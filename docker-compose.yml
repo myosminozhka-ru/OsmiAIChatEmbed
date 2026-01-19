@@ -1,0 +1,12 @@
+services:
+  skchat:
+    container_name: osmi-ai-skchat
+    image: osmi-ai-skchat
+    build: .
+    ports:
+      - "3001:3001"
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - HOST=0.0.0.0
