@@ -37,7 +37,7 @@ docker-compose.yml
 .dockerignore
 
 # Environment variables (будет монтироваться как volume)
-.env
+# .env
 .env.example
 .env.local
 
