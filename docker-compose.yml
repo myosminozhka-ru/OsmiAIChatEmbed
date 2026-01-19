@@ -1,7 +1,7 @@
 services:
-  skchat:
-    container_name: osmi-ai-skchat
-    image: osmi-ai-skchat
+  testchat:
+    container_name: osmi-ai-testchat
+    image: osmi-ai-testchat
     build: .
     ports:
       - "3001:3001"
