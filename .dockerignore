@@ -3,25 +3,10 @@
 .gitignore
 .gitattributes
 
-# Python cache
-__pycache__
-*.py[cod]
-*$py.class
-*.so
-.Python
-.pytest_cache
-.mypy_cache
-.coverage
-htmlcov/
+# Dependencies
 dist/
 build/
-*.egg-info/
-
-# Virtual environments
-venv/
-env/
-ENV/
-.venv
+node_modules/
 
 # IDE settings
 .vscode/
@@ -36,16 +21,14 @@ Dockerfile
 docker-compose.yml
 .dockerignore
 
-# Environment variables (будет монтироваться как volume)
+# Environment variables
 .env
 .env.example
 .env.local
 
-# Logs (будут создаваться в volume)
+# Logs and temporary files
 *.log
 logs/
-
-# Temporary files
 *.tmp
 *.temp
 tmp/
@@ -63,3 +46,4 @@ docs/
 
 # Other
 .editorconfig
+cgi-bin/
