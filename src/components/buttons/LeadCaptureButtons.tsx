@@ -19,7 +19,7 @@ export const CancelLeadCaptureButton = (props: LeadCaptureButtonProps) => {
         'h-10 p-2 justify-center font-semibold focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 ' +
         props.class
       }
-      style={{ background: 'transparent', border: 'none', color: props.buttonColor }}
+      style={{ background: 'transparent', border: 'none', color: 'var(--chatbot-button-color)' }}
       title="Cancel Lead Capture"
     >
       Cancel
@@ -39,7 +39,6 @@ const SaveLeadFallback = () => {
 export const SaveLeadButton = (props: LeadCaptureButtonProps) => {
   return (
     <SendButton
-      sendButtonColor={props.buttonColor}
       type="submit"
       isDisabled={props.isDisabled || props.isLoading}
       class="m-0 h-14 flex items-center justify-center"

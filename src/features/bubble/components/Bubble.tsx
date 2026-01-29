@@ -6,9 +6,6 @@ import { Bot, BotProps } from '../../../components/Bot';
 import Tooltip from './Tooltip';
 import { getBubbleButtonSize } from '@/utils';
 
-const defaultButtonColor = '#3B81F6';
-const defaultIconColor = 'white';
-
 export type BubbleProps = BotProps & BubbleParams;
 
 export const Bubble = (props: BubbleProps) => {
@@ -90,7 +87,7 @@ export const Bubble = (props: BubbleProps) => {
           'transform-origin': 'bottom right',
           transform: isBotOpened() ? 'scale3d(1, 1, 1)' : 'scale3d(0, 0, 1)',
           'box-shadow': 'rgb(0 0 0 / 16%) 0px 5px 40px',
-          'background-color': bubbleProps.theme?.chatWindow?.backgroundColor || '#ffffff',
+          'background-color': 'var(--chatbot-container-bg-color)',
           'background-image': bubbleProps.theme?.chatWindow?.backgroundImage ? `url(${bubbleProps.theme?.chatWindow?.backgroundImage})` : 'none',
           'background-size': 'cover',
           'background-position': 'center',
@@ -114,30 +111,21 @@ export const Bubble = (props: BubbleProps) => {
                 class="py-2 pr-3 absolute top-0 right-[-8px] m-[6px] bg-transparent text-white rounded-full z-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75"
                 title="Close Chat"
               >
-                <svg viewBox="0 0 24 24" width="24" height="24">
+                <svg viewBox="0 0 24 24" width="24" height="24" class="send-icon">
                   <path
-                    fill={bubbleProps.theme?.button?.iconColor ?? defaultIconColor}
+                    fill="var(--chatbot-button-icon-color)"
                     d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
                   />
                 </svg>
               </button>
             </Show>
             <Bot
-              backgroundColor={bubbleProps.theme?.chatWindow?.backgroundColor}
-              formBackgroundColor={bubbleProps.theme?.form?.backgroundColor}
-              formTextColor={bubbleProps.theme?.form?.textColor}
-              badgeBackgroundColor={bubbleProps.theme?.chatWindow?.backgroundColor}
-              bubbleBackgroundColor={bubbleProps.theme?.button?.backgroundColor ?? defaultButtonColor}
-              bubbleTextColor={bubbleProps.theme?.button?.iconColor ?? defaultIconColor}
               showTitle={bubbleProps.theme?.chatWindow?.showTitle}
               showAgentMessages={bubbleProps.theme?.chatWindow?.showAgentMessages}
               title={bubbleProps.theme?.chatWindow?.title}
               titleAvatarSrc={bubbleProps.theme?.chatWindow?.titleAvatarSrc}
-              titleTextColor={bubbleProps.theme?.chatWindow?.titleTextColor}
-              titleBackgroundColor={bubbleProps.theme?.chatWindow?.titleBackgroundColor}
               welcomeMessage={bubbleProps.theme?.chatWindow?.welcomeMessage}
               errorMessage={bubbleProps.theme?.chatWindow?.errorMessage}
-              poweredByTextColor={bubbleProps.theme?.chatWindow?.poweredByTextColor}
               textInput={bubbleProps.theme?.chatWindow?.textInput}
               botMessage={bubbleProps.theme?.chatWindow?.botMessage}
               userMessage={bubbleProps.theme?.chatWindow?.userMessage}

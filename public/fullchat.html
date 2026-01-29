@@ -1,0 +1,28 @@
+<!--
+  Страница с развёрнутым чатом (не в виде попапа).
+  Используется отдельный вызов Chatbot.initFull() для полноэкранного чата.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flowise Chat — Full Page</title>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="module">
+        import Chatbot from './web.js'
+
+        // Инициализация развёрнутого (полноэкранного) чата через initFull
+        Chatbot.initFull({
+            chatflowid: 'agent1',
+            apiHost: window.location.origin
+        })
+    </script>
+</body>
+
+</html>

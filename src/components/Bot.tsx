@@ -264,9 +264,9 @@ const defaultWelcomeMessage = 'Hi there! How can I help?';
     },
 ]*/
 
-const defaultBackgroundColor = '#ffffff';
-const defaultTextColor = '#303235';
-const defaultTitleBackgroundColor = '#3B81F6';
+const defaultBackgroundColor = 'var(--chatbot-container-bg-color)';
+const defaultTextColor = 'var(--chatbot-title-color)';
+const defaultTitleBackgroundColor = 'var(--chatbot-title-bg-color)';
 
 /* FeedbackDialog component - for collecting user feedback */
 const FeedbackDialog = (props: {
@@ -337,27 +337,23 @@ const FormInputView = (props: {
 
   return (
     <div
-      class="w-full h-full flex flex-col items-center justify-center px-4 py-8 rounded-lg"
+      class="w-full h-full flex flex-col items-center justify-center px-4 py-8 rounded-lg chatbot-container"
       style={{
-        'font-family': 'Poppins, sans-serif',
-        'font-size': props.fontSize ? `${props.fontSize}px` : '16px',
-        background: props.parentBackgroundColor || defaultBackgroundColor,
-        color: props.textColor || defaultTextColor,
+        'font-size': props.fontSize ? `${props.fontSize}px` : 'var(--chatbot-font-size)',
       }}
     >
       <div
-        class="w-full max-w-md bg-white shadow-lg rounded-lg overflow-hidden"
+        class="w-full max-w-md shadow-lg rounded-lg overflow-hidden"
         style={{
-          'font-family': 'Poppins, sans-serif',
-          'font-size': props.fontSize ? `${props.fontSize}px` : '16px',
-          background: props.backgroundColor || defaultBackgroundColor,
-          color: props.textColor || defaultTextColor,
+          background: defaultBackgroundColor,
+          color: defaultTextColor,
+          'font-size': props.fontSize ? `${props.fontSize}px` : 'var(--chatbot-font-size)',
         }}
       >
         <div class="p-6">
           <h2 class="text-xl font-bold mb-2">{props.title}</h2>
           {props.description && (
-            <p class="text-gray-600 mb-6" style={{ color: props.textColor || defaultTextColor }}>
+            <p class="text-gray-600 mb-6" style={{ color: defaultTextColor }}>
               {props.description}
             </p>
           )}
@@ -439,9 +435,10 @@ const FormInputView = (props: {
             <div class="pt-4">
               <button
                 type="submit"
-                class="w-full py-2 px-4 text-white font-semibold rounded-md focus:outline-none transition duration-300 ease-in-out"
+                class="w-full py-2 px-4 font-semibold rounded-md focus:outline-none transition duration-300 ease-in-out chatbot-button"
                 style={{
-                  'background-color': props.sendButtonColor || '#3B81F6',
+                  color: 'var(--chatbot-button-color)',
+                  'background-color': 'var(--chatbot-button-bg-color)',
                 }}
               >
                 Submit
@@ -2350,10 +2347,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           description={formDescription()}
           inputParams={formInputParams()}
           onSubmit={(formData) => handleSubmit(formData)}
-          parentBackgroundColor={props?.backgroundColor}
-          backgroundColor={props?.formBackgroundColor}
-          textColor={props?.formTextColor || props.botMessage?.textColor}
-          sendButtonColor={props.textInput?.sendButtonColor}
           fontSize={props.fontSize}
         />
       ) : (
@@ -2375,7 +2368,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           {isDragActive() && (uploadsConfig()?.isImageUploadAllowed || isFileUploadAllowed()) && (
             <div
               class="absolute top-0 left-0 bottom-0 right-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm text-white z-40 gap-2 border-2 border-dashed"
-              style={{ 'border-color': props.bubbleBackgroundColor }}
+              style={{ 'border-color': 'var(--chatbot-button-bg-color)' }}
             >
               <h2 class="text-xl font-semibold">Drop here to upload</h2>
               <For each={[...(uploadsConfig()?.imgUploadSizeAndTypes || []), ...(uploadsConfig()?.fileUploadSizeAndTypes || [])]}>
@@ -2393,12 +2386,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
           {props.showTitle ? (
             <div
-              class="flex flex-row items-center w-full h-[50px] absolute top-0 left-0 z-10"
+              class="flex flex-row items-center w-full h-[50px] absolute top-0 left-0 z-10 chatbot-header"
               style={{
-                background: props.titleBackgroundColor || props.bubbleBackgroundColor || defaultTitleBackgroundColor,
-                color: props.titleTextColor || props.bubbleTextColor || defaultBackgroundColor,
-                'border-top-left-radius': props.isFullPage ? '0px' : '6px',
-                'border-top-right-radius': props.isFullPage ? '0px' : '6px',
+                background: defaultTitleBackgroundColor,
+                color: defaultTextColor,
+                'border-top-left-radius': props.isFullPage ? '0px' : 'var(--chatbot-border-radius)',
+                'border-top-right-radius': props.isFullPage ? '0px' : 'var(--chatbot-border-radius)',
               }}
             >
               <Show when={props.titleAvatarSrc}>
@@ -2412,13 +2405,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
               </Show>
               <div style={{ flex: 1 }} />
               <DeleteButton
-                sendButtonColor={props.bubbleTextColor}
                 type="button"
                 isDisabled={messages().length === 1}
                 class="my-2 ml-2"
                 on:click={clearChat}
               >
-                <span style={{ 'font-family': 'Poppins, sans-serif' }}>Clear</span>
+                <span>Clear</span>
               </DeleteButton>
             </div>
           ) : null}
@@ -2437,8 +2429,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                           apiHost={props.apiHost}
                           chatflowid={props.chatflowid}
                           chatId={chatId()}
-                          backgroundColor={props.userMessage?.backgroundColor}
-                          textColor={props.userMessage?.textColor}
                           showAvatar={props.userMessage?.showAvatar}
                           avatarSrc={props.userMessage?.avatarSrc}
                           fontSize={props.fontSize}
@@ -2452,9 +2442,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                           chatflowid={props.chatflowid}
                           chatId={chatId()}
                           apiHost={props.apiHost}
-                          backgroundColor={props.botMessage?.backgroundColor}
-                          textColor={props.botMessage?.textColor}
-                          feedbackColor={props.feedback?.color}
                           showAvatar={props.botMessage?.showAvatar}
                           avatarSrc={props.botMessage?.avatarSrc}
                           chatFeedbackStatus={chatFeedbackStatus()}
@@ -2482,13 +2469,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                           chatflowid={props.chatflowid}
                           chatId={chatId()}
                           apiHost={props.apiHost}
-                          backgroundColor={props.botMessage?.backgroundColor}
-                          textColor={props.botMessage?.textColor}
                           fontSize={props.fontSize}
                           showAvatar={props.botMessage?.showAvatar}
                           avatarSrc={props.botMessage?.avatarSrc}
                           leadsConfig={leadsConfig()}
-                          sendButtonColor={props.textInput?.sendButtonColor}
                           isLeadSaved={isLeadSaved()}
                           setIsLeadSaved={setIsLeadSaved}
                           setLeadEmail={setLeadEmail}
@@ -2562,11 +2546,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                     <div
                       class="h-[58px] flex items-center justify-between chatbot-input border border-[#eeeeee]"
                       data-testid="input"
-                      style={{
-                        margin: 'auto',
-                        'background-color': props.textInput?.backgroundColor ?? defaultBackgroundColor,
-                        color: props.textInput?.textColor ?? defaultTextColor,
-                      }}
+                      style={{ margin: 'auto' }}
                     >
                       <div class="flex items-center gap-3 px-4 py-2">
                         <span>
@@ -2594,10 +2574,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 </>
               ) : (
                 <TextInput
-                  backgroundColor={props.textInput?.backgroundColor}
-                  textColor={props.textInput?.textColor}
                   placeholder={props.textInput?.placeholder}
-                  sendButtonColor={props.textInput?.sendButtonColor}
                   maxChars={props.textInput?.maxChars}
                   maxCharsWarningMessage={props.textInput?.maxCharsWarningMessage}
                   autoFocus={props.textInput?.autoFocus}
@@ -2621,8 +2598,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             </div>
             <Badge
               footer={props.footer}
-              badgeBackgroundColor={props.badgeBackgroundColor}
-              poweredByTextColor={props.poweredByTextColor}
               botContainer={botContainer}
             />
           </div>
@@ -2636,13 +2611,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           onAccept={handleDisclaimerAccept}
           title={props.disclaimer?.title}
           message={props.disclaimer?.message}
-          textColor={props.disclaimer?.textColor}
-          buttonColor={props.disclaimer?.buttonColor}
           buttonText={props.disclaimer?.buttonText}
-          buttonTextColor={props.disclaimer?.buttonTextColor}
-          blurredBackgroundColor={props.disclaimer?.blurredBackgroundColor}
-          backgroundColor={props.disclaimer?.backgroundColor}
-          denyButtonBgColor={props.disclaimer?.denyButtonBgColor}
           denyButtonText={props.disclaimer?.denyButtonText}
           onDeny={props.closeBot}
           isFullPage={props.isFullPage}

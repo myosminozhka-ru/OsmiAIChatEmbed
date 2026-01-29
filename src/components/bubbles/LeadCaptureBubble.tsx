@@ -16,15 +16,12 @@ type Props = {
   avatarSrc?: string;
   backgroundColor?: string;
   textColor?: string;
-  sendButtonColor?: string;
   fontSize?: number;
   isLeadSaved: boolean;
   setIsLeadSaved: (value: boolean) => void;
   setLeadEmail: (value: string) => void;
 };
 
-const defaultBackgroundColor = '#f7f8ff';
-const defaultTextColor = '#303235';
 const defaultFontSize = 16;
 const phoneRegex = new RegExp(/^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/);
 
@@ -90,10 +87,8 @@ export const LeadCaptureBubble = (props: Props) => {
         class="px-4 py-2 ml-2 max-w-full chatbot-host-bubble prose"
         data-testid="host-bubble"
         style={{
-          'background-color': props.backgroundColor ?? defaultBackgroundColor,
-          color: props.textColor ?? defaultTextColor,
-          'border-radius': '6px',
-          'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
+          'border-radius': 'var(--chatbot-border-radius)',
+          'font-size': props.fontSize ? `${props.fontSize}px` : 'var(--chatbot-font-size)',
         }}
       >
         {props.isLeadSaved || getLocalStorageChatflow(props.chatflowid)?.lead ? (
@@ -154,7 +149,7 @@ export const LeadCaptureBubble = (props: Props) => {
                 </div>
               )}
               <div class="flex items-center justify-end gap-1">
-                <SaveLeadButton buttonColor={props.sendButtonColor} isLoading={isLeadSaving()} />
+                <SaveLeadButton isLoading={isLeadSaving()} />
               </div>
             </div>
           </form>

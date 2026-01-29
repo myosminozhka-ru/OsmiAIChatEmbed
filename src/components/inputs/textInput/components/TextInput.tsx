@@ -33,8 +33,6 @@ type TextInputProps = {
   maxHistorySize?: number;
 };
 
-const defaultBackgroundColor = '#ffffff';
-const defaultTextColor = '#303235';
 // CDN link for default send sound
 const defaultSendSound = 'https://cdn.jsdelivr.net/gh/FlowiseAI/FlowiseChatEmbed@latest/src/assets/send_message.mp3';
 
@@ -144,8 +142,8 @@ export const TextInput = (props: TextInputProps) => {
       data-testid="input"
       style={{
         margin: 'auto',
-        'background-color': props.backgroundColor ?? defaultBackgroundColor,
-        color: props.textColor ?? defaultTextColor,
+        'background-color': props.backgroundColor ?? 'var(--chatbot-input-bg-color)',
+        color: props.textColor ?? 'var(--chatbot-input-color)',
       }}
       onKeyDown={handleKeyDown}
     >

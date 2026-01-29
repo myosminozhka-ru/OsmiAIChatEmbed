@@ -3,9 +3,6 @@ import { Bot, BotProps } from '@/components/Bot';
 import { BubbleParams } from '@/features/bubble/types';
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
 
-const defaultButtonColor = '#3B81F6';
-const defaultIconColor = 'white';
-
 export type FullProps = BotProps & BubbleParams;
 
 export const Full = (props: FullProps, { element }: { element: HTMLElement }) => {
@@ -51,30 +48,22 @@ export const Full = (props: FullProps, { element }: { element: HTMLElement }) =>
       <style>{styles}</style>
       <Show when={isBotDisplayed()}>
         <div
+          class="chatbot-container"
           style={{
-            'background-color': props.theme?.chatWindow?.backgroundColor || '#ffffff',
+            'background-color': 'var(--chatbot-container-bg-color)',
             height: props.theme?.chatWindow?.height ? `${props.theme?.chatWindow?.height.toString()}px` : '100dvh',
             width: props.theme?.chatWindow?.width ? `${props.theme?.chatWindow?.width.toString()}px` : '100%',
             margin: '0px',
-            overflow: 'hidden', // Ensure no extra scrolling due to content overflow
+            overflow: 'hidden',
           }}
         >
           <Bot
-            backgroundColor={props.theme?.chatWindow?.backgroundColor}
-            formBackgroundColor={props.theme?.form?.backgroundColor}
-            formTextColor={props.theme?.form?.textColor}
-            badgeBackgroundColor={props.theme?.chatWindow?.backgroundColor}
-            bubbleBackgroundColor={props.theme?.button?.backgroundColor ?? defaultButtonColor}
-            bubbleTextColor={props.theme?.button?.iconColor ?? defaultIconColor}
             showTitle={props.theme?.chatWindow?.showTitle}
             showAgentMessages={props.theme?.chatWindow?.showAgentMessages}
             title={props.theme?.chatWindow?.title}
             titleAvatarSrc={props.theme?.chatWindow?.titleAvatarSrc}
-            titleTextColor={props.theme?.chatWindow?.titleTextColor}
-            titleBackgroundColor={props.theme?.chatWindow?.titleBackgroundColor}
             welcomeMessage={props.theme?.chatWindow?.welcomeMessage}
             errorMessage={props.theme?.chatWindow?.errorMessage}
-            poweredByTextColor={props.theme?.chatWindow?.poweredByTextColor}
             textInput={props.theme?.chatWindow?.textInput}
             botMessage={props.theme?.chatWindow?.botMessage}
             userMessage={props.theme?.chatWindow?.userMessage}

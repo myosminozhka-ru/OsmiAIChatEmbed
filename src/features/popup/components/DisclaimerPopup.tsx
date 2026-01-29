@@ -47,17 +47,17 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
     <Show when={popupProps.isOpen}>
       <div
         class="fixed inset-0 rounded-lg flex items-center justify-center backdrop-blur-sm z-50"
-        style={{ background: popupProps.blurredBackgroundColor || 'rgba(0, 0, 0, 0.4)' }}
+        style={{ background: popupProps.blurredBackgroundColor ?? 'rgba(0, 0, 0, 0.4)' }}
       >
         <div
-          class="p-10 rounded-lg shadow-lg max-w-md w-full text-center mx-4 font-sans"
-          style={{ background: popupProps.backgroundColor || 'white', color: popupProps.textColor || 'black' }}
+          class="p-10 rounded-lg shadow-lg max-w-md w-full text-center mx-4 font-sans chatbot-container"
+          style={{ background: 'var(--chatbot-container-bg-color)', color: 'var(--chatbot-container-color)' }}
         >
           <h2 class="text-2xl font-semibold mb-4 flex justify-center items-center">{popupProps.title ?? 'Disclaimer'}</h2>
 
           <p
             class="text-gray-700 text-base mb-6"
-            style={{ color: popupProps.textColor || 'black' }}
+            style={{ color: 'var(--chatbot-container-color)' }}
             innerHTML={
               popupProps.message ??
               'By using this chatbot, you agree to the <a target="_blank" href="https://flowiseai.com/terms">Terms & Condition</a>.'
@@ -66,18 +66,17 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
 
           <div class="flex justify-center space-x-4">
             <button
-              class="font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
-              style={{ background: popupProps.buttonColor || '#3b82f6', color: popupProps.buttonTextColor || 'white' }}
+              class="font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline chatbot-button"
+              style={{ background: 'var(--chatbot-button-bg-color)', color: 'var(--chatbot-button-color)' }}
               onClick={handleAccept}
             >
               {popupProps.buttonText ?? 'Start Chatting'}
             </button>
 
-            {/* Only show the Cancel button if not in full-page mode */}
             <Show when={!popupProps.isFullPage}>
               <button
                 class="font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
-                style={{ background: popupProps.denyButtonBgColor || '#ef4444', color: popupProps.buttonTextColor || 'white' }}
+                style={{ background: popupProps.denyButtonBgColor ?? '#ef4444', color: 'var(--chatbot-button-color)' }}
                 onClick={handleDeny}
               >
                 {popupProps.denyButtonText ?? 'Cancel'}

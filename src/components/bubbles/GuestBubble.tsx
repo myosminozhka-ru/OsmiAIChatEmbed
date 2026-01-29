@@ -17,8 +17,6 @@ type Props = {
   renderHTML?: boolean;
 };
 
-const defaultBackgroundColor = '#3B81F6';
-const defaultTextColor = '#ffffff';
 const defaultFontSize = 16;
 
 export const GuestBubble = (props: Props) => {
@@ -29,24 +27,18 @@ export const GuestBubble = (props: Props) => {
     if (el) {
       el.innerHTML = Marked.parse(props.message.message);
 
-      // Apply textColor to all links, headings, and other markdown elements
-      const textColor = props.textColor ?? defaultTextColor;
       el.querySelectorAll('a, h1, h2, h3, h4, h5, h6, strong, em, blockquote, li').forEach((element) => {
-        (element as HTMLElement).style.color = textColor;
+        (element as HTMLElement).style.color = 'inherit';
       });
 
-      // Code blocks (with pre) get white text
       el.querySelectorAll('pre').forEach((element) => {
-        (element as HTMLElement).style.color = '#FFFFFF';
-        // Also ensure any code elements inside pre have white text
+        (element as HTMLElement).style.color = 'var(--chatbot-guest-bubble-color)';
         element.querySelectorAll('code').forEach((codeElement) => {
-          (codeElement as HTMLElement).style.color = '#FFFFFF';
+          (codeElement as HTMLElement).style.color = 'var(--chatbot-guest-bubble-color)';
         });
       });
-
-      // Inline code (not in pre) gets green text
       el.querySelectorAll('code:not(pre code)').forEach((element) => {
-        (element as HTMLElement).style.color = '#4CAF50'; // Green color
+        (element as HTMLElement).style.color = 'inherit';
       });
 
       // Set target="_blank" for links
@@ -77,7 +69,7 @@ export const GuestBubble = (props: Props) => {
     } else {
       return (
         <div class={`inline-flex items-center h-12 max-w-max p-2 mr-1 flex-none bg-transparent border border-gray-300 rounded-md`}>
-          <AttachmentIcon color={props.textColor ?? defaultTextColor} />
+          <AttachmentIcon color="var(--chatbot-guest-bubble-color)" />
           <span class={`ml-1.5 text-inherit`}>{item.name}</span>
         </div>
       );
@@ -89,11 +81,7 @@ export const GuestBubble = (props: Props) => {
       <div
         class="max-w-full flex flex-col justify-center items-start chatbot-guest-bubble px-4 py-2 gap-2 mr-2"
         data-testid="guest-bubble"
-        style={{
-          'background-color': props.backgroundColor ?? defaultBackgroundColor,
-          color: props.textColor ?? defaultTextColor,
-          'border-radius': '6px',
-        }}
+        style={{ 'border-radius': 'var(--chatbot-border-radius)' }}
       >
         {props.message.fileUploads && props.message.fileUploads.length > 0 && (
           <div class="flex flex-col items-start flex-wrap w-full gap-2">

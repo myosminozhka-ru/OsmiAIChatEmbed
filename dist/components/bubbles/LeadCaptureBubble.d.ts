@@ -9,7 +9,6 @@ type Props = {
     avatarSrc?: string;
     backgroundColor?: string;
     textColor?: string;
-    sendButtonColor?: string;
     fontSize?: number;
     isLeadSaved: boolean;
     setIsLeadSaved: (value: boolean) => void;
