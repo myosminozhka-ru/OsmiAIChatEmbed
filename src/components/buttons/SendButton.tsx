@@ -1,9 +1,8 @@
-import { Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { DeleteIcon, SendIcon } from '../icons';
+import { SendIcon } from '../icons';
+import { IconButton } from './IconButton';
 
 type SendButtonProps = {
-  sendButtonColor?: string;
   isDisabled?: boolean;
   isLoading?: boolean;
   disableIcon?: boolean;
@@ -11,45 +10,18 @@ type SendButtonProps = {
 
 export const SendButton = (props: SendButtonProps) => {
   return (
-    <button
+    <IconButton
       type="submit"
       disabled={props.isDisabled || props.isLoading}
+      ariaLabel="Отправить сообщение"
       {...props}
-      class={
-        'py-2 px-4 justify-center font-semibold text-white focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 chatbot-button ' +
-        props.class
-      }
-      style={{ background: 'transparent', border: 'none' }}
-    >
-      <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
-        <SendIcon color={props.sendButtonColor ?? 'var(--chatbot-button-color)'} class={'send-icon flex ' + (props.disableIcon ? 'hidden' : '')} />
-      </Show>
-    </button>
+      class={props.class}
+      icon={<SendIcon class={props.disableIcon ? 'hidden' : ''} />}
+    />
   );
 };
-export const DeleteButton = (props: SendButtonProps) => {
-  // Check if <flowise-fullchatbot> is present in the DOM
-  const isFullChatbot = document.querySelector('flowise-fullchatbot') !== null;
-  const paddingClass = isFullChatbot ? 'px-4' : 'px-12';
 
-  return (
-    <button
-      type="submit"
-      disabled={props.isDisabled || props.isLoading}
-      {...props}
-      class={
-        `py-2 ${paddingClass} justify-center font-semibold text-white focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 chatbot-button ` +
-        props.class
-      }
-      style={{ background: 'transparent', border: 'none' }}
-      title="Reset Chat"
-    >
-      <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
-        <DeleteIcon color={props.sendButtonColor ?? 'var(--chatbot-button-color)'} class={'send-icon flex ' + (props.disableIcon ? 'hidden' : '')} />
-      </Show>
-    </button>
-  );
-};
+export { DeleteButton } from './DeleteButton';
 
 export const Spinner = (props: JSX.SvgSVGAttributes<SVGSVGElement>) => (
   <svg

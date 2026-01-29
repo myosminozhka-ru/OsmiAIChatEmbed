@@ -6,6 +6,8 @@ type ShortTextInputProps = {
   onInput: (value: string) => void;
   fontSize?: number;
   disabled?: boolean;
+  paddingX?: string;
+  paddingY?: string;
 } & Omit<JSX.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onInput'>;
 
 const DEFAULT_HEIGHT = 56;
@@ -18,7 +20,6 @@ export const ShortTextInput = (props: ShortTextInputProps) => {
   const handleInput = (e) => {
     if (props.ref) {
       if (e.currentTarget.value === '') {
-        // reset height when value is empty
         setHeight(DEFAULT_HEIGHT);
       } else {
         setHeight(e.currentTarget.scrollHeight - 24);
@@ -30,7 +31,6 @@ export const ShortTextInput = (props: ShortTextInputProps) => {
 
   // @ts-expect-error: unknown type
   const handleKeyDown = (e) => {
-    // Handle Shift + Enter new line
     if (e.keyCode == 13 && e.shiftKey) {
       e.preventDefault();
       e.stopPropagation();
@@ -39,15 +39,23 @@ export const ShortTextInput = (props: ShortTextInputProps) => {
     }
   };
 
+  const paddingX = props.paddingX ?? 'px-4';
+  const paddingY = props.paddingY ?? 'py-4';
+  const isEmpty = !props.value || props.value === '';
+  const shouldCenterPlaceholder = isEmpty && paddingY === 'py-0';
+  const fontSize = props.fontSize ?? 16;
+  const centerPaddingTop = shouldCenterPlaceholder ? `${(56 - fontSize) / 2}px` : undefined;
+
   return (
     <textarea
       ref={props.ref}
-      class="focus:outline-none bg-transparent px-4 py-4 flex-1 w-full h-full min-h-[56px] max-h-[128px] text-input disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 "
+      class={`focus:outline-none bg-transparent ${paddingX} ${paddingY} flex-1 w-full h-full min-h-[56px] max-h-[128px] text-input placeholder:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 caret-[var(--chatbot-input-caret-color)]`}
       disabled={props.disabled}
       style={{
-        'font-size': props.fontSize ? `${props.fontSize}px` : '16px',
+        'font-size': `${fontSize}px`,
         resize: 'none',
         height: `${props.value !== '' ? height() : DEFAULT_HEIGHT}px`,
+        'padding-top': centerPaddingTop,
       }}
       onInput={handleInput}
       onKeyDown={handleKeyDown}

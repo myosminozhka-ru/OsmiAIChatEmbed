@@ -31,6 +31,11 @@ module.exports = {
     theme: {
         ...rem2px(defaultTheme),
         extend: {
+            colors: {
+                gray: {
+                    880: '#15181E'
+                }
+            },
             keyframes: {
                 'fade-in': {
                     '0%': {

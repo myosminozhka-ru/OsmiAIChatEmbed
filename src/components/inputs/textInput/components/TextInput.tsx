@@ -31,6 +31,7 @@ type TextInputProps = {
   fullFileUploadAllowedTypes?: string;
   enableInputHistory?: boolean;
   maxHistorySize?: number;
+  isFullPage?: boolean;
 };
 
 // CDN link for default send sound
@@ -138,21 +139,22 @@ export const TextInput = (props: TextInputProps) => {
 
   return (
     <div
-      class="w-full h-auto max-h-[192px] min-h-[56px] flex flex-col items-end justify-between chatbot-input border border-[#eeeeee]"
+      class={`sticky bottom-0 w-full min-h-[72px] flex flex-col chatbot-input border-t py-3 pr-[66px] z-10 text-gray-880 ${
+        props.isFullPage ? 'px-4 md:px-6 lg:px-8' : 'px-6'
+      }`}
       data-testid="input"
       style={{
-        margin: 'auto',
         'background-color': props.backgroundColor ?? 'var(--chatbot-input-bg-color)',
         color: props.textColor ?? 'var(--chatbot-input-color)',
       }}
       onKeyDown={handleKeyDown}
     >
       <Show when={warningMessage() !== ''}>
-        <div class="w-full px-4 pt-4 pb-1 text-red-500 text-sm" data-testid="warning-message">
+        <div class="absolute bottom-full left-0 right-0 bg-white/30 w-full p-4 text-red-500 text-sm" data-testid="warning-message">
           {warningMessage()}
         </div>
       </Show>
-      <div class="w-full flex items-end justify-between">
+      <div class="w-full h-full flex items-center gap-4">
         {props.uploadsConfig?.isImageUploadAllowed ? (
           <>
             <ImageUploadButton
@@ -162,7 +164,7 @@ export const TextInput = (props: TextInputProps) => {
               isDisabled={props.disabled || isSendButtonDisabled()}
               on:click={handleImageUploadClick}
             >
-              <span style={{ 'font-family': 'Poppins, sans-serif' }}>Image Upload</span>
+              <span class="font-sans">Image Upload</span>
             </ImageUploadButton>
             <input
               style={{ display: 'none' }}
@@ -187,7 +189,7 @@ export const TextInput = (props: TextInputProps) => {
               isDisabled={props.disabled || isSendButtonDisabled()}
               on:click={handleFileUploadClick}
             >
-              <span style={{ 'font-family': 'Poppins, sans-serif' }}>File Upload</span>
+              <span class="font-sans">File Upload</span>
             </AttachmentUploadButton>
             <input
               style={{ display: 'none' }}
@@ -205,7 +207,9 @@ export const TextInput = (props: TextInputProps) => {
           value={props.inputValue}
           fontSize={props.fontSize}
           disabled={props.disabled}
-          placeholder={props.placeholder ?? 'Type your question'}
+          placeholder={props.placeholder ?? 'Напишите свой вопрос...'}
+          paddingX="px-0"
+          paddingY="py-0"
         />
         {props.uploadsConfig?.isSpeechToTextEnabled ? (
           <RecordAudioButton
@@ -215,19 +219,21 @@ export const TextInput = (props: TextInputProps) => {
             isDisabled={props.disabled || isSendButtonDisabled()}
             on:click={props.onMicrophoneClicked}
           >
-            <span style={{ 'font-family': 'Poppins, sans-serif' }}>Record Audio</span>
+            <span class="font-sans">Record Audio</span>
           </RecordAudioButton>
         ) : null}
-        <SendButton
-          sendButtonColor={props.sendButtonColor}
-          type="button"
-          isDisabled={props.disabled || isSendButtonDisabled()}
-          class="m-0 h-14 flex items-center justify-center"
-          on:click={submit}
-        >
-          <span style={{ 'font-family': 'Poppins, sans-serif' }}>Send</span>
-        </SendButton>
       </div>
+      <SendButton
+        sendButtonColor={props.sendButtonColor}
+        type="button"
+        isDisabled={props.disabled || isSendButtonDisabled() || !props.inputValue || props.inputValue.trim() === ''}
+        class={`absolute top-1/2 -translate-y-1/2 h-14 flex items-center justify-center ${
+          props.isFullPage ? 'right-4 md:right-6 lg:right-8' : 'right-6'
+        }`}
+        on:click={submit}
+      >
+        <span class="font-sans">Send</span>
+      </SendButton>
     </div>
   );
 };

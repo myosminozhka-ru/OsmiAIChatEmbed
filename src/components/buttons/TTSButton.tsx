@@ -9,7 +9,7 @@ type Props = {
   class?: string;
 };
 
-const defaultButtonColor = '#3B81F6';
+const defaultButtonColor = 'var(--chatbot-button-bg-color)';
 
 export const TTSButton = (props: Props) => {
   const handleClick = (event: MouseEvent) => {

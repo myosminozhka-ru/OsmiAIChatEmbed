@@ -431,10 +431,9 @@ export const BotBubble = (props: Props) => {
           {props.message.message && (
             <span
               ref={setBotMessageRef}
-              class="px-4 py-2 ml-2 max-w-full chatbot-host-bubble prose"
+              class="flex flex-col justify-start px-4 py-3 ml-2 max-w-full chatbot-host-bubble prose min-h-[52px] rounded-lg rounded-bl-none bg-[var(--chatbot-host-bubble-bg-color)] text-[var(--chatbot-host-bubble-color)]"
               data-testid="host-bubble"
               style={{
-                'border-radius': 'var(--chatbot-border-radius)',
                 'font-size': props.fontSize ? `${props.fontSize}px` : 'var(--chatbot-font-size)',
               }}
             />
@@ -554,7 +553,7 @@ export const BotBubble = (props: Props) => {
                 />
               ) : null}
               <Show when={props.message.dateTime}>
-                <div class="text-sm text-gray-500 ml-2">
+                <div class="text-xs text-gray-500 opacity-70 mt-2 w-full text-right">
                   {formatDateTime(props.message.dateTime, props?.dateTimeToggle?.date, props?.dateTimeToggle?.time)}
                 </div>
               </Show>

@@ -10,6 +10,7 @@ export * from './TrashIcon';
 export * from './XIcon';
 export * from './TickIcon';
 export * from './AttachmentIcon';
+export * from './ResizeIcon';
 export * from './SparklesIcon';
 export * from './VolumeIcon';
 export * from './SquareStopIcon';

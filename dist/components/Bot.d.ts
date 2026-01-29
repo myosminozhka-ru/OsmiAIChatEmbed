@@ -118,6 +118,8 @@ export type BotProps = {
     dateTimeToggle?: DateTimeToggleTheme;
     renderHTML?: boolean;
     closeBot?: () => void;
+    toggleFullscreen?: () => void;
+    isFullscreen?: boolean;
 };
 export type LeadsConfig = {
     status: boolean;

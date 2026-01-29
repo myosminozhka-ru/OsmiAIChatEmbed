@@ -4,6 +4,7 @@ import { Show, onCleanup, onMount } from 'solid-js';
 type Props = {
   footer?: FooterTheme;
   botContainer: HTMLDivElement | undefined;
+  showBadge?: boolean;
 };
 
 export const Badge = (props: Props) => {
@@ -35,13 +36,13 @@ export const Badge = (props: Props) => {
   });
 
   return (
-    <>
+    <Show when={props.showBadge === true}>
       <Show when={props.footer?.showFooter === undefined || props.footer?.showFooter === null || props.footer?.showFooter === true}>
         <span
           class="w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto text-[13px] chatbot-container"
           style={{
-            color: props.footer?.textColor ?? 'var(--chatbot-container-color)',
-            'background-color': 'var(--chatbot-container-bg-color)',
+            color: props.footer?.textColor ?? 'var(--chatbot-title-color)',
+            'background-color': 'var(--chatbot-title-bg-color)',
           }}
         >
           {props.footer?.text ?? 'Powered by'}
@@ -52,7 +53,7 @@ export const Badge = (props: Props) => {
             rel="noopener noreferrer"
             class="lite-badge"
             id="lite-badge"
-            style={{ 'font-weight': 'bold', color: props.footer?.textColor ?? 'var(--chatbot-container-color)' }}
+            style={{ 'font-weight': 'bold', color: props.footer?.textColor ?? 'var(--chatbot-title-color)' }}
           >
             <span>&nbsp;{props.footer?.company ?? 'Flowise'}</span>
           </a>
@@ -62,11 +63,11 @@ export const Badge = (props: Props) => {
         <span
           class="w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto text-[13px] chatbot-container"
           style={{
-            color: props.footer?.textColor ?? 'var(--chatbot-container-color)',
-            'background-color': 'var(--chatbot-container-bg-color)',
+            color: props.footer?.textColor ?? 'var(--chatbot-title-color)',
+            'background-color': 'var(--chatbot-title-bg-color)',
           }}
         />
       </Show>
-    </>
+    </Show>
   );
 };

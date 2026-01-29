@@ -10,7 +10,7 @@ type RatingButtonProps = {
   rating?: string;
 } & JSX.ButtonHTMLAttributes<HTMLButtonElement>;
 
-const defaultFeedbackColor = '#3B81F6';
+const defaultFeedbackColor = 'var(--chatbot-button-bg-color)';
 
 export const CopyToClipboardButton = (props: RatingButtonProps) => {
   return (

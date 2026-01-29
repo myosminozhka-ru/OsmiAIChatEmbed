@@ -35,7 +35,7 @@ const FeedbackContentDialog = (props: FeedbackContentDialogProps) => {
             }}
           >
             <div
-              class="flex items-center justify-between p-5 border-b border-solid border-blueGray-200 rounded-t"
+              class="flex items-center justify-between p-5 border-b border-solid border-gray-200 rounded-t"
               style={{
                 border: '1px solid #eeeeee',
               }}
@@ -70,7 +70,7 @@ const FeedbackContentDialog = (props: FeedbackContentDialogProps) => {
                 onInput={(e) => handleInput(e.currentTarget.value)}
                 ref={inputRef as HTMLTextAreaElement}
                 rows="4"
-                class="block p-2.5 rounded-lg border focus:ring-blue-500 focus:border-blue-500 bg-transparent flex-1 w-full feedback-input disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 font-normal"
+                class="block p-2.5 rounded-lg border focus:ring-2 focus:ring-[var(--chatbot-button-bg-color)] focus:border-[var(--chatbot-button-bg-color)] bg-transparent flex-1 w-full feedback-input disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 font-normal"
                 style={{
                   border: '1px solid #eeeeee',
                   color: 'var(--chatbot-input-color)',
@@ -79,7 +79,7 @@ const FeedbackContentDialog = (props: FeedbackContentDialogProps) => {
                 value={inputValue()}
               />
             </div>
-            <div class="flex items-center justify-end p-4 border-t border-solid border-blueGray-200 rounded-b">
+            <div class="flex items-center justify-end p-4 border-t border-solid border-gray-200 rounded-b">
               <button
                 class="bg-emerald-500 text-white active:bg-emerald-600 font-bold text-sm px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
                 type="button"

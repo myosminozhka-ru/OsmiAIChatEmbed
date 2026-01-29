@@ -29,8 +29,9 @@ import { Badge } from './Badge';
 import { Popup, DisclaimerPopup } from '@/features/popup';
 import { Avatar } from '@/components/avatars/Avatar';
 import { DeleteButton, SendButton } from '@/components/buttons/SendButton';
+import { IconButton } from '@/components/buttons/IconButton';
 import { FilePreview } from '@/components/inputs/textInput/components/FilePreview';
-import { CircleDotIcon, SparklesIcon, TrashIcon } from './icons';
+import { CircleDotIcon, ResizeIcon, SparklesIcon, TrashIcon, XIcon } from './icons';
 import { CancelButton } from './buttons/CancelButton';
 import { cancelAudioRecording, startAudioRecording, stopAudioRecording } from '@/utils/audioRecording';
 import { LeadCaptureBubble } from '@/components/bubbles/LeadCaptureBubble';
@@ -174,6 +175,8 @@ export type BotProps = {
   dateTimeToggle?: DateTimeToggleTheme;
   renderHTML?: boolean;
   closeBot?: () => void;
+  toggleFullscreen?: () => void;
+  isFullscreen?: boolean;
 };
 
 export type LeadsConfig = {
@@ -300,7 +303,7 @@ const FeedbackDialog = (props: {
             </button>
             <button
               class="font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
-              style={{ background: '#3b82f6', color: 'white' }}
+              style={{ background: 'var(--chatbot-button-bg-color)', color: 'var(--chatbot-button-color)' }}
               onClick={props.onSubmit}
             >
               Submit
@@ -372,7 +375,7 @@ const FormInputView = (props: {
                         border: '1px solid #9ca3af',
                         'border-radius': '0.375rem',
                       }}
-                      onFocus={(e) => (e.target.style.border = '1px solid #3b82f6')}
+                      onFocus={(e) => (e.target.style.border = '1px solid var(--chatbot-button-bg-color)')}
                       onBlur={(e) => (e.target.style.border = '1px solid #9ca3af')}
                       name={param.name}
                       onInput={(e) => handleInputChange(param.name, e.target.value)}
@@ -388,7 +391,7 @@ const FormInputView = (props: {
                         border: '1px solid #9ca3af',
                         'border-radius': '0.375rem',
                       }}
-                      onFocus={(e) => (e.target.style.border = '1px solid #3b82f6')}
+                      onFocus={(e) => (e.target.style.border = '1px solid var(--chatbot-button-bg-color)')}
                       onBlur={(e) => (e.target.style.border = '1px solid #9ca3af')}
                       name={param.name}
                       onInput={(e) => handleInputChange(param.name, parseFloat(e.target.value))}
@@ -400,9 +403,10 @@ const FormInputView = (props: {
                     <div class="flex items-center">
                       <input
                         type="checkbox"
-                        class="h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
+                        class="h-4 w-4 rounded focus:ring-2 focus:ring-[var(--chatbot-button-bg-color)] focus:ring-offset-0"
                         style={{
                           border: '1px solid #9ca3af',
+                          accentColor: 'var(--chatbot-button-bg-color)',
                         }}
                         name={param.name}
                         onChange={(e) => handleInputChange(param.name, e.target.checked)}
@@ -418,7 +422,7 @@ const FormInputView = (props: {
                         border: '1px solid #9ca3af',
                         'border-radius': '0.375rem',
                       }}
-                      onFocus={(e) => (e.target.style.border = '1px solid #3b82f6')}
+                      onFocus={(e) => (e.target.style.border = '1px solid var(--chatbot-button-bg-color)')}
                       onBlur={(e) => (e.target.style.border = '1px solid #9ca3af')}
                       name={param.name}
                       onChange={(e) => handleInputChange(param.name, e.target.value)}
@@ -2386,14 +2390,31 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
           {props.showTitle ? (
             <div
-              class="flex flex-row items-center w-full h-[50px] absolute top-0 left-0 z-10 chatbot-header"
+              class={`flex flex-row items-center w-full absolute top-0 left-0 z-10 chatbot-header border-b ${
+                props.isFullPage ? 'h-[50px]' : props.isFullscreen ? 'py-3 px-4 md:px-6 lg:px-8' : 'py-3 px-4'
+              }`}
               style={{
                 background: defaultTitleBackgroundColor,
                 color: defaultTextColor,
-                'border-top-left-radius': props.isFullPage ? '0px' : 'var(--chatbot-border-radius)',
-                'border-top-right-radius': props.isFullPage ? '0px' : 'var(--chatbot-border-radius)',
+                'border-top-left-radius': props.isFullPage || props.isFullscreen ? '0px' : 'var(--chatbot-border-radius)',
+                'border-top-right-radius': props.isFullPage || props.isFullscreen ? '0px' : 'var(--chatbot-border-radius)',
               }}
             >
+              {!props.isFullPage && (
+                <div class="flex flex-row items-center gap-2">
+                  {props.closeBot && (
+                    <IconButton type="button" onClick={props.closeBot} ariaLabel="Закрыть чат" icon={<XIcon color={defaultTextColor} />} />
+                  )}
+                  {props.toggleFullscreen && (
+                    <IconButton
+                      type="button"
+                      onClick={props.toggleFullscreen}
+                      ariaLabel="Развернуть на весь экран"
+                      icon={<ResizeIcon color={defaultTextColor} />}
+                    />
+                  )}
+                </div>
+              )}
               <Show when={props.titleAvatarSrc}>
                 <>
                   <div style={{ width: '15px' }} />
@@ -2407,17 +2428,16 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
               <DeleteButton
                 type="button"
                 isDisabled={messages().length === 1}
-                class="my-2 ml-2"
+                class="ml-auto text-gray-880"
                 on:click={clearChat}
-              >
-                <span>Clear</span>
-              </DeleteButton>
+                text="Очистить диалог"
+              />
             </div>
           ) : null}
-          <div class="flex flex-col w-full h-full justify-start z-0">
+          <div class={`flex flex-col w-full h-full justify-start z-0 ${!props.isFullPage && !props.isFullscreen ? 'bg-white' : 'bg-[var(--chatbot-container-bg-color)]'}`}>
             <div
               ref={chatContainer}
-              class="overflow-y-scroll flex flex-col flex-grow min-w-full w-full px-3 pt-[70px] relative scrollable-container chatbot-chat-view scroll-smooth"
+              class="overflow-y-scroll flex flex-col flex-grow min-w-full w-full px-3 pt-[48px] pb-4 relative scrollable-container chatbot-chat-view scroll-smooth"
             >
               <For each={[...messages()]}>
                 {(message, index) => {
@@ -2526,8 +2546,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 <For each={[...previews()]}>{(item) => <>{previewDisplay(item)}</>}</For>
               </div>
             </Show>
-            <div class="w-full px-5 pt-2 pb-1">
-              {isRecording() ? (
+            {isRecording() ? (
                 <>
                   {recordingNotSupported() ? (
                     <div class="w-full flex items-center justify-between p-4 border border-[#eeeeee]">
@@ -2546,7 +2565,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                     <div
                       class="h-[58px] flex items-center justify-between chatbot-input border border-[#eeeeee]"
                       data-testid="input"
-                      style={{ margin: 'auto' }}
+                      style={{ margin: 'auto', 'background-color': 'var(--chatbot-input-bg-color)' }}
                     >
                       <div class="flex items-center gap-3 px-4 py-2">
                         <span>
@@ -2593,12 +2612,13 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                   sendSoundLocation={props.textInput?.sendSoundLocation}
                   enableInputHistory={true}
                   maxHistorySize={10}
+                  isFullPage={props.isFullPage || props.isFullscreen}
                 />
               )}
-            </div>
             <Badge
               footer={props.footer}
               botContainer={botContainer}
+              showBadge={props.showBadge}
             />
           </div>
         </div>

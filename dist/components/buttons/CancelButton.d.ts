@@ -4,6 +4,7 @@ type CancelButtonProps = {
     isDisabled?: boolean;
     isLoading?: boolean;
     disableIcon?: boolean;
+    text?: string;
 } & JSX.ButtonHTMLAttributes<HTMLButtonElement>;
 export declare const CancelButton: (props: CancelButtonProps) => JSX.Element;
 export {};

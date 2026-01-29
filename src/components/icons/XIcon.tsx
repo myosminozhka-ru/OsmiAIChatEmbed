@@ -1,5 +1,4 @@
 import { JSX } from 'solid-js/jsx-runtime';
-const defaultButtonColor = '#3B81F6';
 export const XIcon = (props: JSX.SvgSVGAttributes<SVGSVGElement> & { isCurrentColor?: boolean }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -7,7 +6,7 @@ export const XIcon = (props: JSX.SvgSVGAttributes<SVGSVGElement> & { isCurrentCo
     height="24"
     viewBox="0 0 24 24"
     fill="none"
-    stroke={props.isCurrentColor ? 'currentColor' : props.color ?? defaultButtonColor}
+    stroke={props.color ?? 'currentColor'}
     stroke-width="2"
     stroke-linecap="round"
     stroke-linejoin="round"

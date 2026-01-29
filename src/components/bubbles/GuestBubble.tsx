@@ -76,12 +76,28 @@ export const GuestBubble = (props: Props) => {
     }
   };
 
+  const formatTime = (dateTimeString: string | undefined) => {
+    if (!dateTimeString) return '';
+    try {
+      const date = new Date(dateTimeString);
+      if (isNaN(date.getTime())) return '';
+      const formatter = new Intl.DateTimeFormat('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+      return formatter.format(date);
+    } catch {
+      return '';
+    }
+  };
+
   return (
     <div class="flex justify-end mb-2 items-end guest-container" style={{ 'margin-left': '50px' }}>
       <div
-        class="max-w-full flex flex-col justify-center items-start chatbot-guest-bubble px-4 py-2 gap-2 mr-2"
+        class="max-w-full flex flex-col justify-center items-start chatbot-guest-bubble min-h-[52px] px-4 py-2 gap-2 rounded-lg rounded-br-none mr-2 bg-[var(--chatbot-guest-bubble-bg-color)] text-[var(--chatbot-guest-bubble-text-color)] overflow-hidden"
         data-testid="guest-bubble"
-        style={{ 'border-radius': 'var(--chatbot-border-radius)' }}
       >
         {props.message.fileUploads && props.message.fileUploads.length > 0 && (
           <div class="flex flex-col items-start flex-wrap w-full gap-2">
@@ -98,6 +114,9 @@ export const GuestBubble = (props: Props) => {
             class="mr-2 whitespace-pre-wrap"
             style={{ 'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px` }}
           />
+        )}
+        {props.message.dateTime && (
+          <div class="text-xs text-gray-500 opacity-70 w-full">{formatTime(props.message.dateTime)}</div>
         )}
       </div>
       <Show when={props.showAvatar}>

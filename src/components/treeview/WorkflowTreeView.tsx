@@ -604,7 +604,7 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
     const nodeLabel = (
       <div class="flex items-center">
         {isIterationNode && (
-          <div class="mr-1 text-blue-500">
+          <div class="mr-1" style={{ color: 'var(--chatbot-button-bg-color)' }}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"

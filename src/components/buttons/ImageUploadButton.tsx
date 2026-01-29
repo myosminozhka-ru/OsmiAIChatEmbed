@@ -16,13 +16,16 @@ export const ImageUploadButton = (props: ImageUploadButtonProps) => {
       disabled={props.isDisabled || props.isLoading}
       {...props}
       class={
-        'py-2 pl-4 pr-0 justify-center font-semibold focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 chatbot-button ' +
-        props.class
+        'group py-2 pl-4 pr-0 justify-center font-semibold focus:outline-none flex items-center shadow-sm disabled:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter active:brightness-75 chatbot-button ' +
+        (props.class || '')
       }
       style={{ background: 'transparent', border: 'none' }}
     >
       <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
-        <AddImageIcon color={props.buttonColor} />
+        <AddImageIcon
+          color={props.buttonColor}
+          class="transition-colors group-hover:stroke-[var(--chatbot-button-bg-color)]"
+        />
       </Show>
     </button>
   );
