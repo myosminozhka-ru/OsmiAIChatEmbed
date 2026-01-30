@@ -30,7 +30,7 @@ import { Popup, DisclaimerPopup } from '@/features/popup';
 import { Avatar } from '@/components/avatars/Avatar';
 import { DeleteButton, SendButton } from '@/components/buttons/SendButton';
 import { FilePreview } from '@/components/inputs/textInput/components/FilePreview';
-import { CircleDotIcon, SparklesIcon, TrashIcon } from './icons';
+import { CircleDotIcon, SparklesIcon, TrashIcon, MenuIcon, ExpandIcon, LogoIcon } from './icons';
 import { CancelButton } from './buttons/CancelButton';
 import { cancelAudioRecording, startAudioRecording, stopAudioRecording } from '@/utils/audioRecording';
 import { LeadCaptureBubble } from '@/components/bubbles/LeadCaptureBubble';
@@ -2359,7 +2359,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       ) : (
         <div
           ref={botContainer}
-          class={'relative flex w-full h-full text-base overflow-hidden bg-cover bg-center flex-col items-center chatbot-container ' + props.class}
+          class={
+            'relative flex w-full h-full md:rounded-[30px] text-base overflow-hidden bg-cover bg-center flex-col items-center chatbot-container ' +
+            props.class
+          }
           onDragEnter={handleDrag}
         >
           {isDragActive() && (
@@ -2393,12 +2396,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
           {props.showTitle ? (
             <div
-              class="flex flex-row items-center w-full h-[50px] absolute top-0 left-0 z-10"
+              class="flex flex-row items-center w-full h-[60px] md:h-[80px] absolute top-0 left-0 z-10 justify-between"
               style={{
-                background: props.titleBackgroundColor || props.bubbleBackgroundColor || defaultTitleBackgroundColor,
-                color: props.titleTextColor || props.bubbleTextColor || defaultBackgroundColor,
-                'border-top-left-radius': props.isFullPage ? '0px' : '6px',
-                'border-top-right-radius': props.isFullPage ? '0px' : '6px',
+                background: 'var(--chatbot-header-bg-color)',
+                color: 'var(--chatbot-header-color)',
+                'border-top-left-radius': props.isFullPage ? '0px' : '12px',
+                'border-top-right-radius': props.isFullPage ? '0px' : '12px',
               }}
             >
               <Show when={props.titleAvatarSrc}>
@@ -2407,11 +2410,15 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                   <Avatar initialAvatarSrc={props.titleAvatarSrc} />
                 </>
               </Show>
-              <Show when={props.title}>
-                <span class="px-3 whitespace-pre-wrap font-semibold max-w-full">{props.title}</span>
-              </Show>
+              <div class="w-auto flex shrink-0 pl-3">
+                <MenuIcon />
+              </div>
+              <span class="px-3 whitespace-pre-wrap font-semibold max-w-full w-full text-center absolute uppercase">{props.title || 'чат-бот'}</span>
               <div style={{ flex: 1 }} />
-              <DeleteButton
+              <div class="-translate-x-[45px]">
+                <ExpandIcon class="w-auto flex shrink-0" />
+              </div>
+              {/*<DeleteButton
                 sendButtonColor={props.bubbleTextColor}
                 type="button"
                 isDisabled={messages().length === 1}
@@ -2419,14 +2426,17 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 on:click={clearChat}
               >
                 <span style={{ 'font-family': 'Poppins, sans-serif' }}>Clear</span>
-              </DeleteButton>
+              </DeleteButton>*/}
             </div>
           ) : null}
           <div class="flex flex-col w-full h-full justify-start z-0">
             <div
               ref={chatContainer}
-              class="overflow-y-scroll flex flex-col flex-grow min-w-full w-full px-3 pt-[70px] relative scrollable-container chatbot-chat-view scroll-smooth"
+              class="overflow-y-scroll flex flex-col flex-grow min-w-full w-full px-3 pt-[80px] relative scrollable-container chatbot-chat-view scroll-smooth"
             >
+              <div class="flex flex-row items-center justify-center pt-[89px] pb-[95px]">
+                <LogoIcon class="w-auto flex shrink-0" />
+              </div>
               <For each={[...messages()]}>
                 {(message, index) => {
                   return (
