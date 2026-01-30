@@ -15,9 +15,11 @@ export const StarterPromptBubble = (props: Props) => (
         class="px-2 py-1 ml-1 whitespace-pre-wrap max-w-full chatbot-host-bubble"
         data-testid="host-bubble"
         style={{
-          width: 'max-content',
-          'font-size': props.starterPromptFontSize ? `${props.starterPromptFontSize}px` : '15px', // Convert to string with unit
-          'border-radius': '15px',
+          'font-size': props.starterPromptFontSize ? `${props.starterPromptFontSize}px` : '12px', // Convert to string with unit
+          'border-radius': '20px',
+          background: 'transparent',
+          color: '#ffffff',
+          border: '1px solid #FF4978',
           cursor: 'pointer',
         }}
       >
