@@ -1,7 +1,7 @@
 {
   "name": "osmi-ai-embed",
   "version": "3.0.5",
-  "description": "Javascript library to display flowise chatbot on your website",
+  "description": "Javascript library to display sk chatwidget chatbot on your website",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

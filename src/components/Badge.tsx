@@ -8,7 +8,7 @@ type Props = {
 };
 
 export const Badge = (props: Props) => {
-  let liteBadge: HTMLAnchorElement | undefined;
+  let liteBadge: HTMLAnchorElement | HTMLSpanElement | undefined;
   let observer: MutationObserver | undefined;
 
   const appendBadgeIfNecessary = (mutations: MutationRecord[]) => {
@@ -46,17 +46,28 @@ export const Badge = (props: Props) => {
           }}
         >
           {props.footer?.text ?? 'Powered by'}
-          <a
-            ref={liteBadge}
-            href={props.footer?.companyLink ?? 'https://flowiseai.com'}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="lite-badge"
-            id="lite-badge"
-            style={{ 'font-weight': 'bold', color: props.footer?.textColor ?? 'var(--chatbot-title-color)' }}
-          >
-            <span>&nbsp;{props.footer?.company ?? 'Flowise'}</span>
-          </a>
+          {props.footer?.companyLink ? (
+            <a
+              ref={liteBadge}
+              href={props.footer.companyLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="lite-badge"
+              id="lite-badge"
+              style={{ 'font-weight': 'bold', color: props.footer?.textColor ?? 'var(--chatbot-title-color)' }}
+            >
+              <span>&nbsp;{props.footer?.company ?? 'Sk Chatwidget'}</span>
+            </a>
+          ) : (
+            <span
+              ref={liteBadge}
+              class="lite-badge"
+              id="lite-badge"
+              style={{ 'font-weight': 'bold', color: props.footer?.textColor ?? 'var(--chatbot-title-color)' }}
+            >
+              &nbsp;{props.footer?.company ?? 'Sk Chatwidget'}
+            </span>
+          )}
         </span>
       </Show>
       <Show when={props.footer?.showFooter === false}>

@@ -11,6 +11,7 @@ type Props = {
   chatId: string;
   showAvatar?: boolean;
   avatarSrc?: string;
+  userName?: string;
   backgroundColor?: string;
   textColor?: string;
   fontSize?: number;
@@ -94,7 +95,15 @@ export const GuestBubble = (props: Props) => {
   };
 
   return (
-    <div class="flex justify-end mb-2 items-end guest-container" style={{ 'margin-left': '50px' }}>
+    <div class="flex justify-end mb-5 items-end guest-container flex-col items-end" style={{ 'margin-left': '50px' }}>
+      <Show when={props.userName}>
+        <span
+          class="text-xs mb-1 opacity-75 text-[var(--chatbot-guest-bubble-text-color)] mr-2"
+          style={{ 'font-size': props.fontSize ? `${(props.fontSize * 0.75).toFixed(0)}px` : '12px' }}
+        >
+          {props.userName}
+        </span>
+      </Show>
       <div
         class="max-w-full flex flex-col justify-center items-start chatbot-guest-bubble min-h-[52px] px-4 py-2 gap-2 rounded-lg rounded-br-none mr-2 bg-[var(--chatbot-guest-bubble-bg-color)] text-[var(--chatbot-guest-bubble-text-color)] overflow-hidden"
         data-testid="guest-bubble"

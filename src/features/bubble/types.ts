@@ -42,6 +42,8 @@ export type BotMessageTheme = {
   textColor?: string;
   showAvatar?: boolean;
   avatarSrc?: string;
+  /** При true всегда показывать иконку по умолчанию (смайлик), а не картинку из avatarSrc */
+  useDefaultBotIcon?: boolean;
 };
 
 export type FooterTheme = {
@@ -54,6 +56,7 @@ export type FooterTheme = {
 
 export type FeedbackTheme = {
   color?: string;
+  reasons?: string[];
 };
 
 export type ChatWindowTheme = {
@@ -64,6 +67,9 @@ export type ChatWindowTheme = {
   titleTextColor?: string;
   titleBackgroundColor?: string;
   welcomeMessage?: string;
+  welcomeTitle?: string;
+  welcomeText?: string;
+  showWelcomeImage?: boolean;
   errorMessage?: string;
   backgroundColor?: string;
   backgroundImage?: string;

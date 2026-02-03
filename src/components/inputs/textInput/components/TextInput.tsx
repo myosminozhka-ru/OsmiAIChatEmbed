@@ -35,7 +35,7 @@ type TextInputProps = {
 };
 
 // CDN link for default send sound
-const defaultSendSound = 'https://cdn.jsdelivr.net/gh/FlowiseAI/FlowiseChatEmbed@latest/src/assets/send_message.mp3';
+const defaultSendSound = 'https://cdn.jsdelivr.net/gh/SkChatwidget/SkChatwidgetEmbed@latest/src/assets/send_message.mp3';
 
 export const TextInput = (props: TextInputProps) => {
   const [isSendButtonDisabled, setIsSendButtonDisabled] = createSignal(false);
@@ -139,8 +139,8 @@ export const TextInput = (props: TextInputProps) => {
 
   return (
     <div
-      class={`sticky bottom-0 w-full min-h-[72px] flex flex-col chatbot-input border-t py-3 pr-[66px] z-10 text-gray-880 ${
-        props.isFullPage ? 'px-4 md:px-6 lg:px-8' : 'px-6'
+      class={`sticky bottom-0 w-full min-h-[72px] flex flex-col chatbot-input border-t py-4 pr-[66px] z-10 text-gray-880 ${
+        props.isFullPage ? 'px-4 md:px-6 lg:px-8' : 'px-4'
       }`}
       data-testid="input"
       style={{
@@ -228,7 +228,7 @@ export const TextInput = (props: TextInputProps) => {
         type="button"
         isDisabled={props.disabled || isSendButtonDisabled() || !props.inputValue || props.inputValue.trim() === ''}
         class={`absolute top-1/2 -translate-y-1/2 h-14 flex items-center justify-center ${
-          props.isFullPage ? 'right-4 md:right-6 lg:right-8' : 'right-6'
+          props.isFullPage ? 'right-4 md:right-6 lg:right-8' : 'right-4'
         }`}
         on:click={submit}
       >

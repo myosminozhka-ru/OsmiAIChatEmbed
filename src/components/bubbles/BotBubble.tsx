@@ -6,11 +6,13 @@ import { FileUpload, IAction, MessageType } from '../Bot';
 import { CopyToClipboardButton, ThumbsDownButton, ThumbsUpButton } from '../buttons/FeedbackButtons';
 import { TTSButton } from '../buttons/TTSButton';
 import FeedbackContentDialog from '../FeedbackContentDialog';
+import { SuccessAlert } from './SuccessAlert';
 import { AgentReasoningBubble } from './AgentReasoningBubble';
 import { TickIcon, XIcon } from '../icons';
 import { SourceBubble } from '../bubbles/SourceBubble';
 import { DateTimeToggleTheme } from '@/features/bubble/types';
 import { WorkflowTreeView } from '../treeview/WorkflowTreeView';
+import { TypingBubble } from '../TypingBubble';
 
 type Props = {
   message: MessageType;
@@ -21,6 +23,7 @@ type Props = {
   fileAnnotations?: any;
   showAvatar?: boolean;
   avatarSrc?: string;
+  botTitle?: string;
   backgroundColor?: string;
   textColor?: string;
   chatFeedbackStatus?: boolean;
@@ -33,15 +36,29 @@ type Props = {
   renderHTML?: boolean;
   handleActionClick: (elem: any, action: IAction | undefined | null) => void;
   handleSourceDocumentsClick: (src: any) => void;
+  isFullPage?: boolean;
+  isFullscreen?: boolean;
+  isPopup?: boolean;
+  enableCopyMessage?: boolean;
   // TTS props
   isTTSEnabled?: boolean;
   isTTSLoading?: Record<string, boolean>;
   isTTSPlaying?: Record<string, boolean>;
   handleTTSClick?: (messageId: string, messageText: string) => void;
   handleTTSStop?: (messageId: string) => void;
+  feedbackReasons?: string[];
+  userData?: {
+    fio?: string;
+    email?: string;
+    user_name?: string;
+    user_id?: string;
+    shortname?: string;
+    orn?: string;
+  };
 };
 
 const defaultFontSize = 16;
+const defaultFeedbackColor = 'rgba(11, 17, 19, 0.5)';
 
 export const BotBubble = (props: Props) => {
   let botDetailsEl: HTMLDetailsElement | undefined;
@@ -51,9 +68,11 @@ export const BotBubble = (props: Props) => {
   const [rating, setRating] = createSignal('');
   const [feedbackId, setFeedbackId] = createSignal('');
   const [showFeedbackContentDialog, setShowFeedbackContentModal] = createSignal(false);
+  const [showSuccessAlert, setShowSuccessAlert] = createSignal(false);
+  const [feedbackError, setFeedbackError] = createSignal('');
   const [copiedMessage, setCopiedMessage] = createSignal(false);
-  const [thumbsUpColor, setThumbsUpColor] = createSignal('var(--chatbot-button-bg-color)');
-  const [thumbsDownColor, setThumbsDownColor] = createSignal('var(--chatbot-button-bg-color)');
+  const [thumbsUpColor, setThumbsUpColor] = createSignal(props.feedbackColor ?? defaultFeedbackColor);
+  const [thumbsDownColor, setThumbsDownColor] = createSignal(props.feedbackColor ?? defaultFeedbackColor);
 
   // Store a reference to the bot message element for the copyMessageToClipboard function
   const [botMessageElement, setBotMessageElement] = createSignal<HTMLElement | null>(null);
@@ -185,12 +204,15 @@ export const BotBubble = (props: Props) => {
 
   const onThumbsUpClick = async () => {
     if (rating() === '') {
+      const messageId = props.message?.messageId || props.message?.id || '';
       const body = {
         chatflowid: props.chatflowid,
         chatId: props.chatId,
-        messageId: props.message?.messageId as string,
+        messageId: String(messageId),
         rating: 'THUMBS_UP' as FeedbackRatingType,
         content: '',
+        ...(props.userData?.fio && { fio: props.userData.fio }),
+        ...(props.userData?.email && { email: props.userData.email }),
       };
       const result = await sendFeedbackQuery({
         chatflowid: props.chatflowid,
@@ -205,8 +227,6 @@ export const BotBubble = (props: Props) => {
         if (data && data.id) id = data.id;
         setRating('THUMBS_UP');
         setFeedbackId(id);
-        setShowFeedbackContentModal(true);
-        // update the thumbs up color state
         setThumbsUpColor('#006400');
         saveToLocalStorage('THUMBS_UP');
       }
@@ -215,12 +235,15 @@ export const BotBubble = (props: Props) => {
 
   const onThumbsDownClick = async () => {
     if (rating() === '') {
+      const messageId = props.message?.messageId || props.message?.id || '';
       const body = {
         chatflowid: props.chatflowid,
         chatId: props.chatId,
-        messageId: props.message?.messageId as string,
+        messageId: String(messageId),
         rating: 'THUMBS_DOWN' as FeedbackRatingType,
         content: '',
+        ...(props.userData?.fio && { fio: props.userData.fio }),
+        ...(props.userData?.email && { email: props.userData.email }),
       };
       const result = await sendFeedbackQuery({
         chatflowid: props.chatflowid,
@@ -236,16 +259,23 @@ export const BotBubble = (props: Props) => {
         setRating('THUMBS_DOWN');
         setFeedbackId(id);
         setShowFeedbackContentModal(true);
-        // update the thumbs down color state
         setThumbsDownColor('#8B0000');
         saveToLocalStorage('THUMBS_DOWN');
+      } else if (result.error) {
+        setFeedbackError('Произошла ошибка, попробуйте еще раз');
+        setShowFeedbackContentModal(true);
       }
     }
   };
 
-  const submitFeedbackContent = async (text: string) => {
+  const submitFeedbackContent = async (text: string, _reason?: string) => {
+    setFeedbackError('');
+    if (!feedbackId()) return;
+
     const body = {
       content: text,
+      ...(props.userData?.fio && { fio: props.userData.fio }),
+      ...(props.userData?.email && { email: props.userData.email }),
     };
     const result = await updateFeedbackQuery({
       id: feedbackId(),
@@ -257,6 +287,9 @@ export const BotBubble = (props: Props) => {
     if (result.data) {
       setFeedbackId('');
       setShowFeedbackContentModal(false);
+      setShowSuccessAlert(true);
+    } else if (result.error) {
+      setFeedbackError('Произошла ошибка, попробуйте еще раз');
     }
   };
 
@@ -340,34 +373,22 @@ export const BotBubble = (props: Props) => {
     try {
       const date = new Date(dateTimeString);
 
-      // Check if the date is valid
       if (isNaN(date.getTime())) {
-        console.error('Invalid ISO date string:', dateTimeString);
         return '';
       }
 
+      // В баблах показываем только время, дата остается в разделителе (как в old)
+      const shouldShowTime = showTime !== false;
       let formatted = '';
 
-      if (showDate) {
-        const dateFormatter = new Intl.DateTimeFormat('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        });
-        const [{ value: month }, , { value: day }, , { value: year }] = dateFormatter.formatToParts(date);
-        formatted = `${month.charAt(0).toUpperCase() + month.slice(1)} ${day}, ${year}`;
-      }
-
-      if (showTime) {
-        const timeFormatter = new Intl.DateTimeFormat('en-US', {
-          hour: 'numeric',
+      if (shouldShowTime) {
+        const timeFormatter = new Intl.DateTimeFormat('ru-RU', {
+          hour: '2-digit',
           minute: '2-digit',
-          hour12: true,
+          hour12: false,
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         });
-        const timeString = timeFormatter.format(date).toLowerCase();
-        formatted = formatted ? `${formatted}, ${timeString}` : timeString;
+        formatted = timeFormatter.format(date);
       }
 
       return formatted;
@@ -377,13 +398,69 @@ export const BotBubble = (props: Props) => {
     }
   };
 
+  const getContainerClasses = () => {
+    const isFullMode = props.isFullPage || props.isFullscreen;
+    const isPopupMode = props.isPopup && !props.isFullscreen;
+    const baseClasses = 'flex flex-row justify-start mb-5 items-start host-container';
+
+    if (isPopupMode) {
+      return `${baseClasses} w-full pr-[40px]`;
+    }
+
+    if (isFullMode) {
+      return `${baseClasses} w-full pr-[40px] sm:w-[70%] sm:pr-0 lg:w-3/5 xl:w-1/2`;
+    }
+
+    return `${baseClasses} w-2/3`;
+  };
+
   return (
     <div>
-      <div class="flex flex-row justify-start mb-2 items-start host-container" style={{ 'margin-right': '50px' }}>
-        <Show when={props.showAvatar}>
-          <Avatar initialAvatarSrc={props.avatarSrc} />
-        </Show>
-        <div class="flex flex-col justify-start">
+      <div class={getContainerClasses()}>
+        <div
+          class={`flex flex-col justify-start px-4 py-3 rounded-lg rounded-bl-none chatbot-host-bubble min-h-[52px] shadow-sm bg-[var(--chatbot-host-bubble-bg-color)] text-[var(--chatbot-host-bubble-text-color)] ${
+            props.isLoading && !props.message.message ? 'w-[72px]' : 'w-full'
+          }`}
+          style={{
+            'font-size': props.fontSize ? `${props.fontSize}px` : 'var(--chatbot-font-size)',
+          }}
+        >
+          <Show when={props.message.message}>
+            <div class="flex flex-row items-center justify-between w-full mb-2">
+              <div class="flex flex-row items-center gap-2">
+                <Show when={props.showAvatar !== false}>
+                  <Avatar initialAvatarSrc={props.avatarSrc} />
+                </Show>
+                <span class="font-semibold text-gray-880">{props.botTitle ?? 'Умный помощник'}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <Show when={props.enableCopyMessage}>
+                  <CopyToClipboardButton feedbackColor={props.feedbackColor ?? defaultFeedbackColor} onClick={() => copyMessageToClipboard()} />
+                  <Show when={copiedMessage()}>
+                    <div class="copied-message text-xs text-gray-500">Скопировано</div>
+                  </Show>
+                </Show>
+                <Show when={props.chatFeedbackStatus !== false && !props.message.disableFeedback}>
+                  {rating() === '' || rating() === 'THUMBS_UP' ? (
+                    <ThumbsUpButton
+                      feedbackColor={thumbsUpColor()}
+                      isDisabled={rating() === 'THUMBS_UP'}
+                      rating={rating()}
+                      onClick={onThumbsUpClick}
+                    />
+                  ) : null}
+                  {rating() === '' || rating() === 'THUMBS_DOWN' ? (
+                    <ThumbsDownButton
+                      feedbackColor={thumbsDownColor()}
+                      isDisabled={rating() === 'THUMBS_DOWN'}
+                      rating={rating()}
+                      onClick={onThumbsDownClick}
+                    />
+                  ) : null}
+                </Show>
+              </div>
+            </div>
+          </Show>
           {props.showAgentMessages &&
             props.message.agentFlowExecutedData &&
             Array.isArray(props.message.agentFlowExecutedData) &&
@@ -428,16 +505,13 @@ export const BotBubble = (props: Props) => {
               </For>
             </div>
           )}
-          {props.message.message && (
-            <span
-              ref={setBotMessageRef}
-              class="flex flex-col justify-start px-4 py-3 ml-2 max-w-full chatbot-host-bubble prose min-h-[52px] rounded-lg rounded-bl-none bg-[var(--chatbot-host-bubble-bg-color)] text-[var(--chatbot-host-bubble-color)]"
-              data-testid="host-bubble"
-              style={{
-                'font-size': props.fontSize ? `${props.fontSize}px` : 'var(--chatbot-font-size)',
-              }}
-            />
-          )}
+          {props.message.message ? (
+            <span ref={setBotMessageRef} class="mt-3 max-w-full prose overflow-hidden" data-testid="host-bubble" />
+          ) : props.isLoading ? (
+            <div class="mt-3">
+              <TypingBubble />
+            </div>
+          ) : null}
           {props.message.action && (
             <div class="px-4 py-2 flex flex-row justify-start space-x-2">
               <For each={props.message.action.elements || []}>
@@ -473,6 +547,11 @@ export const BotBubble = (props: Props) => {
               </For>
             </div>
           )}
+          {props.message.dateTime && !(props.isLoading && !props.message.message) && (
+            <div class="text-xs text-gray-500 opacity-70 mt-2 w-full text-right">
+              {formatDateTime(props.message.dateTime, props?.dateTimeToggle?.date, props?.dateTimeToggle?.time)}
+            </div>
+          )}
         </div>
       </div>
       <div>
@@ -505,10 +584,10 @@ export const BotBubble = (props: Props) => {
         )}
       </div>
       <div>
-        <div class={`flex items-center px-2 pb-2 ${props.showAvatar ? 'ml-10' : ''}`}>
+        <div class={`flex items-center gap-2 px-2 pb-2 ${props.showAvatar !== false ? 'ml-10' : ''}`}>
           <Show when={props.isTTSEnabled && (props.message.id || props.message.messageId)}>
             <TTSButton
-              feedbackColor={props.feedbackColor}
+              feedbackColor={props.feedbackColor ?? defaultFeedbackColor}
               isLoading={(() => {
                 const messageId = props.message.id || props.message.messageId;
                 return !!(messageId && props.isTTSLoading?.[messageId]);
@@ -519,12 +598,9 @@ export const BotBubble = (props: Props) => {
               })()}
               onClick={() => {
                 const messageId = props.message.id || props.message.messageId;
-                if (!messageId) return; // Don't allow TTS for messages without valid IDs
-
+                if (!messageId) return;
                 const messageText = props.message.message || '';
-                if (props.isTTSLoading?.[messageId]) {
-                  return; // Prevent multiple clicks while loading
-                }
+                if (props.isTTSLoading?.[messageId]) return;
                 if (props.isTTSPlaying?.[messageId]) {
                   props.handleTTSStop?.(messageId);
                 } else {
@@ -533,40 +609,21 @@ export const BotBubble = (props: Props) => {
               }}
             />
           </Show>
-          {props.chatFeedbackStatus && props.message.messageId && (
-            <>
-              <CopyToClipboardButton feedbackColor={props.feedbackColor} onClick={() => copyMessageToClipboard()} />
-              <Show when={copiedMessage()}>
-                <div class="copied-message" style={{ color: 'var(--chatbot-button-bg-color)' }}>
-                  Copied!
-                </div>
-              </Show>
-              {rating() === '' || rating() === 'THUMBS_UP' ? (
-                <ThumbsUpButton feedbackColor={thumbsUpColor()} isDisabled={rating() === 'THUMBS_UP'} rating={rating()} onClick={onThumbsUpClick} />
-              ) : null}
-              {rating() === '' || rating() === 'THUMBS_DOWN' ? (
-                <ThumbsDownButton
-                  feedbackColor={thumbsDownColor()}
-                  isDisabled={rating() === 'THUMBS_DOWN'}
-                  rating={rating()}
-                  onClick={onThumbsDownClick}
-                />
-              ) : null}
-              <Show when={props.message.dateTime}>
-                <div class="text-xs text-gray-500 opacity-70 mt-2 w-full text-right">
-                  {formatDateTime(props.message.dateTime, props?.dateTimeToggle?.date, props?.dateTimeToggle?.time)}
-                </div>
-              </Show>
-            </>
-          )}
         </div>
-        <Show when={showFeedbackContentDialog()}>
-          <FeedbackContentDialog
-            isOpen={showFeedbackContentDialog()}
-            onClose={() => setShowFeedbackContentModal(false)}
-            onSubmit={submitFeedbackContent}
-          />
-        </Show>
+        <FeedbackContentDialog
+          isOpen={showFeedbackContentDialog()}
+          onClose={() => {
+            setShowFeedbackContentModal(false);
+            setFeedbackError('');
+          }}
+          onSubmit={submitFeedbackContent}
+          reasons={props.feedbackReasons}
+          errorMessage={feedbackError()}
+          onErrorClear={() => setFeedbackError('')}
+          isFullPage={props.isFullPage}
+          userData={props.userData}
+        />
+        <SuccessAlert isOpen={showSuccessAlert()} onClose={() => setShowSuccessAlert(false)} message="Ваше сообщение отправлено." />
       </div>
     </div>
   );

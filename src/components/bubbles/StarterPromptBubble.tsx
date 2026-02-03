@@ -1,28 +1,26 @@
 type Props = {
   prompt: string;
   onPromptClick?: () => void;
+  disabled?: boolean;
   starterPromptFontSize?: number;
 };
 export const StarterPromptBubble = (props: Props) => (
-  <>
-    <div
-      data-modal-target="defaultModal"
-      data-modal-toggle="defaultModal"
-      class="flex justify-start items-start animate-fade-in host-container hover:brightness-90 active:brightness-75"
-      onClick={() => props.onPromptClick?.()}
-    >
-      <span
-        class="px-2 py-1 ml-1 whitespace-pre-wrap max-w-full chatbot-host-bubble"
-        data-testid="host-bubble"
-        style={{
-          width: 'max-content',
-          'font-size': props.starterPromptFontSize ? `${props.starterPromptFontSize}px` : '15px', // Convert to string with unit
-          'border-radius': '15px',
-          cursor: 'pointer',
-        }}
-      >
-        {props.prompt}
-      </span>
-    </div>
-  </>
+  <button
+    type="button"
+    data-modal-target="defaultModal"
+    data-modal-toggle="defaultModal"
+    class={`px-3 py-2.5 ml-1 whitespace-pre-wrap max-w-full font-medium rounded-lg rounded-tr-none text-gray-880 animate-fade-in host-container cursor-pointer hover:brightness-90 active:brightness-75 ${
+      props.disabled ? 'opacity-60 cursor-default' : ''
+    }`}
+    data-testid="host-bubble"
+    disabled={props.disabled}
+    onClick={() => !props.disabled && props.onPromptClick?.()}
+    style={{
+      width: 'max-content',
+      'font-size': props.starterPromptFontSize ? `${props.starterPromptFontSize}px` : '15px',
+      background: 'var(--gradient, linear-gradient(135deg, #B4FF0A 0%, #A4EB04 100%))',
+    }}
+  >
+    {props.prompt}
+  </button>
 );

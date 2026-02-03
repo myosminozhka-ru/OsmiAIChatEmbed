@@ -12,7 +12,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flowise Chatbot Widget</title>
+    <title>Sk Chatwidget Widget</title>
 </head>
 
 <body>
@@ -20,17 +20,37 @@
     <script type="module">
         import Chatbot from './web.js'
 
-        // Example initialization:
-        // If your .env contains:
-        // agent1=xyz789-uvw456,https://example.com
-        // support=abc123-def456,https://example.com
-        // salesbot=ghi123-jkl456,https://example.com
-        //
-        // Then use the environment variable name as chatflowid:
+        const chatflowid = '560cea41-6c22-45cc-9ea1-485e4450c565';
+        const apiHost = 'https://sk.osmi-ai.ru';
+        const authApiUrl = 'https://sk.ru/auth/user_info/';
+
         Chatbot.init({
-            chatflowid: 'agent1',    // or 'support', 'salesbot', etc.
-            apiHost: window.location.origin
-        })
+            chatflowid,
+            apiHost,
+            authApiUrl,
+            chatflowConfig: {
+                chatFeedback: {
+                    status: true
+                }
+            },
+            theme: {
+                chatWindow: {
+                    showTitle: true,
+                    title: 'Умный помощник',
+                    welcomeTitle: 'Привет! Я ваш виртуальный ассистент от Фонда «Сколково».',
+                    welcomeText: 'Задавайте мне вопросы об экосистеме так, словно обращаетесь к сотруднику Сколково.',
+                    assistantGreeting: 'Я ваш AI-ассистент Сколково. Чем могу помочь?',
+                    botMessage: {
+                        showAvatar: true,
+                        useDefaultBotIcon: true,
+                    },
+                    dateTimeToggle: {
+                        date: false,
+                        time: true
+                    },
+                },
+            }
+        });
     </script>
 </body>
 

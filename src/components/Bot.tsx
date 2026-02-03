@@ -16,6 +16,7 @@ import { GuestBubble } from './bubbles/GuestBubble';
 import { BotBubble } from './bubbles/BotBubble';
 import { LoadingBubble } from './bubbles/LoadingBubble';
 import { StarterPromptBubble } from './bubbles/StarterPromptBubble';
+import { WelcomeMessage } from './bubbles/WelcomeMessage';
 import {
   BotMessageTheme,
   FooterTheme,
@@ -35,7 +36,8 @@ import { CircleDotIcon, ResizeIcon, SparklesIcon, TrashIcon, XIcon } from './ico
 import { CancelButton } from './buttons/CancelButton';
 import { cancelAudioRecording, startAudioRecording, stopAudioRecording } from '@/utils/audioRecording';
 import { LeadCaptureBubble } from '@/components/bubbles/LeadCaptureBubble';
-import { removeLocalStorageChatHistory, getLocalStorageChatflow, setLocalStorageChatflow, setCookie, getCookie } from '@/utils';
+import { DateDivider } from './DateDivider';
+import { removeLocalStorageChatHistory, getLocalStorageChatflow, setLocalStorageChatflow, setCookie, getCookie, getUserDataWithAuth } from '@/utils';
 import { cloneDeep } from 'lodash';
 import { FollowUpPromptBubble } from '@/components/bubbles/FollowUpPromptBubble';
 import { fetchEventSource, EventStreamContentType } from '@microsoft/fetch-event-source';
@@ -142,10 +144,14 @@ export type observersConfigType = Record<'observeUserInput' | 'observeLoading' |
 export type BotProps = {
   chatflowid: string;
   apiHost?: string;
+  authApiUrl?: string;
   onRequest?: (request: RequestInit) => Promise<void>;
   chatflowConfig?: Record<string, unknown>;
   backgroundColor?: string;
   welcomeMessage?: string;
+  welcomeTitle?: string;
+  welcomeText?: string;
+  showWelcomeImage?: boolean;
   errorMessage?: string;
   botMessage?: BotMessageTheme;
   userMessage?: UserMessageTheme;
@@ -188,7 +194,9 @@ export type LeadsConfig = {
   successMessage?: string;
 };
 
-const defaultWelcomeMessage = 'Hi there! How can I help?';
+const defaultWelcomeTitle = 'Привет! Я ваш виртуальный ассистент от Фонда «Сколково».';
+const defaultWelcomeText = 'Задавайте мне вопросы об экосистеме так, словно обращаетесь к сотруднику Сколково.';
+const defaultWelcomeMessage = 'Я ваш AI-ассистент. Чем могу помочь?';
 
 /*const sourceDocuments = [
     {
@@ -480,7 +488,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   const [chatId, setChatId] = createSignal('');
   const [isMessageStopping, setIsMessageStopping] = createSignal(false);
   const [starterPrompts, setStarterPrompts] = createSignal<string[]>([], { equals: false });
-  const [chatFeedbackStatus, setChatFeedbackStatus] = createSignal<boolean>(false);
+  const [chatFeedbackStatus, setChatFeedbackStatus] = createSignal<boolean>(true);
   const [fullFileUpload, setFullFileUpload] = createSignal<boolean>(false);
   const [uploadsConfig, setUploadsConfig] = createSignal<UploadsConfig>();
   const [leadsConfig, setLeadsConfig] = createSignal<LeadsConfig>();
@@ -492,6 +500,15 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   const [feedback, setFeedback] = createSignal('');
   const [pendingActionData, setPendingActionData] = createSignal(null);
   const [feedbackType, setFeedbackType] = createSignal('');
+  const [userData, setUserData] = createSignal<{
+    fio?: string;
+    user_id?: string;
+    user_name?: string;
+    email?: string;
+    token?: string;
+    shortname?: string;
+    orn?: string;
+  }>({});
 
   // start input type
   const [startInputType, setStartInputType] = createSignal('');
@@ -543,7 +560,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     setChatId(customerId ? `${customerId.toString()}+${uuidv4()}` : uuidv4());
   });
 
-  onMount(() => {
+  onMount(async () => {
+    if (props.authApiUrl && typeof (window as any).__AUTH_API_URL__ !== 'undefined') {
+      const data = await getUserDataWithAuth(props.onRequest);
+      setUserData(data);
+    }
+
     if (botProps?.observersConfig) {
       const { observeUserInput, observeLoading, observeMessages } = botProps.observersConfig;
       typeof observeUserInput === 'function' &&
@@ -612,7 +634,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   // Define the audioRef
   let audioRef: HTMLAudioElement | undefined;
   // CDN link for default receive sound
-  const defaultReceiveSound = 'https://cdn.jsdelivr.net/gh/FlowiseAI/FlowiseChatEmbed@latest/src/assets/receive_message.mp3';
+  const defaultReceiveSound = 'https://cdn.jsdelivr.net/gh/SkChatwidget/SkChatwidgetEmbed@latest/src/assets/receive_message.mp3';
   const playReceiveSound = () => {
     if (props.textInput?.receiveMessageSound) {
       let audioSrc = defaultReceiveSound;
@@ -1067,7 +1089,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     clearPreviews();
 
     setMessages((prevMessages) => {
-      const messages: MessageType[] = [...prevMessages, { message: value as string, type: 'userMessage', fileUploads: uploads }];
+      const messages: MessageType[] = [...prevMessages, { message: value as string, type: 'userMessage', fileUploads: uploads, dateTime: new Date().toISOString() }];
       addChatMessage(messages);
       return messages;
     });
@@ -1084,7 +1106,19 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
     if (uploads && uploads.length > 0) body.uploads = uploads;
 
-    if (props.chatflowConfig) body.overrideConfig = props.chatflowConfig;
+    const currentUserData = userData();
+    const userDataForRequest: Record<string, unknown> = {};
+    if (currentUserData.user_id) userDataForRequest.user_id = currentUserData.user_id;
+    if (currentUserData.fio) userDataForRequest.fio = currentUserData.fio;
+    if (currentUserData.email) userDataForRequest.email = currentUserData.email;
+    if ((currentUserData as any).login) userDataForRequest.login = (currentUserData as any).login;
+    if (currentUserData.shortname) userDataForRequest.shortname = currentUserData.shortname;
+    if (currentUserData.orn) userDataForRequest.orn = currentUserData.orn;
+    if (Object.keys(userDataForRequest).length > 0) {
+      body.overrideConfig = { ...(props.chatflowConfig || {}), userData: userDataForRequest };
+    } else if (props.chatflowConfig) {
+      body.overrideConfig = props.chatflowConfig;
+    }
 
     if (leadEmail()) body.leadEmail = leadEmail();
 
@@ -1241,6 +1275,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         {
           message: props.welcomeMessage ?? defaultWelcomeMessage,
           type: 'apiMessage',
+          dateTime: new Date().toISOString(),
         },
       ];
       if (leadsConfig()?.status && !getLocalStorageChatflow(props.chatflowid)?.lead) {
@@ -2390,9 +2425,9 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
           {props.showTitle ? (
             <div
-              class={`flex flex-row items-center w-full absolute top-0 left-0 z-10 chatbot-header border-b ${
-                props.isFullPage ? 'h-[50px]' : props.isFullscreen ? 'py-3 px-4 md:px-6 lg:px-8' : 'py-3 px-4'
-              }`}
+              class={`sticky top-0 z-10 flex flex-row items-center justify-between w-full chatbot-header border-b py-3 ${
+                props.isFullPage || props.isFullscreen ? 'px-4 md:px-6 lg:px-8' : 'px-4'
+              } ${props.isFullPage ? 'h-[50px] border-t' : ''}`}
               style={{
                 background: defaultTitleBackgroundColor,
                 color: defaultTextColor,
@@ -2415,19 +2450,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                   )}
                 </div>
               )}
-              <Show when={props.titleAvatarSrc}>
-                <>
-                  <div style={{ width: '15px' }} />
-                  <Avatar initialAvatarSrc={props.titleAvatarSrc} />
-                </>
-              </Show>
-              <Show when={props.title}>
-                <span class="px-3 whitespace-pre-wrap font-semibold max-w-full">{props.title}</span>
-              </Show>
               <div style={{ flex: 1 }} />
               <DeleteButton
                 type="button"
-                isDisabled={messages().length === 1}
+                isDisabled={messages().length < 1}
                 class="ml-auto text-gray-880"
                 on:click={clearChat}
                 text="Очистить диалог"
@@ -2437,12 +2463,53 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           <div class={`flex flex-col w-full h-full justify-start z-0 ${!props.isFullPage && !props.isFullscreen ? 'bg-white' : 'bg-[var(--chatbot-container-bg-color)]'}`}>
             <div
               ref={chatContainer}
-              class="overflow-y-scroll flex flex-col flex-grow min-w-full w-full px-3 pt-[48px] pb-4 relative scrollable-container chatbot-chat-view scroll-smooth"
+              class="overflow-y-scroll flex flex-col flex-grow min-w-full w-full px-3 pt-4 pb-20 relative scrollable-container chatbot-chat-view scroll-smooth"
             >
+              <Show when={messages().length >= 1}>
+                <WelcomeMessage
+                  welcomeTitle={props.welcomeTitle ?? defaultWelcomeTitle}
+                  welcomeText={props.welcomeText ?? defaultWelcomeText}
+                  fontSize={props.fontSize}
+                  showWelcomeImage={typeof props.showWelcomeImage === 'boolean' ? props.showWelcomeImage : true}
+                  starterPrompts={starterPrompts()}
+                  isLoading={loading()}
+                  onPromptClick={promptClick}
+                  starterPromptFontSize={botProps.starterPromptFontSize}
+                />
+                <div class="mt-4" />
+              </Show>
               <For each={[...messages()]}>
                 {(message, index) => {
+                  const getDateOnly = (dateTime?: string): string | null => {
+                    if (!dateTime) return null;
+                    try {
+                      const date = new Date(dateTime);
+                      if (isNaN(date.getTime())) return null;
+                      const y = date.getFullYear();
+                      const m = date.getMonth() + 1;
+                      const d = date.getDate();
+                      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    } catch {
+                      return null;
+                    }
+                  };
+                  const shouldShowDateDivider = () => {
+                    // Перед самым первым сообщением всегда показываем плашку даты
+                    if (index() === 0) return true;
+                    const currentDate = getDateOnly(message.dateTime);
+                    if (!currentDate) return false;
+                    const prevMessage = messages()[index() - 1];
+                    const prevDate = getDateOnly(prevMessage?.dateTime);
+                    // Не показывать разделитель, если у предыдущего сообщения нет даты — считаем тот же день, иначе «Сегодня» дублируется
+                    if (prevDate == null) return false;
+                    return prevDate !== currentDate;
+                  };
+
+                  const dateForDivider = () => message.dateTime ?? new Date().toISOString();
+
                   return (
                     <>
+                      {shouldShowDateDivider() && <DateDivider date={dateForDivider()} />}
                       {message.type === 'userMessage' && (
                         <GuestBubble
                           message={message}
@@ -2453,6 +2520,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                           avatarSrc={props.userMessage?.avatarSrc}
                           fontSize={props.fontSize}
                           renderHTML={props.renderHTML}
+                          userName={userData().user_name}
                         />
                       )}
                       {message.type === 'apiMessage' && (
@@ -2463,8 +2531,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                           chatId={chatId()}
                           apiHost={props.apiHost}
                           showAvatar={props.botMessage?.showAvatar}
-                          avatarSrc={props.botMessage?.avatarSrc}
-                          chatFeedbackStatus={chatFeedbackStatus()}
+                          avatarSrc={props.botMessage?.useDefaultBotIcon ? undefined : (props.botMessage?.avatarSrc ?? props.titleAvatarSrc)}
+                          botTitle={props.title ?? 'Умный помощник'}
+                          chatFeedbackStatus={index() > 0 ? chatFeedbackStatus() : false}
+                          enableCopyMessage={false}
                           fontSize={props.fontSize}
                           isLoading={loading() && index() === messages().length - 1}
                           showAgentMessages={props.showAgentMessages}
@@ -2476,11 +2546,23 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                           }}
                           dateTimeToggle={props.dateTimeToggle}
                           renderHTML={props.renderHTML}
+                          isFullPage={props.isFullPage}
+                          isFullscreen={props.isFullscreen}
+                          isPopup={!props.isFullPage}
                           isTTSEnabled={isTTSEnabled()}
                           isTTSLoading={isTTSLoading()}
                           isTTSPlaying={isTTSPlaying()}
                           handleTTSClick={handleTTSClick}
                           handleTTSStop={handleTTSStop}
+                          feedbackReasons={props.feedback?.reasons}
+                          userData={{
+                            fio: userData().fio,
+                            email: userData().email,
+                            user_name: userData().user_name,
+                            user_id: userData().user_id,
+                            shortname: userData().shortname,
+                            orn: userData().orn,
+                          }}
                         />
                       )}
                       {message.type === 'leadCaptureMessage' && leadsConfig()?.status && !getLocalStorageChatflow(props.chatflowid)?.lead && (
@@ -2505,21 +2587,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 }}
               </For>
             </div>
-            <Show when={messages().length === 1}>
-              <Show when={starterPrompts().length > 0}>
-                <div class="w-full flex flex-row flex-wrap px-5 py-[10px] gap-2">
-                  <For each={[...starterPrompts()]}>
-                    {(key) => (
-                      <StarterPromptBubble
-                        prompt={key}
-                        onPromptClick={() => promptClick(key)}
-                        starterPromptFontSize={botProps.starterPromptFontSize} // Pass it here as a number
-                      />
-                    )}
-                  </For>
-                </div>
-              </Show>
-            </Show>
             <Show when={messages().length > 2 && followUpPromptsStatus()}>
               <Show when={followUpPrompts().length > 0}>
                 <>

@@ -70,7 +70,7 @@ const configs = [
     output: {
       file: 'dist/web.umd.js',
       format: 'umd',
-      name: 'FlowiseEmbed',
+      name: 'SkChatwidgetEmbed',
     },
   },
 ];

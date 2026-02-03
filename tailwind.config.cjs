@@ -31,6 +31,9 @@ module.exports = {
     theme: {
         ...rem2px(defaultTheme),
         extend: {
+            boxShadow: {
+                xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
+            },
             colors: {
                 gray: {
                     880: '#15181E'

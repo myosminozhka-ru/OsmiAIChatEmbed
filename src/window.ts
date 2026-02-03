@@ -5,6 +5,8 @@ import { BubbleTheme } from './features/bubble/types';
 type BotProps = {
   chatflowid: string;
   apiHost?: string;
+  authApiUrl?: string;
+  apiKey?: string;
   onRequest?: (request: RequestInit) => Promise<void>;
   chatflowConfig?: Record<string, unknown>;
   observersConfig?: observersConfigType;
@@ -13,23 +15,45 @@ type BotProps = {
 
 let elementUsed: Element | undefined;
 
+const createOnRequestWithApiKey = (apiKey?: string, customOnRequest?: (request: RequestInit) => Promise<void>) => {
+  if (!apiKey && !customOnRequest) return undefined;
+  return async (request: RequestInit) => {
+    if (apiKey) {
+      if (!request.headers) request.headers = {};
+      (request.headers as Record<string, string>)['Authorization'] = `Bearer ${apiKey}`;
+    }
+    if (customOnRequest) await customOnRequest(request);
+  };
+};
+
 export const initFull = (props: BotProps & { id?: string }) => {
   destroy();
-  let fullElement = props.id ? document.getElementById(props.id) : document.querySelector('flowise-fullchatbot');
+  const { apiKey, authApiUrl, onRequest, ...restProps } = props;
+  const finalOnRequest = createOnRequestWithApiKey(apiKey, onRequest);
+  if (authApiUrl && typeof window !== 'undefined') {
+    (window as any).__AUTH_API_URL__ = authApiUrl;
+  }
+  const finalProps = { ...restProps, authApiUrl, onRequest: finalOnRequest };
+  let fullElement = props.id ? document.getElementById(props.id) : document.querySelector('osmi-ai-fullchatbot');
   if (!fullElement) {
-    fullElement = document.createElement('flowise-fullchatbot');
-    Object.assign(fullElement, props);
+    fullElement = document.createElement('osmi-ai-fullchatbot');
+    Object.assign(fullElement, finalProps);
     document.body.appendChild(fullElement);
   } else {
-    Object.assign(fullElement, props);
+    Object.assign(fullElement, finalProps);
   }
   elementUsed = fullElement;
 };
 
 export const init = (props: BotProps) => {
   destroy();
-  const element = document.createElement('flowise-chatbot');
-  Object.assign(element, props);
+  const { apiKey, authApiUrl, onRequest, ...restProps } = props;
+  const finalOnRequest = createOnRequestWithApiKey(apiKey, onRequest);
+  if (authApiUrl && typeof window !== 'undefined') {
+    (window as any).__AUTH_API_URL__ = authApiUrl;
+  }
+  const element = document.createElement('osmi-ai-chatbot');
+  Object.assign(element, { ...restProps, authApiUrl, onRequest: finalOnRequest });
   document.body.appendChild(element);
   elementUsed = element;
 };

@@ -9,7 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flowise Chat — Full Page</title>
+    <title>Sk Chatwidget Chat — Full Page</title>
 </head>
 
 <body>
@@ -17,11 +17,36 @@
     <script type="module">
         import Chatbot from './web.js'
 
-        // Инициализация развёрнутого (полноэкранного) чата через initFull
+        const chatflowid = '560cea41-6c22-45cc-9ea1-485e4450c565';
+        const apiHost = 'https://sk.osmi-ai.ru';
+        const authApiUrl = 'https://sk.ru/auth/user_info/';
+
         Chatbot.initFull({
-            chatflowid: 'agent1',
-            apiHost: window.location.origin
-        })
+            chatflowid,
+            apiHost,
+            authApiUrl,
+            chatflowConfig: {
+                chatFeedback: {
+                    status: true
+                }
+            },
+            theme: {
+                chatWindow: {
+                    showTitle: true,
+                    title: 'Умный помощник',
+                    welcomeTitle: 'Привет! Я ваш виртуальный ассистент от Фонда «Сколково».',
+                    welcomeText: 'Задавайте мне вопросы об экосистеме так, словно обращаетесь к сотруднику Сколково.',
+                    assistantGreeting: 'Я ваш AI-ассистент Сколково. Чем могу помочь?',
+                    botMessage: {
+                        showAvatar: true,
+                    },
+                    dateTimeToggle: {
+                        date: false,
+                        time: true
+                    },
+                },
+            }
+        });
     </script>
 </body>
 

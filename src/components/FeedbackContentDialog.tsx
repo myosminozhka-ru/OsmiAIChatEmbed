@@ -1,98 +1,173 @@
-import { createSignal } from 'solid-js';
+import { createSignal, createMemo, For, Show } from 'solid-js';
+import { IconButton } from './buttons/IconButton';
+import { Button } from './buttons/Button';
+import { XIcon } from './icons';
 
 type FeedbackContentDialogProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (text: string) => void;
+  onSubmit: (text: string, reason?: string) => void;
+  reasons?: string[];
+  errorMessage?: string;
+  onErrorClear?: () => void;
+  isFullPage?: boolean;
+  userData?: {
+    fio?: string;
+    email?: string;
+    user_name?: string;
+    user_id?: string;
+    shortname?: string;
+    orn?: string;
+  };
 };
+
+const defaultBackgroundColor = 'var(--chatbot-input-bg-color, #ffffff)';
+
+const OTHER_REASON = 'Другое';
+
+const DEFAULT_REASONS: string[] = [
+  'Ответа на мой вопрос нет',
+  'Ответ неполный',
+  'Текст ответа непонятен',
+  'Не согласен с ответом',
+  'Ссылки не работают',
+];
+
+const MAX_TEXT_LENGTH = 500;
 
 const FeedbackContentDialog = (props: FeedbackContentDialogProps) => {
   const [inputValue, setInputValue] = createSignal('');
-  let inputRef: HTMLInputElement | HTMLTextAreaElement | undefined;
+  const [selectedReason, setSelectedReason] = createSignal<string>('');
+  let inputRef: HTMLTextAreaElement | undefined;
 
-  const handleInput = (value: string) => setInputValue(value);
+  const reasons = () => {
+    const customReasons = props.reasons || DEFAULT_REASONS;
+    return [...customReasons, OTHER_REASON];
+  };
 
-  const checkIfInputIsValid = () => inputValue() !== '' && inputRef?.reportValidity();
+  const handleInput = (value: string) => {
+    if (value.length <= MAX_TEXT_LENGTH) {
+      setInputValue(value);
+      if (props.errorMessage && props.onErrorClear) {
+        props.onErrorClear();
+      }
+    }
+  };
+
+  const handleReasonChange = (reason: string) => {
+    setSelectedReason(reason);
+    if (props.errorMessage && props.onErrorClear) {
+      props.onErrorClear();
+    }
+  };
+
+  const countWords = (text: string): number => {
+    return text
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0).length;
+  };
+
+  const isSubmitDisabled = createMemo(() => {
+    const reason = selectedReason();
+    if (!reason) return true;
+    if (reason === OTHER_REASON) {
+      const trimmedValue = inputValue().trim();
+      if (!trimmedValue) return true;
+      const wordCount = countWords(trimmedValue);
+      if (wordCount < 2) return true;
+    }
+    return false;
+  });
 
   const submit = () => {
-    if (checkIfInputIsValid()) props.onSubmit(inputValue());
-    setInputValue('');
+    if (!isSubmitDisabled()) {
+      const reason = selectedReason();
+      const comment = inputValue().trim();
+
+      let finalText = reason;
+      if (comment) {
+        finalText = `${reason}: ${comment}`;
+      }
+
+      props.onSubmit(finalText, reason);
+    }
   };
 
   const onClose = () => {
+    setInputValue('');
+    setSelectedReason('');
     props.onClose();
   };
 
   return (
-    <>
+    <Show when={props.isOpen}>
       <div class="flex overflow-x-hidden overflow-y-auto fixed inset-0 z-[1002] outline-none focus:outline-none justify-center items-center">
-        <div class="relative w-full my-6 max-w-3xl mx-4">
+        <div class="relative my-6 w-[380px] mx-4">
           <div
-            class="border-0 rounded-lg shadow-lg relative flex flex-col w-full outline-none focus:outline-none chatbot-container"
+            class="border-0 rounded-2xl shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none text-gray-880"
             style={{
-              'background-color': 'var(--chatbot-input-bg-color)',
-              color: 'var(--chatbot-input-color)',
+              'background-color': defaultBackgroundColor,
             }}
           >
-            <div
-              class="flex items-center justify-between p-5 border-b border-solid border-gray-200 rounded-t"
-              style={{
-                border: '1px solid #eeeeee',
-              }}
-            >
-              <span class="whitespace-pre-wrap font-semibold max-w-full">Provide additional feedback</span>
-              <button
-                class="p-1 ml-auto bg-transparent border-0 text-black float-right text-xl leading-none font-semibold outline-none focus:outline-none"
-                type="button"
-                onClick={onClose}
-              >
-                <span class="bg-transparent block outline-none focus:outline-none">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="text-black h-6 w-6"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M18 6 6 18" />
-                    <path d="m6 6 12 12" />
-                  </svg>
-                </span>
-              </button>
+            <div class="flex items-center justify-between py-3 pl-5 pr-3 border-b border-solid border-gray-200 rounded-t-2xl">
+              <span class="whitespace-pre-wrap font-semibold text-base text-gray-800">Что именно не понравилось?</span>
+              <IconButton icon={<XIcon />} onClick={onClose} ariaLabel="Закрыть" class="ml-auto" />
             </div>
-            <div class="relative p-6 flex-auto">
-              <textarea
-                onInput={(e) => handleInput(e.currentTarget.value)}
-                ref={inputRef as HTMLTextAreaElement}
-                rows="4"
-                class="block p-2.5 rounded-lg border focus:ring-2 focus:ring-[var(--chatbot-button-bg-color)] focus:border-[var(--chatbot-button-bg-color)] bg-transparent flex-1 w-full feedback-input disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 font-normal"
-                style={{
-                  border: '1px solid #eeeeee',
-                  color: 'var(--chatbot-input-color)',
-                }}
-                placeholder="What do you think of the response?"
-                value={inputValue()}
-              />
+
+            <div class={`relative flex-auto ${props.isFullPage === false ? 'p-5' : 'p-6'}`}>
+              <div class="space-y-3 mb-6">
+                <For each={reasons()}>
+                  {(reason) => (
+                    <label class="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="feedback-reason"
+                        value={reason}
+                        checked={selectedReason() === reason}
+                        onChange={(e) => handleReasonChange(e.currentTarget.value)}
+                      />
+                      <span class="ml-3 text-sm text-gray-700">{reason}</span>
+                    </label>
+                  )}
+                </For>
+              </div>
+
+              <div class="relative">
+                <textarea
+                  onInput={(e) => handleInput(e.currentTarget.value)}
+                  ref={inputRef}
+                  rows={props.isFullPage === false ? 3 : 4}
+                  class="block p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 flex-1 w-full text-sm font-normal resize-none bg-blue-100 text-gray-800"
+                  placeholder="Напишите свой комментарий"
+                  value={inputValue()}
+                />
+                <div class="absolute bottom-2 right-2 text-xs text-gray-400">
+                  {inputValue().length}/{MAX_TEXT_LENGTH}
+                </div>
+              </div>
             </div>
-            <div class="flex items-center justify-end p-4 border-t border-solid border-gray-200 rounded-b">
-              <button
-                class="bg-emerald-500 text-white active:bg-emerald-600 font-bold text-sm px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                type="button"
-                onClick={submit}
-              >
-                Submit Feedback
-              </button>
+
+            <div class={`flex flex-col border-t border-solid border-gray-200 rounded-b-2xl space-y-3 ${props.isFullPage === false ? 'p-5' : 'p-6'}`}>
+              <Show when={props.errorMessage}>
+                <p class="text-red-500 text-sm text-center">{props.errorMessage}</p>
+              </Show>
+              <div class="flex flex-wrap items-center justify-end gap-3">
+                <Button text="Отмена" type="button" onClick={onClose} class={'flex-1 bg-white'} />
+                <Button
+                  text="Отправить"
+                  type="submit"
+                  onClick={submit}
+                  disabled={isSubmitDisabled()}
+                  class={`flex-1 disabled:bg-gray-100 disabled:text-gray-400 bg-[var(--chatbot-button-bg-color)]`}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
       <div class="flex opacity-25 fixed inset-0 z-[1001] bg-black" />
-    </>
+    </Show>
   );
 };
 

@@ -6,10 +6,11 @@
 
 @layer base {
   :host {
-    font-family: var(--chatbot-container-font-family), sans-serif;
+    font-family: 'Manrope', sans-serif;
   }
+
   html {
-    font-family: var(--chatbot-container-font-family), sans-serif;
+    font-family: 'Manrope', sans-serif;
   }
 }
 
@@ -153,6 +154,7 @@ pre {
 button,
 input,
 textarea {
+  font-family: 'Manrope', sans-serif;
   font-weight: 300;
 }
 
@@ -209,6 +211,7 @@ textarea {
 }
 
 .chatbot-button {
+  font-family: 'Manrope', sans-serif;
   color: var(--chatbot-button-color);
   background-color: var(--chatbot-button-bg-color);
   border: 1px solid var(--chatbot-button-bg-color);
@@ -480,8 +483,8 @@ textarea {
     overflow-x: hidden; /* Prevent horizontal scrolling */
   }
 
-    div[part='button'], .chatbot-header, .chatbot-container, .rounded-lg {
-    border-radius: 0px !important;
+    div[part='button'], div[class='flex flex-row items-center w-full h-[50px] absolute top-0 left-0 z-10'], .chatbot-header, .chatbot-container, .rounded-lg {
+    border-radius: 0 !important;
   }
 
 button {

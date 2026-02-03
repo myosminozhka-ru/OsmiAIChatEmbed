@@ -60,7 +60,7 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
             style={{ color: 'var(--chatbot-container-color)' }}
             innerHTML={
               popupProps.message ??
-              'By using this chatbot, you agree to the <a target="_blank" href="https://flowiseai.com/terms">Terms & Condition</a>.'
+              'By using this chatbot, you agree to the Terms & Condition.'
             }
           />
 
