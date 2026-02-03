@@ -11,6 +11,7 @@ import { TickIcon, XIcon } from '../icons';
 import { SourceBubble } from '../bubbles/SourceBubble';
 import { DateTimeToggleTheme } from '@/features/bubble/types';
 import { WorkflowTreeView } from '../treeview/WorkflowTreeView';
+import { StarterPromptBubble } from './StarterPromptBubble';
 
 type Props = {
   message: MessageType;
@@ -39,6 +40,9 @@ type Props = {
   isTTSPlaying?: Record<string, boolean>;
   handleTTSClick?: (messageId: string, messageText: string) => void;
   handleTTSStop?: (messageId: string) => void;
+  starterPrompts?: string[];
+  starterPromptFontSize?: number;
+  onStarterPromptClick?: (prompt: string) => void;
 };
 
 const defaultBackgroundColor = '#19191b';
@@ -61,7 +65,7 @@ export const BotBubble = (props: Props) => {
   // Store a reference to the bot message element for the copyMessageToClipboard function
   const [botMessageElement, setBotMessageElement] = createSignal<HTMLElement | null>(null);
 
-  const setBotMessageRef = (el: HTMLSpanElement) => {
+  const setBotMessageRef = (el: HTMLDivElement) => {
     if (el) {
       el.innerHTML = Marked.parse(props.message.message);
 
@@ -397,7 +401,7 @@ export const BotBubble = (props: Props) => {
 
   return (
     <div>
-      <div class="flex flex-col gap-4 justify-start mb-2 items-start host-container" style={{ 'margin-right': '50px' }}>
+      <div class="flex flex-col gap-4 justify-start mb-2 items-start host-container">
         <Show when={props.showAvatar}>
           <Avatar initialAvatarSrc={props.avatarSrc} />
         </Show>
@@ -411,7 +415,7 @@ export const BotBubble = (props: Props) => {
               </div>
             )}
           {props.showAgentMessages && props.message.agentReasoning && (
-            <details ref={botDetailsEl} class="mb-2 px-4 py-2 ml-2 chatbot-host-bubble rounded-[6px]">
+            <details ref={botDetailsEl} class="mb-2 px-4 py-2 chatbot-host-bubble rounded-[6px]">
               <summary class="cursor-pointer">
                 <span class="italic">Agent Messages</span>
               </summary>
@@ -449,9 +453,8 @@ export const BotBubble = (props: Props) => {
             </div>
           )}
           {props.message.message && (
-            <span
-              ref={setBotMessageRef}
-              class="px-4 py-2 ml-2 max-w-full border border-[#4D5164] chatbot-host-bubble prose"
+            <div
+              class="px-4 py-2 w-full max-w-[487px] border border-[#4D5164] chatbot-host-bubble text-white"
               data-testid="host-bubble"
               style={{
                 'background-color': props.backgroundColor ?? defaultBackgroundColor,
@@ -459,7 +462,22 @@ export const BotBubble = (props: Props) => {
                 'border-radius': '16px',
                 'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
               }}
-            />
+            >
+              <div ref={setBotMessageRef} class="prose text-white" />
+              <Show when={props.starterPrompts && props.starterPrompts.length > 0}>
+                <div class="mt-3 flex flex-row flex-wrap gap-1.5">
+                  <For each={[...props.starterPrompts!]}>
+                    {(key) => (
+                      <StarterPromptBubble
+                        prompt={key}
+                        onPromptClick={() => props.onStarterPromptClick?.(key)}
+                        starterPromptFontSize={props.starterPromptFontSize}
+                      />
+                    )}
+                  </For>
+                </div>
+              </Show>
+            </div>
           )}
           {props.message.action && (
             <div class="px-4 py-2 flex flex-row justify-start space-x-2">
@@ -559,7 +577,7 @@ export const BotBubble = (props: Props) => {
           <CopyToClipboardButton feedbackColor={props.feedbackColor} onClick={() => copyMessageToClipboard()} />
           <Show when={copiedMessage()}>
             <div class="copied-message" style={{ color: props.feedbackColor ?? defaultFeedbackColor }}>
-              Copied!
+              Скопировано!
             </div>
           </Show>
           {rating() === '' || rating() === 'THUMBS_UP' ? (

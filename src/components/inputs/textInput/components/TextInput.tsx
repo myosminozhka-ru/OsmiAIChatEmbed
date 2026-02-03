@@ -1,18 +1,21 @@
 import { ShortTextInput } from './ShortTextInput';
 import { isMobile } from '@/utils/isMobileSignal';
 import { Show, createSignal, createEffect, onMount, Setter } from 'solid-js';
-import { SendButton } from '@/components/buttons/SendButton';
+import { JSX } from 'solid-js/jsx-runtime';
+import { SendButton, Spinner } from '@/components/buttons/SendButton';
 import { FileEvent, UploadsConfig } from '@/components/Bot';
 import { ImageUploadButton } from '@/components/buttons/ImageUploadButton';
 import { RecordAudioButton } from '@/components/buttons/RecordAudioButton';
 import { AttachmentUploadButton } from '@/components/buttons/AttachmentUploadButton';
 import { ChatInputHistory } from '@/utils/chatInputHistory';
+import { DeleteIcon } from '@/components/icons';
 
 type TextInputProps = {
   placeholder?: string;
   backgroundColor?: string;
   textColor?: string;
   sendButtonColor?: string;
+  clearButtonColor?: string;
   inputValue: string;
   fontSize?: number;
   disabled?: boolean;
@@ -23,6 +26,10 @@ type TextInputProps = {
   setPreviews: Setter<unknown[]>;
   onMicrophoneClicked: () => void;
   handleFileChange: (event: FileEvent<HTMLInputElement>) => void;
+  onClearChat?: () => void;
+  clearButtonDisabled?: boolean;
+  clearButtonClass?: string;
+  clearButtonLabel?: string;
   maxChars?: number;
   maxCharsWarningMessage?: string;
   autoFocus?: boolean;
@@ -37,6 +44,38 @@ const defaultBackgroundColor = '#19191B';
 const defaultTextColor = '#9E9E9E';
 // CDN link for default send sound
 const defaultSendSound = 'https://cdn.jsdelivr.net/gh/FlowiseAI/FlowiseChatEmbed@latest/src/assets/send_message.mp3';
+
+type DeleteButtonProps = {
+  sendButtonColor?: string;
+  isDisabled?: boolean;
+  isLoading?: boolean;
+  disableIcon?: boolean;
+  active?: boolean;
+} & JSX.ButtonHTMLAttributes<HTMLButtonElement>;
+
+export const DeleteButton = (props: DeleteButtonProps) => {
+  // Check if <flowise-fullchatbot> is present in the DOM
+  const isFullChatbot = document.querySelector('flowise-fullchatbot') !== null;
+  const paddingClass = isFullChatbot ? 'px-4' : 'px-2';
+
+  return (
+    <button
+      type="submit"
+      disabled={props.isDisabled || props.isLoading}
+      {...props}
+      class={
+        `${paddingClass} justify-center font-semibold text-white focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 chatbot-button ` +
+        props.class
+      }
+      style={{ background: 'transparent', border: 'none' }}
+      title="Reset Chat"
+    >
+      <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
+        <DeleteIcon color={props.sendButtonColor} class={'send-icon flex ' + (props.disableIcon ? 'hidden' : '')} />
+      </Show>
+    </button>
+  );
+};
 
 export const TextInput = (props: TextInputProps) => {
   const [isSendButtonDisabled, setIsSendButtonDisabled] = createSignal(false);
@@ -153,7 +192,7 @@ export const TextInput = (props: TextInputProps) => {
           {warningMessage()}
         </div>
       </Show>
-      <div class="w-full flex items-end justify-between gap-4">
+      <div class="w-full flex items-end justify-between gap-4 relative">
         {props.uploadsConfig?.isImageUploadAllowed ? (
           <>
             <ImageUploadButton
@@ -211,12 +250,23 @@ export const TextInput = (props: TextInputProps) => {
         <RecordAudioButton
           buttonColor={props.sendButtonColor}
           type="button"
-          class="absolute right-[92px] m-0 start-recording-button h-[54px] flex items-center justify-center"
+          class="absolute right-[92px] m-0 mr-4 start-recording-button h-[54px] flex items-center justify-center"
           isDisabled={props.disabled || isSendButtonDisabled()}
           on:click={props.onMicrophoneClicked}
         >
           <span style={{ 'font-family': 'Poppins, sans-serif' }}>Record Audio</span>
         </RecordAudioButton>
+        <Show when={props.onClearChat}>
+          <DeleteButton
+            sendButtonColor={props.clearButtonColor}
+            type="button"
+            isDisabled={props.clearButtonDisabled}
+            class={props.clearButtonClass ?? ''}
+            on:click={props.onClearChat}
+          >
+            <span style={{ 'font-family': 'Poppins, sans-serif' }}>{props.clearButtonLabel ?? 'Clear'}</span>
+          </DeleteButton>
+        </Show>
         <SendButton
           sendButtonColor={props.sendButtonColor}
           type="button"

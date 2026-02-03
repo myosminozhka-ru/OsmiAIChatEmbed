@@ -726,17 +726,17 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
         }
         .tree-item-content {
           border-left: 3px solid transparent;
-          transition: background-color 0.2s ease, 
-                      border-color 0.2s ease, 
+          transition: background-color 0.2s ease,
+                      border-color 0.2s ease,
                       transform 0.2s ease,
                       box-shadow 0.2s ease;
         }
-        
+
         /* Animation for node details panel */
         .node-details-panel {
           transition: opacity 0.2s ease, transform 0.2s ease;
         }
-        
+
         /* Enhanced status icons */
         .status-icon {
           filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
@@ -769,7 +769,7 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
                 <button
                   onClick={copyToClipboard}
                   class="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded hover:bg-gray-100"
-                  title="Copy to clipboard"
+                  title="Скопировать"
                 >
                   {copied() ? <CheckIcon /> : <CopyIcon />}
                 </button>

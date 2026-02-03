@@ -1,10 +1,12 @@
 import { Setter } from 'solid-js';
+import { JSX } from 'solid-js/jsx-runtime';
 import { FileEvent, UploadsConfig } from '@/components/Bot';
 type TextInputProps = {
     placeholder?: string;
     backgroundColor?: string;
     textColor?: string;
     sendButtonColor?: string;
+    clearButtonColor?: string;
     inputValue: string;
     fontSize?: number;
     disabled?: boolean;
@@ -15,6 +17,10 @@ type TextInputProps = {
     setPreviews: Setter<unknown[]>;
     onMicrophoneClicked: () => void;
     handleFileChange: (event: FileEvent<HTMLInputElement>) => void;
+    onClearChat?: () => void;
+    clearButtonDisabled?: boolean;
+    clearButtonClass?: string;
+    clearButtonLabel?: string;
     maxChars?: number;
     maxCharsWarningMessage?: string;
     autoFocus?: boolean;
@@ -24,6 +30,14 @@ type TextInputProps = {
     enableInputHistory?: boolean;
     maxHistorySize?: number;
 };
-export declare const TextInput: (props: TextInputProps) => import("solid-js").JSX.Element;
+type DeleteButtonProps = {
+    sendButtonColor?: string;
+    isDisabled?: boolean;
+    isLoading?: boolean;
+    disableIcon?: boolean;
+    active?: boolean;
+} & JSX.ButtonHTMLAttributes<HTMLButtonElement>;
+export declare const DeleteButton: (props: DeleteButtonProps) => JSX.Element;
+export declare const TextInput: (props: TextInputProps) => JSX.Element;
 export {};
 //# sourceMappingURL=TextInput.d.ts.map
