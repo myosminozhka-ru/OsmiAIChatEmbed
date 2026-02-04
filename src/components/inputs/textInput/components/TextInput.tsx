@@ -43,7 +43,7 @@ type TextInputProps = {
 const defaultBackgroundColor = '#19191B';
 const defaultTextColor = '#9E9E9E';
 // CDN link for default send sound
-const defaultSendSound = 'https://cdn.jsdelivr.net/gh/FlowiseAI/FlowiseChatEmbed@latest/src/assets/send_message.mp3';
+const defaultSendSound = 'https://cdn.jsdelivr.net/npm/osmi-ai-embed@latest/src/assets/send_message.mp3';
 
 type DeleteButtonProps = {
   sendButtonColor?: string;
@@ -54,8 +54,8 @@ type DeleteButtonProps = {
 } & JSX.ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const DeleteButton = (props: DeleteButtonProps) => {
-  // Check if <flowise-fullchatbot> is present in the DOM
-  const isFullChatbot = document.querySelector('flowise-fullchatbot') !== null;
+  // Check if <chatbot-full> is present in the DOM
+  const isFullChatbot = document.querySelector('chatbot-full') !== null;
   const paddingClass = isFullChatbot ? 'px-4' : 'px-2';
 
   return (

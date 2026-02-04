@@ -611,7 +611,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   // Define the audioRef
   let audioRef: HTMLAudioElement | undefined;
   // CDN link for default receive sound
-  const defaultReceiveSound = 'https://cdn.jsdelivr.net/gh/FlowiseAI/FlowiseChatEmbed@latest/src/assets/receive_message.mp3';
+  const defaultReceiveSound = 'https://cdn.jsdelivr.net/npm/osmi-ai-embed@latest/src/assets/receive_message.mp3';
   const playReceiveSound = () => {
     if (props.textInput?.receiveMessageSound) {
       let audioSrc = defaultReceiveSound;
