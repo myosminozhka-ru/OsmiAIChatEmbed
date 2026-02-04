@@ -4,6 +4,7 @@ import { BubbleButton } from './BubbleButton';
 import { BubbleParams } from '../types';
 import { Bot, BotProps } from '../../../components/Bot';
 import Tooltip from './Tooltip';
+import { ExpandIcon } from '../../../components/icons/ExpandIcon';
 import { getBubbleButtonSize } from '@/utils';
 
 const defaultButtonColor = '#3B81F6';
@@ -16,6 +17,7 @@ export const Bubble = (props: BubbleProps) => {
 
   const [isBotOpened, setIsBotOpened] = createSignal(false);
   const [isBotStarted, setIsBotStarted] = createSignal(false);
+  const [isFullScreen, setIsFullScreen] = createSignal(false); // New state for fullscreen
   const [buttonPosition, setButtonPosition] = createSignal({
     bottom: bubbleProps.theme?.button?.bottom ?? 20,
     right: bubbleProps.theme?.button?.right ?? 20,
@@ -32,6 +34,10 @@ export const Bubble = (props: BubbleProps) => {
 
   const toggleBot = () => {
     isBotOpened() ? closeBot() : openBot();
+  };
+
+  const toggleFullScreen = () => {
+    setIsFullScreen((prev) => !prev);
   };
 
   onCleanup(() => {
@@ -84,8 +90,14 @@ export const Bubble = (props: BubbleProps) => {
       <div
         part="bot"
         style={{
-          height: bubbleProps.theme?.chatWindow?.height ? `${bubbleProps.theme?.chatWindow?.height.toString()}px` : 'calc(100% - 150px)',
-          width: bubbleProps.theme?.chatWindow?.width ? `${bubbleProps.theme?.chatWindow?.width.toString()}px` : undefined,
+          height: isFullScreen()
+            ? '100vh'
+            : bubbleProps.theme?.chatWindow?.height
+              ? `${bubbleProps.theme?.chatWindow?.height.toString()}px`
+              : 'calc(100% - 150px)',
+          width: isFullScreen() ? '100vw' : bubbleProps.theme?.chatWindow?.width ? `${bubbleProps.theme?.chatWindow?.width.toString()}px` : undefined,
+          top: isFullScreen() ? '0' : undefined, // Add top for fullscreen
+          left: isFullScreen() ? '0' : undefined, // Add left for fullscreen
           transition: 'transform 200ms cubic-bezier(0, 1.2, 1, 1), opacity 150ms ease-out',
           'transform-origin': 'bottom right',
           transform: isBotOpened() ? 'scale3d(1, 1, 1)' : 'scale3d(0, 0, 1)',
@@ -95,23 +107,36 @@ export const Bubble = (props: BubbleProps) => {
           'background-size': 'cover',
           'background-position': 'center',
           'background-repeat': 'no-repeat',
+          overflow: 'hidden',
           'z-index': 42424242,
-          bottom: `${Math.min(buttonPosition().bottom + buttonSize + 10, window.innerHeight - chatWindowBottom)}px`,
-          right: `${Math.max(0, Math.min(buttonPosition().right, window.innerWidth - (bubbleProps.theme?.chatWindow?.width ?? 410) - 10))}px`,
+          bottom: isFullScreen() ? '0' : `${Math.min(buttonPosition().bottom + buttonSize + 10, window.innerHeight - chatWindowBottom)}px`,
+          right: isFullScreen()
+            ? '0'
+            : `${Math.max(0, Math.min(buttonPosition().right, window.innerWidth - (bubbleProps.theme?.chatWindow?.width ?? 410) - 10))}px`,
+          'max-height': isFullScreen() ? '100vh' : '704px', // Set max-height for fullscreen
         }}
         class={
-          `fixed sm:right-5 w-full md:rounded-[30px] sm:w-[400px] max-h-[704px]` +
-          (isBotOpened() ? ' opacity-1' : ' opacity-0 pointer-events-none') +
-          ` bottom-${chatWindowBottom}px`
+          `fixed w-full` +
+          (isFullScreen() ? ' h-full' : ` sm:right-5 md:rounded-[30px] sm:w-[400px]`) +
+          (isBotOpened() ? ' opacity-1' : ' opacity-0 pointer-events-none')
         }
       >
         <Show when={isBotStarted()}>
           <div class="relative h-full bg-transparent">
             <Show when={isBotOpened()}>
               {/* Cross button For only mobile screen use this <Show when={isBotOpened() && window.innerWidth <= 640}>  */}
+              {/* Fullscreen button */}
+              <button
+                onClick={toggleFullScreen}
+                class="py-3 hidden md:block md:py-[22px] pr-3 absolute top-0 right-[32px] m-[6px] bg-transparent text-white rounded-full z-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75"
+                title={isFullScreen() ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+              >
+                <ExpandIcon class="w-6 h-6" color={bubbleProps.theme?.button?.iconColor ?? defaultIconColor} />
+              </button>
+              {/* Cross button For only mobile screen use this <Show when={isBotOpened() && window.innerWidth <= 640}>  */}
               <button
                 onClick={closeBot}
-                class="py-3 md:py-[22px] pr-3 absolute top-0 right-[-8px] m-[6px] bg-transparent text-white rounded-full z-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75"
+                class="py-3 md:py-[22px] pr-3 absolute top-0 right-0 m-[6px] bg-transparent text-white rounded-full z-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75"
                 title="Close Chat"
               >
                 <svg viewBox="0 0 24 24" width="24" height="24">
@@ -157,6 +182,7 @@ export const Bubble = (props: BubbleProps) => {
               dateTimeToggle={bubbleProps.theme?.chatWindow?.dateTimeToggle}
               renderHTML={props.theme?.chatWindow?.renderHTML}
               closeBot={closeBot}
+              isFullScreen={isFullScreen()} // Pass isFullScreen state
             />
           </div>
         </Show>
