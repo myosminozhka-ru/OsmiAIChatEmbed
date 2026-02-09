@@ -277,12 +277,17 @@ export const audioRecorder: AudioRecorder = {
             });
 
             //start the recording by calling the start method on the media recorder
-            if (isSafari) {
-              // https://community.openai.com/t/whisper-problem-with-audio-mp4-blobs-from-safari/322252
-              // https://community.openai.com/t/whisper-api-cannot-read-files-correctly/93420/46
-              audioRecorder.mediaRecorder.start(1000);
-            } else {
-              audioRecorder.mediaRecorder.start();
+            try {
+              if (isSafari) {
+                // https://community.openai.com/t/whisper-problem-with-audio-mp4-blobs-from-safari/322252
+                // https://community.openai.com/t/whisper-api-cannot-read-files-correctly/93420/46
+                audioRecorder.mediaRecorder.start(1000);
+              } else {
+                audioRecorder.mediaRecorder.start();
+              }
+            } catch (error) {
+              // If start() throws an error, reject the promise
+              return Promise.reject(error);
             }
           })
       );

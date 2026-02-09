@@ -18,7 +18,7 @@ export const CopyToClipboardButton = (props: RatingButtonProps) => {
       {...props}
       class={
         'p-2 justify-center font-semibold text-white focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 chatbot-button ' +
-        (props.class || '')
+        props.class
       }
       style={{ background: 'transparent', border: 'none' }}
       title="Copy to clipboard"
@@ -34,7 +34,7 @@ export const ThumbsUpButton = (props: RatingButtonProps) => {
       type="submit"
       disabled={props.isDisabled || props.isLoading}
       {...props}
-      class={'' + (props.class || '')}
+      class={'' + props.class}
       style={{ background: 'transparent', border: 'none' }}
       title="Понравилось"
     >
@@ -49,7 +49,7 @@ export const ThumbsDownButton = (props: RatingButtonProps) => {
       type="submit"
       disabled={props.isDisabled || props.isLoading}
       {...props}
-      class={'' + (props.class || '')}
+      class={'' + props.class}
       style={{ background: 'transparent', border: 'none' }}
       title="Не понравилось"
     >

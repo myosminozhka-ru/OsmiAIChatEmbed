@@ -1,4 +1,4 @@
-import { createEffect, Show, createSignal, onMount, For } from 'solid-js';
+import { createEffect, Show, createSignal, onMount, For, createMemo } from 'solid-js';
 import { Avatar } from '../avatars/Avatar';
 import { Marked } from '@ts-stack/markdown';
 import { FeedbackRatingType, sendFeedbackQuery, sendFileDownloadQuery, updateFeedbackQuery } from '@/queries/sendMessageQuery';
@@ -6,13 +6,14 @@ import { FileUpload, IAction, MessageType } from '../Bot';
 import { CopyToClipboardButton, ThumbsDownButton, ThumbsUpButton } from '../buttons/FeedbackButtons';
 import { TTSButton } from '../buttons/TTSButton';
 import FeedbackContentDialog from '../FeedbackContentDialog';
-import { SuccessAlert } from './SuccessAlert';
 import { AgentReasoningBubble } from './AgentReasoningBubble';
+import { SuccessAlert } from './SuccessAlert';
 import { TickIcon, XIcon } from '../icons';
 import { SourceBubble } from '../bubbles/SourceBubble';
 import { DateTimeToggleTheme } from '@/features/bubble/types';
 import { WorkflowTreeView } from '../treeview/WorkflowTreeView';
 import { TypingBubble } from '../TypingBubble';
+import { getLocalStorageChatflow, setLocalStorageChatflow } from '@/utils';
 
 type Props = {
   message: MessageType;
@@ -23,9 +24,6 @@ type Props = {
   fileAnnotations?: any;
   showAvatar?: boolean;
   avatarSrc?: string;
-  botTitle?: string;
-  backgroundColor?: string;
-  textColor?: string;
   chatFeedbackStatus?: boolean;
   fontSize?: number;
   feedbackColor?: string;
@@ -34,45 +32,72 @@ type Props = {
   showAgentMessages?: boolean;
   sourceDocsTitle?: string;
   renderHTML?: boolean;
+  botTitle?: string;
+  enableCopyMessage?: boolean;
   handleActionClick: (elem: any, action: IAction | undefined | null) => void;
+  onMessageAdd?: (message: MessageType) => void;
   handleSourceDocumentsClick: (src: any) => void;
   isFullPage?: boolean;
   isFullscreen?: boolean;
   isPopup?: boolean;
-  enableCopyMessage?: boolean;
-  // TTS props
+  feedbackReasons?: string[];
+  userData?: { 
+    fio?: string; 
+    email?: string;
+    user_name?: string;
+    user_id?: string;
+    login?: string;
+    shortname?: string;
+    orn?: string;
+    phone?: string;
+  };
+  isOperatorConnected?: boolean;
   isTTSEnabled?: boolean;
   isTTSLoading?: Record<string, boolean>;
   isTTSPlaying?: Record<string, boolean>;
   handleTTSClick?: (messageId: string, messageText: string) => void;
   handleTTSStop?: (messageId: string) => void;
-  feedbackReasons?: string[];
-  userData?: {
-    fio?: string;
-    email?: string;
-    user_name?: string;
-    user_id?: string;
-    shortname?: string;
-    orn?: string;
-  };
 };
 
-const defaultFontSize = 16;
-const defaultFeedbackColor = 'rgba(11, 17, 19, 0.5)';
+const defaultFontSize = 'var(--chatbot-font-size, 16px)';
+const defaultFeedbackColor = 'rgba(11, 17, 19, 0.5)'; // gray-500
 
 export const BotBubble = (props: Props) => {
   let botDetailsEl: HTMLDetailsElement | undefined;
+
+  // Функция для определения, является ли сообщение от оператора
+  const isOperatorMessage = () => {
+    if (!props.message.fileAnnotations) return false;
+    try {
+      const fileAnnotations =
+        typeof props.message.fileAnnotations === 'string' ? JSON.parse(props.message.fileAnnotations) : props.message.fileAnnotations;
+      const operatorInfo = Array.isArray(fileAnnotations)
+        ? fileAnnotations.find((fa: any) => fa.sender === 'operator')
+        : fileAnnotations?.sender === 'operator'
+          ? fileAnnotations
+          : null;
+      // Оператор подключен, если есть operatorInfo (независимо от наличия имени/инициалов)
+      return !!operatorInfo;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // Определяем, какой аватар использовать: оператора или бота
+  const avatarSrc = createMemo(() => {
+    return isOperatorMessage() ? undefined : props.avatarSrc; // Для оператора используем OperatorAvatar компонент
+  });
 
   Marked.setOptions({ isNoP: true, sanitize: props.renderHTML !== undefined ? !props.renderHTML : true });
 
   const [rating, setRating] = createSignal('');
   const [feedbackId, setFeedbackId] = createSignal('');
   const [showFeedbackContentDialog, setShowFeedbackContentModal] = createSignal(false);
-  const [showSuccessAlert, setShowSuccessAlert] = createSignal(false);
-  const [feedbackError, setFeedbackError] = createSignal('');
   const [copiedMessage, setCopiedMessage] = createSignal(false);
-  const [thumbsUpColor, setThumbsUpColor] = createSignal(props.feedbackColor ?? defaultFeedbackColor);
-  const [thumbsDownColor, setThumbsDownColor] = createSignal(props.feedbackColor ?? defaultFeedbackColor);
+  const [thumbsUpColor, setThumbsUpColor] = createSignal(props.feedbackColor ?? defaultFeedbackColor); // default color
+  const [thumbsDownColor, setThumbsDownColor] = createSignal(props.feedbackColor ?? defaultFeedbackColor); // default color
+  const [feedbackError, setFeedbackError] = createSignal('');
+  const [showSuccessAlert, setShowSuccessAlert] = createSignal(false);
 
   // Store a reference to the bot message element for the copyMessageToClipboard function
   const [botMessageElement, setBotMessageElement] = createSignal<HTMLElement | null>(null);
@@ -81,18 +106,20 @@ export const BotBubble = (props: Props) => {
     if (el) {
       el.innerHTML = Marked.parse(props.message.message);
 
-      el.querySelectorAll('a, h1, h2, h3, h4, h5, h6, strong, em, blockquote, li').forEach((element) => {
-        (element as HTMLElement).style.color = 'inherit';
-      });
+      // Цвета задаются через CSS переменные (не используем props.textColor)
 
+      // Code blocks (with pre) get white text
       el.querySelectorAll('pre').forEach((element) => {
-        (element as HTMLElement).style.color = 'var(--chatbot-host-bubble-color)';
+        (element as HTMLElement).style.color = '#FFFFFF';
+        // Also ensure any code elements inside pre have white text
         element.querySelectorAll('code').forEach((codeElement) => {
-          (codeElement as HTMLElement).style.color = 'var(--chatbot-host-bubble-color)';
+          (codeElement as HTMLElement).style.color = '#FFFFFF';
         });
       });
+
+      // Inline code (not in pre) gets green text
       el.querySelectorAll('code:not(pre code)').forEach((element) => {
-        (element as HTMLElement).style.color = 'inherit';
+        (element as HTMLElement).style.color = '#4CAF50'; // Green color
       });
 
       // Set target="_blank" for links
@@ -208,10 +235,9 @@ export const BotBubble = (props: Props) => {
       const body = {
         chatflowid: props.chatflowid,
         chatId: props.chatId,
-        messageId: String(messageId),
+        messageId: messageId,
         rating: 'THUMBS_UP' as FeedbackRatingType,
         content: '',
-        ...(props.userData?.fio && { fio: props.userData.fio }),
         ...(props.userData?.email && { email: props.userData.email }),
       };
       const result = await sendFeedbackQuery({
@@ -239,10 +265,9 @@ export const BotBubble = (props: Props) => {
       const body = {
         chatflowid: props.chatflowid,
         chatId: props.chatId,
-        messageId: String(messageId),
+        messageId: messageId,
         rating: 'THUMBS_DOWN' as FeedbackRatingType,
         content: '',
-        ...(props.userData?.fio && { fio: props.userData.fio }),
         ...(props.userData?.email && { email: props.userData.email }),
       };
       const result = await sendFeedbackQuery({
@@ -268,14 +293,12 @@ export const BotBubble = (props: Props) => {
     }
   };
 
-  const submitFeedbackContent = async (text: string, _reason?: string) => {
+  const submitFeedbackContent = async (text: string, reason?: string) => {
     setFeedbackError('');
-    if (!feedbackId()) return;
 
+    // text уже содержит склеенную причину и комментарий из FeedbackContentDialog
     const body = {
       content: text,
-      ...(props.userData?.fio && { fio: props.userData.fio }),
-      ...(props.userData?.email && { email: props.userData.email }),
     };
     const result = await updateFeedbackQuery({
       id: feedbackId(),
@@ -311,17 +334,20 @@ export const BotBubble = (props: Props) => {
     // Instead of onMount, we'll use a callback ref to apply styles
     const setArtifactRef = (el: HTMLSpanElement) => {
       if (el) {
-        el.querySelectorAll('a, h1, h2, h3, h4, h5, h6, strong, em, blockquote, li').forEach((element) => {
-          (element as HTMLElement).style.color = 'inherit';
-        });
+        // Цвета задаются через CSS переменные (не используем props.textColor)
+
+        // Code blocks (with pre) get white text
         el.querySelectorAll('pre').forEach((element) => {
-          (element as HTMLElement).style.color = 'var(--chatbot-host-bubble-color)';
+          (element as HTMLElement).style.color = '#FFFFFF';
+          // Also ensure any code elements inside pre have white text
           element.querySelectorAll('code').forEach((codeElement) => {
-            (codeElement as HTMLElement).style.color = 'var(--chatbot-host-bubble-color)';
+            (codeElement as HTMLElement).style.color = '#FFFFFF';
           });
         });
+
+        // Inline code (not in pre) gets green text
         el.querySelectorAll('code:not(pre code)').forEach((element) => {
-          (element as HTMLElement).style.color = 'inherit';
+          (element as HTMLElement).style.color = '#4CAF50'; // Green color
         });
 
         el.querySelectorAll('a').forEach((link) => {
@@ -356,10 +382,9 @@ export const BotBubble = (props: Props) => {
           <span
             ref={setArtifactRef}
             innerHTML={Marked.parse(item.data as string)}
-            class="prose chatbot-host-bubble"
+            class="prose rounded-lg chatbot-host-bubble bg-[var(--chatbot-host-bubble-bg-color)] text-[var(--chatbot-host-bubble-text-color)]"
             style={{
-              'border-radius': 'var(--chatbot-border-radius)',
-              'font-size': props.fontSize ? `${props.fontSize}px` : 'var(--chatbot-font-size)',
+              'font-size': props.fontSize ? `${props.fontSize}px` : defaultFontSize,
             }}
           />
         </Show>
@@ -373,14 +398,17 @@ export const BotBubble = (props: Props) => {
     try {
       const date = new Date(dateTimeString);
 
+      // Check if the date is valid
       if (isNaN(date.getTime())) {
         return '';
       }
 
-      // В баблах показываем только время, дата остается в разделителе (как в old)
-      const shouldShowTime = showTime !== false;
+      // В баблах показываем только время, дата остается в разделителе
+      const shouldShowTime = showTime !== false; // По умолчанию true, если не false
+
       let formatted = '';
 
+      // Показываем только время
       if (shouldShowTime) {
         const timeFormatter = new Intl.DateTimeFormat('ru-RU', {
           hour: '2-digit',
@@ -393,11 +421,11 @@ export const BotBubble = (props: Props) => {
 
       return formatted;
     } catch (error) {
-      console.error('Error formatting date:', error);
       return '';
     }
   };
 
+  // Определяем классы для ширины бабла в зависимости от режима и размера экрана
   const getContainerClasses = () => {
     const isFullMode = props.isFullPage || props.isFullscreen;
     const isPopupMode = props.isPopup && !props.isFullscreen;
@@ -408,46 +436,110 @@ export const BotBubble = (props: Props) => {
     }
 
     if (isFullMode) {
+      // Для full page/full screen - адаптивные стили: 100% (до sm) -> 70% (sm:640px) -> 60% (lg:1024px) -> 50% (xl:1280px)
       return `${baseClasses} w-full pr-[40px] sm:w-[70%] sm:pr-0 lg:w-3/5 xl:w-1/2`;
     }
 
+    // По умолчанию
     return `${baseClasses} w-2/3`;
   };
 
   return (
     <div>
       <div class={getContainerClasses()}>
+        {/* Основной контейнер с контентом */}
         <div
-          class={`flex flex-col justify-start px-4 py-3 rounded-lg rounded-bl-none chatbot-host-bubble min-h-[52px] shadow-sm bg-[var(--chatbot-host-bubble-bg-color)] text-[var(--chatbot-host-bubble-text-color)] ${
+          class={`flex flex-col justify-start px-4 py-3 rounded-lg rounded-bl-none chatbot-host-bubble min-h-[52px] bg-[var(--chatbot-host-bubble-bg-color)] text-[var(--chatbot-host-bubble-text-color)] ${
             props.isLoading && !props.message.message ? 'w-[72px]' : 'w-full'
           }`}
           style={{
-            'font-size': props.fontSize ? `${props.fontSize}px` : 'var(--chatbot-font-size)',
+            'font-size': isOperatorMessage()
+              ? props.fontSize
+                ? `${Math.max(props.fontSize * 0.85, 12)}px`
+                : '13.6px' // Уменьшаем шрифт на 15% для оператора, минимум 12px
+              : props.fontSize
+                ? `${props.fontSize}px`
+                : defaultFontSize,
           }}
         >
+          {/* Верхняя строка: Аватар, название бота и Feedback кнопки - показываем только когда есть текст сообщения */}
           <Show when={props.message.message}>
-            <div class="flex flex-row items-center justify-between w-full mb-2">
+              <div class="flex flex-row items-center justify-between w-full mb-2">
               <div class="flex flex-row items-center gap-2">
-                <Show when={props.showAvatar !== false}>
-                  <Avatar initialAvatarSrc={props.avatarSrc} />
+                <Show when={props.showAvatar}>
+                  <Avatar initialAvatarSrc={avatarSrc()} isOperator={isOperatorMessage()} />
                 </Show>
-                <span class="font-semibold text-gray-880">{props.botTitle ?? 'Умный помощник'}</span>
+                <Show
+                  when={isOperatorMessage()}
+                  fallback={<span class="font-semibold text-gray-880">{props.botTitle || 'Умный помощник'}</span>}
+                >
+                  {(() => {
+                    try {
+                      const fileAnnotations =
+                        typeof props.message.fileAnnotations === 'string' ? JSON.parse(props.message.fileAnnotations) : props.message.fileAnnotations;
+                      const operatorInfo = Array.isArray(fileAnnotations)
+                        ? fileAnnotations.find((fa: any) => fa.sender === 'operator')
+                        : fileAnnotations?.sender === 'operator'
+                          ? fileAnnotations
+                          : null;
+
+                      // Если оператор подключен, показываем "Оператор" (с именем/инициалами если есть)
+                      if (operatorInfo) {
+                        const operatorText = operatorInfo.operatorInitials
+                          ? `Оператор ${operatorInfo.operatorInitials}${operatorInfo.operatorName ? ` (${operatorInfo.operatorName})` : ''}`
+                          : operatorInfo.operatorName
+                            ? `Оператор ${operatorInfo.operatorName}`
+                            : 'Оператор';
+                        return <span class="font-semibold text-gray-880 text-sm">{operatorText}</span>;
+                      }
+                      // Fallback на botTitle (не должно сюда попасть, т.к. isOperatorMessage() уже проверил)
+                      return <span class="font-semibold text-gray-880">{props.botTitle || 'Умный помощник'}</span>;
+                    } catch (e) {
+                      return <span class="font-semibold text-gray-880">{props.botTitle || 'Умный помощник'}</span>;
+                    }
+                  })()}
+                </Show>
               </div>
+              {/* Feedback кнопки справа - показываем только если chatFeedbackStatus === true */}
               <div class="flex items-center gap-2">
+                {/* Кнопка TTS отображается только если явно включена и у сообщения есть id */}
+                <Show when={props.isTTSEnabled && (props.message.id || props.message.messageId)}>
+                  <TTSButton
+                    feedbackColor={props.feedbackColor}
+                    isLoading={(() => {
+                      const messageId = props.message.id || props.message.messageId;
+                      return !!(messageId && props.isTTSLoading?.[messageId]);
+                    })()}
+                    isPlaying={(() => {
+                      const messageId = props.message.id || props.message.messageId;
+                      return !!(messageId && props.isTTSPlaying?.[messageId]);
+                    })()}
+                    onClick={() => {
+                      const messageId = props.message.id || props.message.messageId;
+                      if (!messageId) return;
+
+                      const messageText = props.message.message || '';
+                      if (props.isTTSLoading?.[messageId]) {
+                        return; // блокируем повторные клики при загрузке
+                      }
+                      if (props.isTTSPlaying?.[messageId]) {
+                        props.handleTTSStop?.(messageId);
+                      } else {
+                        props.handleTTSClick?.(messageId, messageText);
+                      }
+                    }}
+                  />
+                </Show>
                 <Show when={props.enableCopyMessage}>
-                  <CopyToClipboardButton feedbackColor={props.feedbackColor ?? defaultFeedbackColor} onClick={() => copyMessageToClipboard()} />
+                  <CopyToClipboardButton feedbackColor={props.feedbackColor} onClick={() => copyMessageToClipboard()} />
                   <Show when={copiedMessage()}>
-                    <div class="copied-message text-xs text-gray-500">Скопировано</div>
+                    <div class={`copied-message text-xs ${props.feedbackColor ? `text-[${props.feedbackColor}]` : 'text-gray-500'}`}>Скопировано</div>
                   </Show>
                 </Show>
-                <Show when={props.chatFeedbackStatus !== false && !props.message.disableFeedback}>
+                {/* Кнопки фидбека - показываем только если chatFeedbackStatus === true и disableFeedback !== true */}
+                <Show when={props.chatFeedbackStatus && !isOperatorMessage() && !props.message.disableFeedback}>
                   {rating() === '' || rating() === 'THUMBS_UP' ? (
-                    <ThumbsUpButton
-                      feedbackColor={thumbsUpColor()}
-                      isDisabled={rating() === 'THUMBS_UP'}
-                      rating={rating()}
-                      onClick={onThumbsUpClick}
-                    />
+                    <ThumbsUpButton feedbackColor={thumbsUpColor()} isDisabled={rating() === 'THUMBS_UP'} rating={rating()} onClick={onThumbsUpClick} />
                   ) : null}
                   {rating() === '' || rating() === 'THUMBS_DOWN' ? (
                     <ThumbsDownButton
@@ -461,6 +553,7 @@ export const BotBubble = (props: Props) => {
               </div>
             </div>
           </Show>
+          {/* Agent Flow Executed Data блок */}
           {props.showAgentMessages &&
             props.message.agentFlowExecutedData &&
             Array.isArray(props.message.agentFlowExecutedData) &&
@@ -469,6 +562,7 @@ export const BotBubble = (props: Props) => {
                 <WorkflowTreeView workflowData={props.message.agentFlowExecutedData} indentationLevel={24} />
               </div>
             )}
+          {/* Agent Reasoning блок */}
           {props.showAgentMessages && props.message.agentReasoning && (
             <details ref={botDetailsEl} class="mb-2 px-4 py-2 ml-2 chatbot-host-bubble rounded-[6px]">
               <summary class="cursor-pointer">
@@ -496,6 +590,7 @@ export const BotBubble = (props: Props) => {
               </For>
             </details>
           )}
+          {/* Artifacts блок */}
           {props.message.artifacts && props.message.artifacts.length > 0 && (
             <div class="flex flex-row items-start flex-wrap w-full gap-2">
               <For each={props.message.artifacts}>
@@ -505,13 +600,19 @@ export const BotBubble = (props: Props) => {
               </For>
             </div>
           )}
+          {/* Основное сообщение бота или индикатор загрузки */}
           {props.message.message ? (
-            <span ref={setBotMessageRef} class="mt-3 max-w-full prose overflow-hidden" data-testid="host-bubble" />
+            <span
+              ref={setBotMessageRef}
+              class="mt-3 max-w-full prose overflow-hidden"
+              data-testid="host-bubble"
+            />
           ) : props.isLoading ? (
             <div class="mt-3">
               <TypingBubble />
             </div>
           ) : null}
+          {/* Action кнопки (Yes/No) */}
           {props.message.action && (
             <div class="px-4 py-2 flex flex-row justify-start space-x-2">
               <For each={props.message.action.elements || []}>
@@ -534,12 +635,12 @@ export const BotBubble = (props: Props) => {
                           class="px-4 py-2 font-medium text-red-600 border border-red-600 rounded-full hover:bg-red-600 hover:text-white transition-colors duration-300 flex items-center space-x-2"
                           onClick={() => props.handleActionClick(action, props.message.action)}
                         >
-                          <XIcon isCurrentColor={true} />
+                          <XIcon />
                           &nbsp;
                           {action.label}
                         </button>
                       ) : (
-                        <button type="button">{action.label}</button>
+                        <button>{action.label}</button>
                       )}
                     </>
                   );
@@ -547,6 +648,7 @@ export const BotBubble = (props: Props) => {
               </For>
             </div>
           )}
+          {/* Время внизу бабла - справа (скрываем во время загрузки) */}
           {props.message.dateTime && !(props.isLoading && !props.message.message) && (
             <div class="text-xs text-gray-500 opacity-70 mt-2 w-full text-right">
               {formatDateTime(props.message.dateTime, props?.dateTimeToggle?.date, props?.dateTimeToggle?.time)}
@@ -554,6 +656,7 @@ export const BotBubble = (props: Props) => {
           )}
         </div>
       </div>
+      {/* Source Documents блок */}
       <div>
         {props.message.sourceDocuments && props.message.sourceDocuments.length && (
           <>
@@ -583,33 +686,8 @@ export const BotBubble = (props: Props) => {
           </>
         )}
       </div>
-      <div>
-        <div class={`flex items-center gap-2 px-2 pb-2 ${props.showAvatar !== false ? 'ml-10' : ''}`}>
-          <Show when={props.isTTSEnabled && (props.message.id || props.message.messageId)}>
-            <TTSButton
-              feedbackColor={props.feedbackColor ?? defaultFeedbackColor}
-              isLoading={(() => {
-                const messageId = props.message.id || props.message.messageId;
-                return !!(messageId && props.isTTSLoading?.[messageId]);
-              })()}
-              isPlaying={(() => {
-                const messageId = props.message.id || props.message.messageId;
-                return !!(messageId && props.isTTSPlaying?.[messageId]);
-              })()}
-              onClick={() => {
-                const messageId = props.message.id || props.message.messageId;
-                if (!messageId) return;
-                const messageText = props.message.message || '';
-                if (props.isTTSLoading?.[messageId]) return;
-                if (props.isTTSPlaying?.[messageId]) {
-                  props.handleTTSStop?.(messageId);
-                } else {
-                  props.handleTTSClick?.(messageId, messageText);
-                }
-              }}
-            />
-          </Show>
-        </div>
+      {/* Feedback Dialog */}
+      <Show when={showFeedbackContentDialog()}>
         <FeedbackContentDialog
           isOpen={showFeedbackContentDialog()}
           onClose={() => {
@@ -620,11 +698,18 @@ export const BotBubble = (props: Props) => {
           reasons={props.feedbackReasons}
           errorMessage={feedbackError()}
           onErrorClear={() => setFeedbackError('')}
-          isFullPage={props.isFullPage}
+          chatflowid={props.chatflowid}
+          chatId={props.chatId}
+          apiHost={props.apiHost}
+          onRequest={props.onRequest}
+          onMessageAdd={props.onMessageAdd}
           userData={props.userData}
+          isFullPage={props.isFullPage}
+          isOperatorConnected={props.isOperatorConnected}
         />
-        <SuccessAlert isOpen={showSuccessAlert()} onClose={() => setShowSuccessAlert(false)} message="Ваше сообщение отправлено." />
-      </div>
+      </Show>
+      {/* Success Alert */}
+      <SuccessAlert isOpen={showSuccessAlert()} onClose={() => setShowSuccessAlert(false)} message="Ваше сообщение отправлено." />
     </div>
   );
 };

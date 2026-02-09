@@ -7,52 +7,81 @@ import autoprefixer from 'autoprefixer';
 import tailwindcss from 'tailwindcss';
 import typescript from '@rollup/plugin-typescript';
 import { typescriptPaths } from 'rollup-plugin-typescript-paths';
+import alias from '@rollup/plugin-alias';
 import commonjs from '@rollup/plugin-commonjs';
-import { uglify } from 'rollup-plugin-uglify';
 import serve from 'rollup-plugin-serve';
 import livereload from 'rollup-plugin-livereload';
+import copy from 'rollup-plugin-copy';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const isDev = process.env.NODE_ENV === 'development';
 
 const extensions = ['.ts', '.tsx'];
 
+const plugins = [
+  // alias должен быть ПЕРВЫМ для разрешения путей @/
+  alias({
+    entries: [{ find: '@', replacement: path.resolve(__dirname, 'src') }],
+  }),
+  resolve({ extensions, browser: true }),
+  commonjs(),
+  json(),
+  typescript({
+    tsconfig: './tsconfig.json',
+  }),
+  typescriptPaths({ preserveExtensions: true }),
+  babel({
+    babelHelpers: 'bundled',
+    exclude: 'node_modules/**',
+    presets: ['solid', '@babel/preset-typescript'],
+    extensions,
+  }),
+  postcss({
+    plugins: [autoprefixer(), tailwindcss()],
+    extract: false,
+    modules: false,
+    autoModules: false,
+    minimize: !isDev,
+    inject: false,
+  }),
+  // Копируем статические файлы из public в dist (в корень dist)
+  copy({
+    targets: [
+      {
+        src: 'public/operator-avatr.jpg',
+        dest: 'dist',
+      },
+    ],
+  }),
+];
+
+// Добавляем минификацию только в production
+if (!isDev) {
+  plugins.push(terser({ output: { comments: false } }));
+}
+
+// Добавляем dev сервер и livereload только в development
+if (isDev) {
+  plugins.push(
+    serve({
+      open: true,
+      contentBase: ['dist', 'public'],
+      host: 'localhost',
+      port: 5678,
+    }),
+    livereload({
+      watch: ['dist', 'public'],
+    }),
+  );
+}
+
 const indexConfig = {
   context: 'this',
-  plugins: [
-    resolve({ extensions, browser: true }),
-    commonjs(),
-    uglify(),
-    json(),
-    babel({
-      babelHelpers: 'bundled',
-      exclude: 'node_modules/**',
-      presets: ['solid', '@babel/preset-typescript'],
-      extensions,
-    }),
-    postcss({
-      plugins: [autoprefixer(), tailwindcss()],
-      extract: false,
-      modules: false,
-      autoModules: false,
-      minimize: true,
-      inject: false,
-    }),
-    typescript(),
-    typescriptPaths({ preserveExtensions: true }),
-    terser({ output: { comments: false } }),
-    ...(isDev
-      ? [
-          serve({
-            open: true,
-            verbose: true,
-            contentBase: ['dist', 'public'],
-            host: 'localhost',
-            port: 5678,
-          }),
-          livereload({ watch: 'dist' }),
-        ]
-      : []), // Add serve/livereload only in development
-  ],
+  plugins,
 };
 
 const configs = [
@@ -70,7 +99,7 @@ const configs = [
     output: {
       file: 'dist/web.umd.js',
       format: 'umd',
-      name: 'SkChatwidgetEmbed',
+      name: 'OsmiAIEmbed',
     },
   },
 ];

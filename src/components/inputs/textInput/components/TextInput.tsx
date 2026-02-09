@@ -1,18 +1,13 @@
 import { ShortTextInput } from './ShortTextInput';
-import { isMobile } from '@/utils/isMobileSignal';
 import { Show, createSignal, createEffect, onMount, Setter } from 'solid-js';
 import { SendButton } from '@/components/buttons/SendButton';
 import { FileEvent, UploadsConfig } from '@/components/Bot';
 import { ImageUploadButton } from '@/components/buttons/ImageUploadButton';
-import { RecordAudioButton } from '@/components/buttons/RecordAudioButton';
 import { AttachmentUploadButton } from '@/components/buttons/AttachmentUploadButton';
 import { ChatInputHistory } from '@/utils/chatInputHistory';
 
 type TextInputProps = {
   placeholder?: string;
-  backgroundColor?: string;
-  textColor?: string;
-  sendButtonColor?: string;
   inputValue: string;
   fontSize?: number;
   disabled?: boolean;
@@ -21,21 +16,16 @@ type TextInputProps = {
   uploadsConfig?: Partial<UploadsConfig>;
   isFullFileUpload?: boolean;
   setPreviews: Setter<unknown[]>;
-  onMicrophoneClicked: () => void;
   handleFileChange: (event: FileEvent<HTMLInputElement>) => void;
   maxChars?: number;
   maxCharsWarningMessage?: string;
   autoFocus?: boolean;
-  sendMessageSound?: boolean;
-  sendSoundLocation?: string;
   fullFileUploadAllowedTypes?: string;
   enableInputHistory?: boolean;
   maxHistorySize?: number;
-  isFullPage?: boolean;
 };
 
-// CDN link for default send sound
-const defaultSendSound = 'https://cdn.jsdelivr.net/gh/SkChatwidget/SkChatwidgetEmbed@latest/src/assets/send_message.mp3';
+const defaultBackgroundColor = 'var(--chatbot-input-bg-color, #ffffff)';
 
 export const TextInput = (props: TextInputProps) => {
   const [isSendButtonDisabled, setIsSendButtonDisabled] = createSignal(false);
@@ -44,7 +34,6 @@ export const TextInput = (props: TextInputProps) => {
   let inputRef: HTMLInputElement | HTMLTextAreaElement | undefined;
   let fileUploadRef: HTMLInputElement | HTMLTextAreaElement | undefined;
   let imgUploadRef: HTMLInputElement | HTMLTextAreaElement | undefined;
-  let audioRef: HTMLAudioElement | undefined;
 
   const handleInput = (inputValue: string) => {
     const wordCount = inputValue.length;
@@ -68,9 +57,6 @@ export const TextInput = (props: TextInputProps) => {
         inputHistory().addToHistory(props.inputValue);
       }
       props.onSubmit(props.inputValue);
-      if (props.sendMessageSound && audioRef) {
-        audioRef.play();
-      }
     }
   };
 
@@ -103,23 +89,15 @@ export const TextInput = (props: TextInputProps) => {
   };
 
   createEffect(() => {
-    const shouldAutoFocus = props.autoFocus !== undefined ? props.autoFocus : !isMobile() && window.innerWidth > 640;
+    const shouldAutoFocus = props.autoFocus !== undefined ? props.autoFocus : window.innerWidth >= 768;
 
     if (!props.disabled && shouldAutoFocus && inputRef) inputRef.focus();
   });
 
   onMount(() => {
-    const shouldAutoFocus = props.autoFocus !== undefined ? props.autoFocus : !isMobile() && window.innerWidth > 640;
+    const shouldAutoFocus = props.autoFocus !== undefined ? props.autoFocus : window.innerWidth >= 768;
 
     if (!props.disabled && shouldAutoFocus && inputRef) inputRef.focus();
-
-    if (props.sendMessageSound) {
-      if (props.sendSoundLocation) {
-        audioRef = new Audio(props.sendSoundLocation);
-      } else {
-        audioRef = new Audio(defaultSendSound);
-      }
-    }
   });
 
   const handleFileChange = (event: FileEvent<HTMLInputElement>) => {
@@ -139,26 +117,22 @@ export const TextInput = (props: TextInputProps) => {
 
   return (
     <div
-      class={`sticky bottom-0 w-full min-h-[72px] flex flex-col chatbot-input border-t py-4 pr-[66px] z-10 text-gray-880 ${
-        props.isFullPage ? 'px-4 md:px-6 lg:px-8' : 'px-4'
-      }`}
+      class="w-full h-auto max-h-[192px] min-h-[72px] flex flex-col items-end justify-between chatbot-input border-t py-4 px-6 lg:px-8 text-gray-880"
       data-testid="input"
       style={{
-        'background-color': props.backgroundColor ?? 'var(--chatbot-input-bg-color)',
-        color: props.textColor ?? 'var(--chatbot-input-color)',
+        'background-color': defaultBackgroundColor,
       }}
       onKeyDown={handleKeyDown}
     >
       <Show when={warningMessage() !== ''}>
-        <div class="absolute bottom-full left-0 right-0 bg-white/30 w-full p-4 text-red-500 text-sm" data-testid="warning-message">
+        <div class="w-full px-4 pt-4 pb-1 text-red-500 text-sm" data-testid="warning-message">
           {warningMessage()}
         </div>
       </Show>
-      <div class="w-full h-full flex items-center gap-4">
+      <div class="w-full flex items-center justify-between gap-4">
         {props.uploadsConfig?.isImageUploadAllowed ? (
           <>
             <ImageUploadButton
-              buttonColor={props.sendButtonColor}
               type="button"
               class="m-0 h-14 flex items-center justify-center"
               isDisabled={props.disabled || isSendButtonDisabled()}
@@ -183,7 +157,6 @@ export const TextInput = (props: TextInputProps) => {
         {props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload ? (
           <>
             <AttachmentUploadButton
-              buttonColor={props.sendButtonColor}
               type="button"
               class="m-0 h-14 flex items-center justify-center"
               isDisabled={props.disabled || isSendButtonDisabled()}
@@ -207,33 +180,19 @@ export const TextInput = (props: TextInputProps) => {
           value={props.inputValue}
           fontSize={props.fontSize}
           disabled={props.disabled}
-          placeholder={props.placeholder ?? 'Напишите свой вопрос...'}
+          placeholder={props.placeholder ?? 'Введите свой вопрос'}
           paddingX="px-0"
           paddingY="py-0"
         />
-        {props.uploadsConfig?.isSpeechToTextEnabled ? (
-          <RecordAudioButton
-            buttonColor={props.sendButtonColor}
-            type="button"
-            class="m-0 start-recording-button h-14 flex items-center justify-center"
-            isDisabled={props.disabled || isSendButtonDisabled()}
-            on:click={props.onMicrophoneClicked}
-          >
-            <span class="font-sans">Record Audio</span>
-          </RecordAudioButton>
-        ) : null}
+        <SendButton
+          type="button"
+          isDisabled={props.disabled || isSendButtonDisabled()}
+          class="m-0 h-14 flex items-center justify-center"
+          on:click={submit}
+        >
+          <span class="font-sans">Send</span>
+        </SendButton>
       </div>
-      <SendButton
-        sendButtonColor={props.sendButtonColor}
-        type="button"
-        isDisabled={props.disabled || isSendButtonDisabled() || !props.inputValue || props.inputValue.trim() === ''}
-        class={`absolute top-1/2 -translate-y-1/2 h-14 flex items-center justify-center ${
-          props.isFullPage ? 'right-4 md:right-6 lg:right-8' : 'right-4'
-        }`}
-        on:click={submit}
-      >
-        <span class="font-sans">Send</span>
-      </SendButton>
     </div>
   );
 };

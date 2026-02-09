@@ -17,34 +17,31 @@ type WorkflowTreeViewProps = {
   indentationLevel?: number;
   initiallyExpanded?: boolean;
   title?: string;
-  backgroundColor?: string;
-  textColor?: string;
   fontSize?: number;
 };
 
 // Default styling values consistent with BotBubble
-const defaultBackgroundColor = '#f7f8ff';
-const defaultTextColor = '#303235';
-const defaultFontSize = 16;
-const SK_CHATWIDGET_CREDENTIAL_ID = 'SK_CHATWIDGET_CREDENTIAL_ID';
+const defaultBackgroundColor = 'var(--chatbot-host-bubble-bg-color, #f7f8ff)';
+const defaultFontSize = 'var(--chatbot-font-size, 16px)';
+const OSMIAI_CREDENTIAL_ID = 'OSMIAI_CREDENTIAL_ID';
 
 // Recursive function to remove credential IDs from data
-const removeSkChatwidgetCredentialId = (data: any): any => {
+const removeOsmiAICredentialId = (data: any): any => {
   if (!data || typeof data !== 'object') return data;
 
   // Handle arrays
   if (Array.isArray(data)) {
-    return data.map((item) => removeSkChatwidgetCredentialId(item));
+    return data.map((item) => removeOsmiAICredentialId(item));
   }
 
   // Clone the object to avoid modifying the original
   const cleanedData = { ...data };
 
   for (const key in cleanedData) {
-    if (key === SK_CHATWIDGET_CREDENTIAL_ID) {
+    if (key === OSMIAI_CREDENTIAL_ID) {
       delete cleanedData[key];
     } else if (typeof cleanedData[key] === 'object' && cleanedData[key] !== null) {
-      cleanedData[key] = removeSkChatwidgetCredentialId(cleanedData[key]);
+      cleanedData[key] = removeOsmiAICredentialId(cleanedData[key]);
     }
   }
   return cleanedData;
@@ -295,19 +292,19 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
 
   // Transform the execution data into a tree structure
   const buildTreeData = (nodes: WorkflowNode[]) => {
-    // for each node, loop through each and every nested key of node.data, and remove the key if it is equal to SK_CHATWIDGET_CREDENTIAL_ID
+    // for each node, loop through each and every nested key of node.data, and remove the key if it is equal to OSMIAI_CREDENTIAL_ID
     nodes.forEach((node) => {
-      const removeSkChatwidgetCredentialId = (data: any) => {
+      const removeOsmiAICredentialId = (data: any) => {
         for (const key in data) {
-          if (key === SK_CHATWIDGET_CREDENTIAL_ID) {
+          if (key === OSMIAI_CREDENTIAL_ID) {
             delete data[key];
           }
           if (typeof data[key] === 'object' && data[key] !== null) {
-            removeSkChatwidgetCredentialId(data[key]);
+            removeOsmiAICredentialId(data[key]);
           }
         }
       };
-      if (node.data) removeSkChatwidgetCredentialId(node.data);
+      if (node.data) removeOsmiAICredentialId(node.data);
     });
 
     // Create a map for quick node lookup
@@ -604,7 +601,7 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
     const nodeLabel = (
       <div class="flex items-center">
         {isIterationNode && (
-          <div class="mr-1" style={{ color: 'var(--chatbot-button-bg-color)' }}>
+          <div class="mr-1 text-blue-500">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"
@@ -660,7 +657,7 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
     if (node) {
       return {
         nodeLabel: node.label,
-        data: removeSkChatwidgetCredentialId(node.data),
+        data: removeOsmiAICredentialId(node.data),
         status: node.status,
       };
     }
@@ -676,11 +673,10 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
 
   return (
     <div
-      class={`mb-2 ml-2 border rounded-lg shadow-sm overflow-hidden ${props.class || ''}`}
+      class={`mb-2 ml-2 border rounded-lg shadow-sm overflow-hidden text-gray-880 ${props.class || ''}`}
       style={{
-        'background-color': props.backgroundColor ?? defaultBackgroundColor,
-        color: props.textColor ?? defaultTextColor,
-        'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
+        'background-color': defaultBackgroundColor,
+        'font-size': props.fontSize ? `${props.fontSize}px` : defaultFontSize,
       }}
     >
       {/* Collapsible header */}

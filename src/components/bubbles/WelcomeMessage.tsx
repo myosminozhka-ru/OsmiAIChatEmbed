@@ -10,7 +10,6 @@ type WelcomeMessageProps = {
   starterPrompts?: string[];
   onPromptClick?: (prompt: string) => void;
   isLoading?: boolean;
-  starterPromptFontSize?: number;
 };
 
 const defaultFontSize = 'var(--chatbot-font-size, 16px)';
@@ -45,9 +44,8 @@ export const WelcomeMessage = (props: WelcomeMessageProps) => {
             {(key) => (
               <StarterPromptBubble
                 prompt={key}
-                onPromptClick={() => !props.isLoading && props.onPromptClick?.(key)}
+                onPromptClick={() => props.onPromptClick?.(key)}
                 disabled={props.isLoading}
-                starterPromptFontSize={props.starterPromptFontSize}
               />
             )}
           </For>

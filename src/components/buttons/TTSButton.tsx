@@ -9,7 +9,7 @@ type Props = {
   class?: string;
 };
 
-const defaultButtonColor = 'var(--chatbot-button-bg-color)';
+const defaultButtonColor = 'rgba(11, 17, 19, 0.5)';
 
 export const TTSButton = (props: Props) => {
   const handleClick = (event: MouseEvent) => {
@@ -26,7 +26,6 @@ export const TTSButton = (props: Props) => {
         'background-color': 'transparent',
         color: baseColor,
         border: 'none',
-        'border-radius': '4px',
       };
     }
 
@@ -45,9 +44,7 @@ export const TTSButton = (props: Props) => {
 
   return (
     <button
-      class={`py-2 px-2 justify-center font-semibold focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-all filter hover:brightness-90 active:brightness-75 ${
-        props.class ?? ''
-      }`}
+      class={`justify-center flex items-center disabled:opacity-50 disabled:cursor-not-allowed ${props.class ?? ''}`}
       style={getButtonStyle()}
       disabled={props.isLoading}
       onClick={handleClick}
@@ -66,8 +63,15 @@ export const TTSButton = (props: Props) => {
           />
         }
       >
-        <Show when={!props.isPlaying} fallback={<CircleDotIcon color="red" />}>
-          <VolumeIcon color={props.isPlaying ? 'white' : props.feedbackColor ?? defaultButtonColor} />
+        <Show
+          when={!props.isPlaying}
+          fallback={<CircleDotIcon color="red" class="send-icon flex" style={{ width: '17px', height: '17px' }} />}
+        >
+          <VolumeIcon
+            color={props.isPlaying ? 'white' : props.feedbackColor ?? defaultButtonColor}
+            class="send-icon flex"
+            style={{ width: '18px', height: '18px' }}
+          />
         </Show>
       </Show>
     </button>

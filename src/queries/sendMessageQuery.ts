@@ -31,6 +31,8 @@ export type FeedbackInput = {
   messageId: string;
   rating: FeedbackRatingType;
   content?: string;
+  fio?: string;
+  email?: string;
 };
 
 export type CreateFeedbackRequest = BaseRequest & {
@@ -181,5 +183,104 @@ export const abortTTSQuery = ({ apiHost = 'http://localhost:3000', body, onReque
     method: 'POST',
     url: `${apiHost}/api/v1/text-to-speech/abort`,
     body,
+    onRequest: onRequest,
+  });
+
+// URL для auth API, должен быть установлен через параметр authApiUrl при инициализации Chatbot.init() или Chatbot.initFull()
+const getAuthApiUrl = (): string => {
+  if (typeof window !== 'undefined' && (window as any).__AUTH_API_URL__) {
+    return (window as any).__AUTH_API_URL__;
+  }
+  
+  console.error('❌ [AUTH_API_URL] Переменная AUTH_API_URL не установлена! Установите параметр authApiUrl при инициализации Chatbot.init() или Chatbot.initFull()');
+  throw new Error('AUTH_API_URL не установлена. Установите параметр authApiUrl при инициализации чатбота');
+};
+
+export type TransferToAutoFAQRequest = BaseRequest & {
+  chatflowid: string;
+  body: {
+    chatId: string;
+    userMessage?: string;
+    fio?: string;
+    email?: string;
+    overrideConfig?: {
+      userData?: {
+        email?: string;
+        fullName?: string;
+        fio?: string;
+        login?: string;
+        userId?: string;
+        shortname?: string;
+        orn?: string;
+        phone?: string;
+      };
+    };
+  };
+};
+
+export const transferChatHistoryToAutoFAQ = ({ chatflowid, apiHost = 'http://localhost:3000', body, onRequest }: TransferToAutoFAQRequest) =>
+  sendRequest<any>({
+    method: 'POST',
+    url: `${apiHost}/api/v1/autofaq/${chatflowid}/transfer`,
+    body,
+    onRequest: onRequest,
+  });
+
+export type AuthRequest = BaseRequest & {
+  token: string;
+  onRequest?: (request: RequestInit) => Promise<void>;
+};
+
+export type AuthResponse = {
+  fio?: string; // ФИО пользователя
+  id?: string; // ID пользователя из ответа
+  user_id?: string; // Альтернативное имя для id
+  email?: string; // Email пользователя
+  lower_email?: string; // Email в нижнем регистре
+  telligent_id?: number; // ID пользователя из Telligent
+  sub?: string; // Subject (идентификатор пользователя)
+  username?: string; // Имя пользователя
+  avatar?: string; // URL аватара
+  groups?: string[]; // Группы пользователя
+  [key: string]: unknown;
+};
+
+/**
+ * Запрос для получения ФИО пользователя по токену sk_auth
+ * @param token - Токен sk_auth из cookies
+ * @param onRequest - Callback для модификации запроса
+ * @returns Данные пользователя (fio и другие данные)
+ */
+export const authQuery = async ({ token, onRequest }: AuthRequest): Promise<{ data?: AuthResponse; error?: Error }> => {
+  try {
+    const authApiUrl = getAuthApiUrl();
+    const url = `${authApiUrl}?sk_auth=${encodeURIComponent(token)}`;
+    return await sendRequest<AuthResponse>({
+      method: 'GET',
+      url,
+      onRequest: onRequest,
+    });
+  } catch (e) {
+    console.error('❌ [Auth] Ошибка запроса:', e);
+    return { error: e as Error };
+  }
+};
+
+export type GetChatMessagesRequest = BaseRequest & {
+  chatflowid: string;
+  chatId: string;
+  lastMessageId?: string; // Для polling новых сообщений
+};
+
+/**
+ * Получение сообщений чата
+ * Если передан lastMessageId, возвращаются только новые сообщения после этого ID
+ */
+export const getChatMessagesQuery = ({ chatflowid, apiHost = 'http://localhost:3000', chatId, lastMessageId, onRequest }: GetChatMessagesRequest) =>
+  sendRequest<any>({
+    method: 'GET',
+    url: `${apiHost}/api/v1/internal-chatmessage/${chatflowid}${
+      lastMessageId ? `?chatId=${chatId}&lastMessageId=${lastMessageId}` : `?chatId=${chatId}`
+    }`,
     onRequest: onRequest,
   });

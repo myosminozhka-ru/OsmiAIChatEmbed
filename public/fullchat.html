@@ -1,53 +1,109 @@
-<!--
-  Страница с развёрнутым чатом (не в виде попапа).
-  Используется отдельный вызов Chatbot.initFull() для полноэкранного чата.
--->
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sk Chatwidget Chat — Full Page</title>
+    <title>Полноэкранный чат</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        osmi-ai-fullchatbot {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
 
 <body>
-    <div id="root"></div>
+    <!-- Элемент для полноэкранного чата -->
+    <osmi-ai-fullchatbot></osmi-ai-fullchatbot>
+
     <script type="module">
-        import Chatbot from './web.js'
-
-        const chatflowid = '560cea41-6c22-45cc-9ea1-485e4450c565';
-        const apiHost = 'https://sk.osmi-ai.ru';
-        const authApiUrl = 'https://sk.ru/auth/user_info/';
-
-        Chatbot.initFull({
-            chatflowid,
-            apiHost,
-            authApiUrl,
-            chatflowConfig: {
-                chatFeedback: {
-                    status: true
+        (async () => {
+            try {
+                // Загружаем модуль чатбота
+                let module;
+                try {
+                    module = await import('./web.js');
+                } catch (e1) {
+                    try {
+                        module = await import('/web.js');
+                    } catch (e2) {
+                        module = await import('/dist/web.js');
+                    }
                 }
-            },
-            theme: {
-                chatWindow: {
-                    showTitle: true,
-                    title: 'Умный помощник',
-                    welcomeTitle: 'Привет! Я ваш виртуальный ассистент от Фонда «Сколково».',
-                    welcomeText: 'Задавайте мне вопросы об экосистеме так, словно обращаетесь к сотруднику Сколково.',
-                    assistantGreeting: 'Я ваш AI-ассистент Сколково. Чем могу помочь?',
-                    botMessage: {
-                        showAvatar: true,
+
+                // Получаем Chatbot из модуля или window
+                let Chatbot = module.default;
+                if (window.Chatbot) {
+                    Chatbot = window.Chatbot;
+                }
+
+                if (!Chatbot || typeof Chatbot.initFull !== 'function') {
+                    throw new Error('Chatbot.initFull не доступен');
+                }
+
+                // Инициализируем чатбот с параметрами
+                const chatflowid = '560cea41-6c22-45cc-9ea1-485e4450c565'; // UUID вашего chatflow
+                const apiHost = 'https://sk.osmi-ai.ru'; // URL вашего AI инстанса
+                const authApiUrl = 'https://sk.ru/auth/user_info/'; // URL для auth API
+
+                Chatbot.initFull({
+                    chatflowid,
+                    apiHost,
+                    authApiUrl,
+                    apiKey: undefined,
+                    chatflowConfig: {
+                        chatFeedback: {
+                            status: true
+                        }
                     },
-                    dateTimeToggle: {
-                        date: false,
-                        time: true
-                    },
-                },
+                    theme: {
+                        chatWindow: {
+                            showTitle: true,
+                            title: 'Умный помощник',
+                            welcomeTitle: 'Привет! Я ваш виртуальный ассистент от Фонда «Сколково».',
+                            welcomeText: 'Задавайте мне вопросы об экосистеме так, словно обращаетесь к сотруднику Сколково.',
+                            assistantGreeting: 'Я ваш AI-ассистент Сколково. Чем могу помочь?',
+                            // Не указываем height и width для полноэкранного режима
+                            botMessage: {
+                                showAvatar: true,
+                            },
+                            dateTimeToggle: {
+                                date: false,
+                                time: true
+                            },
+                        },
+                    }
+                });
+
+            } catch (error) {
+                console.error('❌ Ошибка загрузки чатбота:', error);
+                document.body.innerHTML = `
+                    <div style="padding: 20px; color: red; font-family: Arial, sans-serif;">
+                        <h2>Ошибка загрузки чатбота</h2>
+                        <p>${error.message}</p>
+                        <p>Проверьте консоль браузера (F12) для подробностей.</p>
+                    </div>
+                `;
             }
-        });
+        })();
     </script>
 </body>
 
 </html>
+

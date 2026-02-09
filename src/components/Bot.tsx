@@ -1,46 +1,54 @@
-import { createSignal, createEffect, For, onMount, Show, mergeProps, on, createMemo, onCleanup } from 'solid-js';
-import { v4 as uuidv4 } from 'uuid';
+import {createEffect, createMemo, createSignal, For, mergeProps, on, onMount, Show} from 'solid-js';
+import {v4 as uuidv4} from 'uuid';
 import {
-  sendMessageQuery,
-  upsertVectorStoreWithFormData,
-  isStreamAvailableQuery,
-  IncomingInput,
-  getChatbotConfig,
-  FeedbackRatingType,
   createAttachmentWithFormData,
+  FeedbackRatingType,
+  getChatbotConfig,
+  getChatMessagesQuery,
+  IncomingInput,
+  isStreamAvailableQuery,
+  sendMessageQuery,
+  transferChatHistoryToAutoFAQ,
+  upsertVectorStoreWithFormData,
   generateTTSQuery,
   abortTTSQuery,
 } from '@/queries/sendMessageQuery';
-import { TextInput } from './inputs/textInput';
-import { GuestBubble } from './bubbles/GuestBubble';
-import { BotBubble } from './bubbles/BotBubble';
-import { LoadingBubble } from './bubbles/LoadingBubble';
-import { StarterPromptBubble } from './bubbles/StarterPromptBubble';
-import { WelcomeMessage } from './bubbles/WelcomeMessage';
+import {SendArea} from './SendArea';
+import {GuestBubble} from './bubbles/GuestBubble';
+import {BotBubble} from './bubbles/BotBubble';
+import {DateDivider} from './DateDivider';
 import {
   BotMessageTheme,
+  ChatWindowTheme,
+  DateTimeToggleTheme,
+  DisclaimerPopUpTheme,
+  FeedbackTheme,
   FooterTheme,
   TextInputTheme,
   UserMessageTheme,
-  FeedbackTheme,
-  DisclaimerPopUpTheme,
-  DateTimeToggleTheme,
 } from '@/features/bubble/types';
-import { Badge } from './Badge';
-import { Popup, DisclaimerPopup } from '@/features/popup';
-import { Avatar } from '@/components/avatars/Avatar';
-import { DeleteButton, SendButton } from '@/components/buttons/SendButton';
-import { IconButton } from '@/components/buttons/IconButton';
-import { FilePreview } from '@/components/inputs/textInput/components/FilePreview';
-import { CircleDotIcon, ResizeIcon, SparklesIcon, TrashIcon, XIcon } from './icons';
-import { CancelButton } from './buttons/CancelButton';
-import { cancelAudioRecording, startAudioRecording, stopAudioRecording } from '@/utils/audioRecording';
-import { LeadCaptureBubble } from '@/components/bubbles/LeadCaptureBubble';
-import { DateDivider } from './DateDivider';
-import { removeLocalStorageChatHistory, getLocalStorageChatflow, setLocalStorageChatflow, setCookie, getCookie, getUserDataWithAuth } from '@/utils';
-import { cloneDeep } from 'lodash';
-import { FollowUpPromptBubble } from '@/components/bubbles/FollowUpPromptBubble';
-import { fetchEventSource, EventStreamContentType } from '@microsoft/fetch-event-source';
+import {Badge} from './Badge';
+import {DisclaimerPopup, Popup} from '@/features/popup';
+import {DeleteButton} from '@/components/buttons/DeleteButton';
+import {IconButton} from '@/components/buttons/IconButton';
+import {FilePreview} from '@/components/inputs/textInput/components/FilePreview';
+import {ResizeIcon, SparklesIcon, TrashIcon, XIcon} from './icons';
+import {LeadCaptureBubble} from '@/components/bubbles/LeadCaptureBubble';
+import {
+  deleteCookie,
+  getCookie,
+  getLocalStorageChatflow,
+  getUserDataWithAuth,
+  removeLocalStorageChatHistory,
+  setCookie,
+  setLocalStorageChatflow,
+} from '@/utils';
+import {cloneDeep} from 'lodash';
+import {FollowUpPromptBubble} from '@/components/bubbles/FollowUpPromptBubble';
+import {EventStreamContentType, fetchEventSource} from '@microsoft/fetch-event-source';
+import {WelcomeMessage} from '@/components/bubbles/WelcomeMessage';
+import {ServiceErrorScreen} from './ServiceErrorScreen';
+import {cancelAudioRecording, startAudioRecording, stopAudioRecording} from '@/utils/audioRecording';
 
 export type FileEvent<T = EventTarget> = {
   target: T;
@@ -60,7 +68,6 @@ export type UploadsConfig = {
   imgUploadSizeAndTypes: IUploadConstraits[];
   fileUploadSizeAndTypes: IUploadConstraits[];
   isImageUploadAllowed: boolean;
-  isSpeechToTextEnabled: boolean;
   isRAGFileUploadAllowed: boolean;
 };
 
@@ -115,6 +122,8 @@ export type MessageType = {
   messageId?: string;
   message: string;
   type: messageType;
+  welcomeTitle?: string;
+  welcomeText?: string;
   sourceDocuments?: any;
   fileAnnotations?: any;
   fileUploads?: Partial<FileUpload>[];
@@ -129,6 +138,7 @@ export type MessageType = {
   id?: string;
   followUpPrompts?: string;
   dateTime?: string;
+  disableFeedback?: boolean; // Если true, кнопки фидбэка не будут отображаться для этого сообщения
 };
 
 type IUploads = {
@@ -144,45 +154,38 @@ export type observersConfigType = Record<'observeUserInput' | 'observeLoading' |
 export type BotProps = {
   chatflowid: string;
   apiHost?: string;
-  authApiUrl?: string;
+  apiKey?: string;
   onRequest?: (request: RequestInit) => Promise<void>;
   chatflowConfig?: Record<string, unknown>;
-  backgroundColor?: string;
-  welcomeMessage?: string;
   welcomeTitle?: string;
   welcomeText?: string;
+  assistantGreeting?: string;
   showWelcomeImage?: boolean;
   errorMessage?: string;
   botMessage?: BotMessageTheme;
   userMessage?: UserMessageTheme;
   textInput?: TextInputTheme;
   feedback?: FeedbackTheme;
-  poweredByTextColor?: string;
-  badgeBackgroundColor?: string;
-  bubbleBackgroundColor?: string;
-  bubbleTextColor?: string;
   showTitle?: boolean;
   showAgentMessages?: boolean;
   title?: string;
   titleAvatarSrc?: string;
-  titleTextColor?: string;
-  titleBackgroundColor?: string;
-  formBackgroundColor?: string;
-  formTextColor?: string;
   fontSize?: number;
   isFullPage?: boolean;
   footer?: FooterTheme;
   sourceDocsTitle?: string;
   observersConfig?: observersConfigType;
   starterPrompts?: string[] | Record<string, { prompt: string }>;
-  starterPromptFontSize?: number;
   clearChatOnReload?: boolean;
   disclaimer?: DisclaimerPopUpTheme;
   dateTimeToggle?: DateTimeToggleTheme;
   renderHTML?: boolean;
   closeBot?: () => void;
+  enableCopyMessage?: boolean;
+  showBadge?: boolean;
   toggleFullscreen?: () => void;
   isFullscreen?: boolean;
+  chatWindow?: ChatWindowTheme;
 };
 
 export type LeadsConfig = {
@@ -194,90 +197,13 @@ export type LeadsConfig = {
   successMessage?: string;
 };
 
+const defaultBackgroundColor = 'var(--chatbot-container-bg-color)';
+const defaultTextColor = 'var(--chatbot-text-bg-color)';
+const defaultTitleBackgroundColor = 'var(--chatbot-title-bg-color)';
+
 const defaultWelcomeTitle = 'Привет! Я ваш виртуальный ассистент от Фонда «Сколково».';
 const defaultWelcomeText = 'Задавайте мне вопросы об экосистеме так, словно обращаетесь к сотруднику Сколково.';
-const defaultWelcomeMessage = 'Я ваш AI-ассистент. Чем могу помочь?';
-
-/*const sourceDocuments = [
-    {
-        "pageContent": "I know some are talking about "living with COVID-19". Tonight – I say that we will never just accept living with COVID-19. \r\n\r\nWe will continue to combat the virus as we do other diseases. And because this is a virus that mutates and spreads, we will stay on guard. \r\n\r\nHere are four common sense steps as we move forward safely.  \r\n\r\nFirst, stay protected with vaccines and treatments. We know how incredibly effective vaccines are. If you're vaccinated and boosted you have the highest degree of protection. \r\n\r\nWe will never give up on vaccinating more Americans. Now, I know parents with kids under 5 are eager to see a vaccine authorized for their children. \r\n\r\nThe scientists are working hard to get that done and we'll be ready with plenty of vaccines when they do. \r\n\r\nWe're also ready with anti-viral treatments. If you get COVID-19, the Pfizer pill reduces your chances of ending up in the hospital by 90%.",
-        "metadata": {
-          "source": "blob",
-          "blobType": "",
-          "loc": {
-            "lines": {
-              "from": 450,
-              "to": 462
-            }
-          }
-        }
-    },
-    {
-        "pageContent": "sistance,  and  polishing  [65].  For  instance,  AI  tools  generate\nsuggestions based on inputting keywords or topics. The tools\nanalyze  search  data,  trending  topics,  and  popular  queries  to\ncreate  fresh  content.  What's  more,  AIGC  assists  in  writing\narticles and posting blogs on specific topics. While these tools\nmay not be able to produce high-quality content by themselves,\nthey can provide a starting point for a writer struggling with\nwriter's block.\nH.  Cons of AIGC\nOne of the main concerns among the public is the potential\nlack  of  creativity  and  human  touch  in  AIGC.  In  addition,\nAIGC sometimes lacks a nuanced understanding of language\nand context, which may lead to inaccuracies and misinterpre-\ntations. There are also concerns about the ethics and legality\nof using AIGC, particularly when it results in issues such as\ncopyright  infringement  and  data  privacy.  In  this  section,  we\nwill discuss some of the disadvantages of AIGC (Table IV).",
-        "metadata": {
-          "source": "blob",
-          "blobType": "",
-          "pdf": {
-            "version": "1.10.100",
-            "info": {
-              "PDFFormatVersion": "1.5",
-              "IsAcroFormPresent": false,
-              "IsXFAPresent": false,
-              "Title": "",
-              "Author": "",
-              "Subject": "",
-              "Keywords": "",
-              "Creator": "LaTeX with hyperref",
-              "Producer": "pdfTeX-1.40.21",
-              "CreationDate": "D:20230414003603Z",
-              "ModDate": "D:20230414003603Z",
-              "Trapped": {
-                "name": "False"
-              }
-            },
-            "metadata": null,
-            "totalPages": 17
-          },
-          "loc": {
-            "pageNumber": 8,
-            "lines": {
-              "from": 301,
-              "to": 317
-            }
-          }
-        }
-    },
-    {
-        "pageContent": "Main article: Views of Elon Musk",
-        "metadata": {
-          "source": "https://en.wikipedia.org/wiki/Elon_Musk",
-          "loc": {
-            "lines": {
-              "from": 2409,
-              "to": 2409
-            }
-          }
-        }
-    },
-    {
-        "pageContent": "First Name: John\nLast Name: Doe\nAddress: 120 jefferson st.\nStates: Riverside\nCode: NJ\nPostal: 8075",
-        "metadata": {
-          "source": "blob",
-          "blobType": "",
-          "line": 1,
-          "loc": {
-            "lines": {
-              "from": 1,
-              "to": 6
-            }
-          }
-        }
-    },
-]*/
-
-const defaultBackgroundColor = 'var(--chatbot-container-bg-color)';
-const defaultTextColor = 'var(--chatbot-title-color)';
-const defaultTitleBackgroundColor = 'var(--chatbot-title-bg-color)';
+const defaultAssistantGreeting = 'Я ваш AI-ассистент. Чем могу помочь?';
 
 /* FeedbackDialog component - for collecting user feedback */
 const FeedbackDialog = (props: {
@@ -311,7 +237,7 @@ const FeedbackDialog = (props: {
             </button>
             <button
               class="font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
-              style={{ background: 'var(--chatbot-button-bg-color)', color: 'var(--chatbot-button-color)' }}
+              style={{ background: '#3b82f6', color: 'white' }}
               onClick={props.onSubmit}
             >
               Submit
@@ -329,10 +255,6 @@ const FormInputView = (props: {
   description: string;
   inputParams: any[];
   onSubmit: (formData: object) => void;
-  parentBackgroundColor?: string;
-  backgroundColor?: string;
-  textColor?: string;
-  sendButtonColor?: string;
   fontSize?: number;
 }) => {
   const [formData, setFormData] = createSignal<Record<string, any>>({});
@@ -348,26 +270,21 @@ const FormInputView = (props: {
 
   return (
     <div
-      class="w-full h-full flex flex-col items-center justify-center px-4 py-8 rounded-lg chatbot-container"
+      class="w-full h-full flex flex-col items-center justify-center px-4 py-8 rounded-lg font-sans"
       style={{
-        'font-size': props.fontSize ? `${props.fontSize}px` : 'var(--chatbot-font-size)',
+        'font-size': props.fontSize ? `${props.fontSize}px` : '16px',
       }}
     >
       <div
-        class="w-full max-w-md shadow-lg rounded-lg overflow-hidden"
+        class="w-full max-w-md bg-white shadow-lg rounded-lg overflow-hidden font-sans"
         style={{
+          'font-size': props.fontSize ? `${props.fontSize}px` : '16px',
           background: defaultBackgroundColor,
-          color: defaultTextColor,
-          'font-size': props.fontSize ? `${props.fontSize}px` : 'var(--chatbot-font-size)',
         }}
       >
         <div class="p-6">
           <h2 class="text-xl font-bold mb-2">{props.title}</h2>
-          {props.description && (
-            <p class="text-gray-600 mb-6" style={{ color: defaultTextColor }}>
-              {props.description}
-            </p>
-          )}
+          {props.description && <p class="text-gray-600 mb-6">{props.description}</p>}
 
           <form onSubmit={handleSubmit} class="space-y-4">
             <For each={props.inputParams}>
@@ -383,7 +300,7 @@ const FormInputView = (props: {
                         border: '1px solid #9ca3af',
                         'border-radius': '0.375rem',
                       }}
-                      onFocus={(e) => (e.target.style.border = '1px solid var(--chatbot-button-bg-color)')}
+                      onFocus={(e) => (e.target.style.border = '1px solid #3b82f6')}
                       onBlur={(e) => (e.target.style.border = '1px solid #9ca3af')}
                       name={param.name}
                       onInput={(e) => handleInputChange(param.name, e.target.value)}
@@ -399,7 +316,7 @@ const FormInputView = (props: {
                         border: '1px solid #9ca3af',
                         'border-radius': '0.375rem',
                       }}
-                      onFocus={(e) => (e.target.style.border = '1px solid var(--chatbot-button-bg-color)')}
+                      onFocus={(e) => (e.target.style.border = '1px solid #3b82f6')}
                       onBlur={(e) => (e.target.style.border = '1px solid #9ca3af')}
                       name={param.name}
                       onInput={(e) => handleInputChange(param.name, parseFloat(e.target.value))}
@@ -411,10 +328,9 @@ const FormInputView = (props: {
                     <div class="flex items-center">
                       <input
                         type="checkbox"
-                        class="h-4 w-4 rounded focus:ring-2 focus:ring-[var(--chatbot-button-bg-color)] focus:ring-offset-0"
+                        class="h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
                         style={{
                           border: '1px solid #9ca3af',
-                          accentColor: 'var(--chatbot-button-bg-color)',
                         }}
                         name={param.name}
                         onChange={(e) => handleInputChange(param.name, e.target.checked)}
@@ -430,7 +346,7 @@ const FormInputView = (props: {
                         border: '1px solid #9ca3af',
                         'border-radius': '0.375rem',
                       }}
-                      onFocus={(e) => (e.target.style.border = '1px solid var(--chatbot-button-bg-color)')}
+                      onFocus={(e) => (e.target.style.border = '1px solid #3b82f6')}
                       onBlur={(e) => (e.target.style.border = '1px solid #9ca3af')}
                       name={param.name}
                       onChange={(e) => handleInputChange(param.name, e.target.value)}
@@ -447,11 +363,7 @@ const FormInputView = (props: {
             <div class="pt-4">
               <button
                 type="submit"
-                class="w-full py-2 px-4 font-semibold rounded-md focus:outline-none transition duration-300 ease-in-out chatbot-button"
-                style={{
-                  color: 'var(--chatbot-button-color)',
-                  'background-color': 'var(--chatbot-button-bg-color)',
-                }}
+                class="w-full py-2 px-4 text-white font-semibold rounded-md focus:outline-none transition duration-300 ease-in-out bg-blue-500 hover:bg-blue-600"
               >
                 Submit
               </button>
@@ -464,8 +376,8 @@ const FormInputView = (props: {
 };
 
 export const Bot = (botProps: BotProps & { class?: string }) => {
-  // set a default value for showTitle if not set and merge with other props
-  const props = mergeProps({ showTitle: true }, botProps);
+  // set default values for props that should be enabled unless explicitly disabled
+  const props = mergeProps({ showTitle: true, renderHTML: true }, botProps);
   let chatContainer: HTMLDivElement | undefined;
   let bottomSpacer: HTMLDivElement | undefined;
   let botContainer: HTMLDivElement | undefined;
@@ -474,58 +386,70 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   const [loading, setLoading] = createSignal(false);
   const [sourcePopupOpen, setSourcePopupOpen] = createSignal(false);
   const [sourcePopupSrc, setSourcePopupSrc] = createSignal({});
-  const [messages, setMessages] = createSignal<MessageType[]>(
-    [
-      {
-        message: props.welcomeMessage ?? defaultWelcomeMessage,
-        type: 'apiMessage',
-      },
-    ],
-    { equals: false },
-  );
+  const [messages, setMessages] = createSignal<MessageType[]>([], { equals: false });
+
+  // Проверяем, подключен ли оператор (последнее сообщение от оператора)
+  const isOperatorConnected = createMemo(() => {
+    const currentMessages = messages();
+    if (currentMessages.length === 0) return false;
+
+    const lastMessage = currentMessages[currentMessages.length - 1];
+    if (lastMessage && lastMessage.fileAnnotations) {
+      try {
+        const fileAnnotations = typeof lastMessage.fileAnnotations === 'string'
+          ? JSON.parse(lastMessage.fileAnnotations)
+          : lastMessage.fileAnnotations;
+        const operatorInfo = Array.isArray(fileAnnotations)
+          ? fileAnnotations.find((fa: any) => fa.sender === 'operator')
+          : fileAnnotations?.sender === 'operator'
+            ? fileAnnotations
+            : null;
+        return !!operatorInfo;
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
+  });
 
   const [isChatFlowAvailableToStream, setIsChatFlowAvailableToStream] = createSignal(false);
   const [chatId, setChatId] = createSignal('');
   const [isMessageStopping, setIsMessageStopping] = createSignal(false);
+
+  let autofaqPollingInterval: NodeJS.Timeout | null = null;
+  let autofaqLastMessageId: string | undefined = undefined;
+  let isPollingActive = false;
   const [starterPrompts, setStarterPrompts] = createSignal<string[]>([], { equals: false });
-  const [chatFeedbackStatus, setChatFeedbackStatus] = createSignal<boolean>(true);
+  const [chatFeedbackStatus, setChatFeedbackStatus] = createSignal<boolean>(true); // По умолчанию фидбэк включен
   const [fullFileUpload, setFullFileUpload] = createSignal<boolean>(false);
   const [uploadsConfig, setUploadsConfig] = createSignal<UploadsConfig>();
   const [leadsConfig, setLeadsConfig] = createSignal<LeadsConfig>();
   const [isLeadSaved, setIsLeadSaved] = createSignal(false);
   const [leadEmail, setLeadEmail] = createSignal('');
   const [disclaimerPopupOpen, setDisclaimerPopupOpen] = createSignal(false);
+  const [hasServiceError, setHasServiceError] = createSignal(false);
 
   const [openFeedbackDialog, setOpenFeedbackDialog] = createSignal(false);
   const [feedback, setFeedback] = createSignal('');
   const [pendingActionData, setPendingActionData] = createSignal(null);
   const [feedbackType, setFeedbackType] = createSignal('');
-  const [userData, setUserData] = createSignal<{
-    fio?: string;
-    user_id?: string;
-    user_name?: string;
-    email?: string;
-    token?: string;
-    shortname?: string;
-    orn?: string;
-  }>({});
+  const [isTransferring, setIsTransferring] = createSignal(false);
+
+  // AbortController для текущего SSE-запроса (streaming)
+  let sseAbortController: AbortController | null = null;
 
   // start input type
   const [startInputType, setStartInputType] = createSignal('');
   const [formTitle, setFormTitle] = createSignal('');
   const [formDescription, setFormDescription] = createSignal('');
-  const [formInputsData, setFormInputsData] = createSignal({});
   const [formInputParams, setFormInputParams] = createSignal([]);
+
+  // Данные пользователя (ФИО и другие данные)
+  const [userData, setUserData] = createSignal<{ fio?: string; user_id?: string; user_name?: string; email?: string; token?: string }>({});
 
   // drag & drop file input
   // TODO: fix this type
   const [previews, setPreviews] = createSignal<FilePreview[]>([]);
-
-  // audio recording
-  const [elapsedTime, setElapsedTime] = createSignal('00:00');
-  const [isRecording, setIsRecording] = createSignal(false);
-  const [recordingNotSupported, setRecordingNotSupported] = createSignal(false);
-  const [isLoadingRecording, setIsLoadingRecording] = createSignal(false);
 
   // follow-up prompts
   const [followUpPromptsStatus, setFollowUpPromptsStatus] = createSignal<boolean>(false);
@@ -536,35 +460,128 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   const [uploadedFiles, setUploadedFiles] = createSignal<{ file: File; type: string }[]>([]);
   const [fullFileUploadAllowedTypes, setFullFileUploadAllowedTypes] = createSignal('*');
 
-  // TTS state
+  const [isTTSEnabled, setIsTTSEnabled] = createSignal(props.chatWindow?.enableTTS ?? false);
   const [isTTSLoading, setIsTTSLoading] = createSignal<Record<string, boolean>>({});
   const [isTTSPlaying, setIsTTSPlaying] = createSignal<Record<string, boolean>>({});
   const [ttsAudio, setTtsAudio] = createSignal<Record<string, HTMLAudioElement>>({});
-  const [isTTSEnabled, setIsTTSEnabled] = createSignal(false);
-  const [ttsStreamingState, setTtsStreamingState] = createSignal({
-    mediaSource: null as MediaSource | null,
-    sourceBuffer: null as SourceBuffer | null,
-    audio: null as HTMLAudioElement | null,
-    chunkQueue: [] as Uint8Array[],
-    isBuffering: false,
-    audioFormat: null as string | null,
-    abortController: null as AbortController | null,
-  });
 
-  // TTS auto-scroll prevention refs
-  let isTTSActionRef = false;
-  let ttsTimeoutRef: ReturnType<typeof setTimeout> | null = null;
+  const [elapsedTime, setElapsedTime] = createSignal('00:00');
+  const [isRecording, setIsRecording] = createSignal(false);
+  const [recordingNotSupported, setRecordingNotSupported] = createSignal(false);
+  const [isLoadingRecording, setIsLoadingRecording] = createSignal(false);
+
+  let audioRef: HTMLAudioElement | undefined;
+  const defaultReceiveSound = 'https://cdn.jsdelivr.net/npm/osmi-ai-embed@latest/src/assets/receive_message.mp3';
+  const playReceiveSound = () => {
+    if (props.textInput?.receiveMessageSound) {
+      let audioSrc = defaultReceiveSound;
+      if (props.textInput?.receiveSoundLocation) {
+        audioSrc = props.textInput?.receiveSoundLocation;
+      }
+      audioRef = new Audio(audioSrc);
+      audioRef.play();
+    }
+  };
+
+  let hasSoundPlayed = false;
+
+  const handleTTSClick = async (messageId: string, messageText: string) => {
+    if (!props.chatflowid || !chatId()) return;
+
+    // помечаем сообщение как загружающееся
+    setIsTTSLoading((prev) => ({ ...prev, [messageId]: true }));
+
+    try {
+      // если уже что-то играет для этого сообщения — остановим
+      const currentAudioMap = ttsAudio();
+      const existingAudio = currentAudioMap[messageId];
+      if (existingAudio) {
+        existingAudio.pause();
+        existingAudio.currentTime = 0;
+      }
+
+      const response = await generateTTSQuery({
+        apiHost: props.apiHost,
+        body: {
+          chatId: chatId(),
+          chatflowId: props.chatflowid,
+          chatMessageId: messageId,
+          text: messageText,
+        },
+        onRequest: props.onRequest,
+      });
+
+      if (!response.ok) {
+        console.error('❌ [TTS] Ошибка ответа сервера:', response.status, response.statusText);
+        return;
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      const audio = new Audio(audioUrl);
+      audio.onended = () => {
+        setIsTTSPlaying((prev) => ({ ...prev, [messageId]: false }));
+        // очищаем ссылку после окончания
+        setTtsAudio((prev) => {
+          const next = { ...prev };
+          delete next[messageId];
+          return next;
+        });
+      };
+
+      setTtsAudio((prev) => ({ ...prev, [messageId]: audio }));
+      setIsTTSPlaying((prev) => ({ ...prev, [messageId]: true }));
+      audio.play().catch((err) => {
+        console.error('❌ [TTS] Ошибка воспроизведения аудио:', err);
+        setIsTTSPlaying((prev) => ({ ...prev, [messageId]: false }));
+      });
+    } catch (error) {
+      console.error('❌ [TTS] Ошибка при генерации TTS:', error);
+    } finally {
+      setIsTTSLoading((prev) => ({ ...prev, [messageId]: false }));
+    }
+  };
+
+  const handleTTSStop = (messageId: string) => {
+    const currentAudioMap = ttsAudio();
+    const audio = currentAudioMap[messageId];
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    setIsTTSPlaying((prev) => ({ ...prev, [messageId]: false }));
+
+    // Дополнительно уведомляем бэкенд, если требуется
+    abortTTSQuery({
+      apiHost: props.apiHost,
+      body: {
+        chatflowId: props.chatflowid || '',
+        chatId: chatId(),
+        chatMessageId: messageId,
+      },
+      onRequest: props.onRequest,
+    }).catch((err) => {
+      console.warn('⚠️ [TTS] Ошибка при отмене TTS:', err);
+    });
+  };
 
   createMemo(() => {
     const customerId = (props.chatflowConfig?.vars as any)?.customerId;
     setChatId(customerId ? `${customerId.toString()}+${uuidv4()}` : uuidv4());
   });
 
+  // Формируем welcomeText (только текст, без приветствия)
+  const formattedWelcomeText = createMemo(() => {
+    return props.welcomeText ?? defaultWelcomeText;
+  });
+
   onMount(async () => {
-    if (props.authApiUrl && typeof (window as any).__AUTH_API_URL__ !== 'undefined') {
-      const data = await getUserDataWithAuth(props.onRequest);
-      setUserData(data);
-    }
+    // Загружаем данные пользователя при монтировании компонента
+    // URL для auth запроса фиксированный (https://sk.ru/auth/user_info/), не зависит от apiHost
+    const data = await getUserDataWithAuth(props.onRequest);
+
+    setUserData(data);
 
     if (botProps?.observersConfig) {
       const { observeUserInput, observeLoading, observeMessages } = botProps.observersConfig;
@@ -591,26 +608,161 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     }, 50);
   });
 
+  const startAutoFAQPolling = () => {
+    if (isPollingActive) return;
+    isPollingActive = true;
+
+    const pollForNewMessages = async () => {
+      try {
+        const currentChatId = chatId();
+        if (!currentChatId) return;
+
+        const currentMessages = messages();
+        // ВАЖНО: Определяем lastMessageId по дате создания, а не по порядку в массиве
+        // Это гарантирует, что мы получим действительно последнее сообщение
+        const lastMessageWithId = [...currentMessages]
+          .filter((msg) => (msg.messageId || msg.id) && !String(msg.messageId || msg.id).startsWith('transfer-'))
+          .sort((a, b) => {
+            // Сортируем по дате создания, если она есть
+            const aDate = a.dateTime ? new Date(a.dateTime).getTime() : 0;
+            const bDate = b.dateTime ? new Date(b.dateTime).getTime() : 0;
+            if (aDate !== bDate) return bDate - aDate; // Более новые сообщения первыми
+            // Если даты равны или отсутствуют, используем порядок в массиве
+            return 0;
+          })[0];
+        const newLastMessageId = lastMessageWithId?.messageId || lastMessageWithId?.id;
+
+        if (newLastMessageId && newLastMessageId !== autofaqLastMessageId) {
+          autofaqLastMessageId = newLastMessageId;
+        }
+
+        const result = await getChatMessagesQuery({
+          chatflowid: props.chatflowid,
+          apiHost: props.apiHost,
+          chatId: currentChatId,
+          lastMessageId: autofaqLastMessageId || undefined,
+          onRequest: props.onRequest,
+        });
+
+        if (result.error) return;
+
+        let messagesData = result.data;
+        if (messagesData && !Array.isArray(messagesData) && typeof messagesData === 'object') {
+          if ('data' in messagesData && Array.isArray(messagesData.data)) {
+            messagesData = messagesData.data;
+          } else if ('messages' in messagesData && Array.isArray(messagesData.messages)) {
+            messagesData = messagesData.messages;
+          } else {
+            messagesData = [messagesData];
+          }
+        }
+
+        if (messagesData && Array.isArray(messagesData) && messagesData.length > 0) {
+          const currentMessageIds = new Set(
+            messages()
+              .map((m) => m.messageId || m.id)
+              .filter(Boolean),
+          );
+
+          const parseJsonField = (field: any) => {
+            if (field && typeof field === 'string') {
+              try {
+                return JSON.parse(field);
+              } catch {
+                return field;
+              }
+            }
+            return field;
+          };
+
+          const newMessages = messagesData
+            .filter((msg: any) => {
+              const msgId = msg.id || msg.messageId;
+              return msgId && !currentMessageIds.has(msgId);
+            })
+            .map((message: any) => ({
+              message: message.content || message.message || '',
+              type: (message.role || 'apiMessage') as 'apiMessage' | 'userMessage',
+              messageId: message.id,
+              id: message.id,
+              dateTime: message.createdDate || new Date().toISOString(),
+              sourceDocuments: parseJsonField(message.sourceDocuments),
+              usedTools: message.usedTools,
+              fileAnnotations: parseJsonField(message.fileAnnotations),
+              agentReasoning: message.agentReasoning,
+              action: parseJsonField(message.action),
+              artifacts: message.artifacts,
+              feedback: message.feedback,
+            }));
+
+          if (newMessages.length > 0) {
+            const closingMessage = newMessages.find((msg) => {
+              const messageText = (msg.message || '').toLowerCase().trim();
+              return (
+                messageText.includes('спасибо, что воспользовались нашим сервисом') ||
+                messageText.includes('спасибо что воспользовались нашим сервисом') ||
+                messageText.includes('благодарим за обращение') ||
+                messageText.includes('чат завершен') ||
+                messageText.includes('чат закрыт')
+              );
+            });
+
+            if (closingMessage) {
+              stopAutoFAQPolling();
+            }
+
+            if (newMessages.some((msg) => msg.type === 'apiMessage')) {
+              playReceiveSound();
+            }
+
+            setMessages((prevMessages) => {
+              const allMessages = [...prevMessages, ...newMessages];
+              // ВАЖНО: Сортируем все сообщения по дате создания для правильного порядка
+              const sortedMessages = allMessages.sort((a, b) => {
+                const aDate = a.dateTime ? new Date(a.dateTime).getTime() : 0;
+                const bDate = b.dateTime ? new Date(b.dateTime).getTime() : 0;
+                if (aDate !== bDate) return aDate - bDate; // Сортируем по возрастанию даты
+                return 0; // Если даты равны, сохраняем порядок
+              });
+              addChatMessage(sortedMessages);
+              // Обновляем lastMessageId на последнее сообщение по дате
+              const lastMessageByDate = sortedMessages
+                .filter((msg) => (msg.messageId || msg.id) && !String(msg.messageId || msg.id).startsWith('transfer-'))
+                .sort((a, b) => {
+                  const aDate = a.dateTime ? new Date(a.dateTime).getTime() : 0;
+                  const bDate = b.dateTime ? new Date(b.dateTime).getTime() : 0;
+                  return bDate - aDate; // Более новые первыми
+                })[0];
+              if (lastMessageByDate && (lastMessageByDate.messageId || lastMessageByDate.id)) {
+                autofaqLastMessageId = lastMessageByDate.messageId || lastMessageByDate.id;
+              }
+              return sortedMessages;
+            });
+
+            scrollToBottom();
+          }
+        }
+      } catch (error) {
+        // Игнорируем ошибки
+      }
+    };
+
+    autofaqPollingInterval = setInterval(pollForNewMessages, 2000);
+    pollForNewMessages();
+  };
+
+  const stopAutoFAQPolling = () => {
+    if (autofaqPollingInterval) {
+      clearInterval(autofaqPollingInterval);
+      autofaqPollingInterval = null;
+      isPollingActive = false;
+    }
+  };
+
   const scrollToBottom = () => {
     setTimeout(() => {
       chatContainer?.scrollTo(0, chatContainer.scrollHeight);
     }, 50);
-  };
-
-  // Helper function to manage TTS action flag
-  const setTTSAction = (isActive: boolean) => {
-    isTTSActionRef = isActive;
-    if (ttsTimeoutRef) {
-      clearTimeout(ttsTimeoutRef);
-      ttsTimeoutRef = null;
-    }
-    if (isActive) {
-      // Reset the flag after a longer delay to ensure all state changes are complete
-      ttsTimeoutRef = setTimeout(() => {
-        isTTSActionRef = false;
-        ttsTimeoutRef = null;
-      }, 300);
-    }
   };
 
   /**
@@ -631,23 +783,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     setLocalStorageChatflow(props.chatflowid, chatId(), { chatHistory: messages });
   };
 
-  // Define the audioRef
-  let audioRef: HTMLAudioElement | undefined;
-  // CDN link for default receive sound
-  const defaultReceiveSound = 'https://cdn.jsdelivr.net/gh/SkChatwidget/SkChatwidgetEmbed@latest/src/assets/receive_message.mp3';
-  const playReceiveSound = () => {
-    if (props.textInput?.receiveMessageSound) {
-      let audioSrc = defaultReceiveSound;
-      if (props.textInput?.receiveSoundLocation) {
-        audioSrc = props.textInput?.receiveSoundLocation;
-      }
-      audioRef = new Audio(audioSrc);
-      audioRef.play();
-    }
-  };
-
-  let hasSoundPlayed = false;
-
   const updateLastMessage = (text: string) => {
     setMessages((prevMessages) => {
       const allMessages = [...cloneDeep(prevMessages)];
@@ -655,10 +790,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       if (!text) return allMessages;
       allMessages[allMessages.length - 1].message += text;
       allMessages[allMessages.length - 1].rating = undefined;
-      allMessages[allMessages.length - 1].dateTime = new Date().toISOString();
-      if (!hasSoundPlayed) {
-        playReceiveSound();
-        hasSoundPlayed = true;
+      if (!allMessages[allMessages.length - 1].dateTime) {
+        allMessages[allMessages.length - 1].dateTime = new Date().toISOString();
       }
       addChatMessage(allMessages);
       return allMessages;
@@ -666,12 +799,16 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   };
 
   const updateErrorMessage = (errorMessage: string) => {
-    setMessages((prevMessages) => {
-      const allMessages = [...cloneDeep(prevMessages)];
-      allMessages.push({ message: props.errorMessage || errorMessage, type: 'apiMessage' });
-      addChatMessage(allMessages);
-      return allMessages;
+    // Логируем полную информацию об ошибке в консоль
+    console.error('Service Error (EventStream):', {
+      message: errorMessage,
+      timestamp: new Date().toISOString(),
     });
+
+    // Устанавливаем состояние ошибки сервиса (пользователю всегда показываем один экран)
+    setHasServiceError(true);
+
+    // Не добавляем сообщение в чат, так как показывается ServiceErrorScreen
   };
 
   const updateLastMessageSourceDocuments = (sourceDocuments: any) => {
@@ -722,7 +859,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
   const updateAgentFlowEvent = (event: string) => {
     if (event === 'INPROGRESS') {
-      setMessages((prevMessages) => [...prevMessages, { message: '', type: 'apiMessage', agentFlowEventStatus: event }]);
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { message: '', type: 'apiMessage', agentFlowEventStatus: event, dateTime: new Date().toISOString() },
+      ]);
     } else {
       setMessages((prevMessages) => {
         const allMessages = [...cloneDeep(prevMessages)];
@@ -757,7 +897,25 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     setMessages((data) => {
       const updated = data.map((item, i) => {
         if (i === data.length - 1) {
-          return { ...item, action: typeof action === 'string' ? JSON.parse(action) : action };
+          let normalizedAction = typeof action === 'string' ? JSON.parse(action) : action;
+
+          // Нормализация формата кнопок от AutoFAQ
+          // AutoFAQ может отправлять кнопки в формате { type: "buttons", buttons: [...] }
+          // Преобразуем в формат { elements: [...] }
+          if (normalizedAction && normalizedAction.type === 'buttons' && Array.isArray(normalizedAction.buttons)) {
+            normalizedAction = {
+              ...normalizedAction,
+              elements: normalizedAction.buttons.map((btn: any) => ({
+                type: btn.type || 'button',
+                label: btn.text || btn.label || btn.value || 'Кнопка',
+                value: btn.value,
+              })),
+            };
+            // Удаляем старый формат buttons, оставляем только elements
+            delete normalizedAction.buttons;
+          }
+
+          return { ...item, action: normalizedAction };
         }
         return item;
       });
@@ -773,20 +931,21 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   };
 
   // Handle errors
-  const handleError = (message = 'Oops! There seems to be an error. Please try again.', preventOverride?: boolean) => {
-    let errMessage = message;
-    if (!preventOverride && props.errorMessage) {
-      errMessage = props.errorMessage;
-    }
-    setMessages((prevMessages) => {
-      const messages: MessageType[] = [...prevMessages, { message: errMessage, type: 'apiMessage' }];
-      addChatMessage(messages);
-      return messages;
+  const handleError = (message = 'Oops! There seems to be an error. Please try again.', preventOverride?: boolean, errorDetails?: any) => {
+    // Логируем полную информацию об ошибке в консоль
+    console.error('Service Error:', {
+      message,
+      errorDetails,
+      timestamp: new Date().toISOString(),
     });
+
+    // Устанавливаем состояние ошибки сервиса (пользователю всегда показываем один экран)
+    setHasServiceError(true);
+
+    // Не добавляем сообщение в чат, так как показывается ServiceErrorScreen
     setLoading(false);
     setUserInput('');
     setUploadedFiles([]);
-    scrollToBottom();
   };
 
   const handleDisclaimerAccept = () => {
@@ -814,6 +973,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         const allMessages = [...cloneDeep(prevMessages)];
         if (allMessages[allMessages.length - 1].type === 'apiMessage') {
           allMessages[allMessages.length - 1].messageId = data.chatMessageId;
+          // Use dateTime from server if available
+          if (data.dateTime) {
+            allMessages[allMessages.length - 1].dateTime = data.dateTime;
+          }
         }
         addChatMessage(allMessages);
         return allMessages;
@@ -821,12 +984,15 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     }
 
     if (input === '' && data.question) {
-      // the response contains the question even if it was in an audio format
       // so if input is empty but the response contains the question, update the user message to show the question
       setMessages((prevMessages) => {
         const allMessages = [...cloneDeep(prevMessages)];
         if (allMessages[allMessages.length - 2].type === 'apiMessage') return allMessages;
         allMessages[allMessages.length - 2].message = data.question;
+        // Use dateTime from server if available for user message
+        if (data.userMessageDateTime) {
+          allMessages[allMessages.length - 2].dateTime = data.userMessageDateTime;
+        }
         addChatMessage(allMessages);
         return allMessages;
       });
@@ -848,39 +1014,139 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     const chatId = params.chatId;
     const input = params.question;
     params.streaming = true;
+
+    // Подготавливаем headers и применяем onRequest если есть
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (props.onRequest) {
+      const requestInit: RequestInit = {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(params),
+      };
+      await props.onRequest(requestInit);
+      // Копируем обновленные headers обратно
+      if (requestInit.headers) {
+        Object.assign(headers, requestInit.headers as Record<string, string>);
+      }
+    }
+
+    // ВАЖНО: EventSource (SSE) имеет ограничения по CORS:
+    // 1. Не поддерживает кастомные заголовки (кроме Content-Type)
+    // 2. Не поддерживает credentials так же хорошо, как fetch
+    // 3. Браузер может блокировать запрос до установки CORS заголовков сервером
+    // Поэтому используем только минимальные заголовки для SSE
+    const sseHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Перед каждым новым SSE-запросом отменяем предыдущий, если он ещё активен
+    if (sseAbortController) {
+      sseAbortController.abort();
+      sseAbortController = null;
+    }
+    sseAbortController = new AbortController();
+
+    // ВАЖНО: fetchEventSource использует fetch API, который требует правильной настройки CORS
+    // Используем 'same-origin' для credentials, чтобы избежать проблем с CORS
     fetchEventSource(`${props.apiHost}/api/v1/prediction/${chatflowid}`, {
       openWhenHidden: true,
       method: 'POST',
       body: JSON.stringify(params),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: sseHeaders,
+      credentials: 'include', // Используем include для cross-origin запросов
+      signal: sseAbortController.signal,
+      // ВАЖНО: При credentials: 'include' сервер должен устанавливать Access-Control-Allow-Credentials: true
+      // и Access-Control-Allow-Origin должен быть конкретным origin (не '*')
       async onopen(response) {
-        if (response.ok && response.headers.get('content-type')?.startsWith(EventStreamContentType)) {
-          return; // everything's good
-        } else if (response.status === 429) {
-          const errMessage = (await response.text()) ?? 'Too many requests. Please try again later.';
-          handleError(errMessage, true);
+        // Проверяем, является ли ответ SSE потоком
+        const contentType = response.headers.get('content-type') || '';
+        const isEventStream = contentType.startsWith(EventStreamContentType);
+
+        if (response.ok && isEventStream) return; // everything's good - это SSE поток
+
+        // Если ответ не SSE, проверяем, не является ли это JSON ответом с autofaqMode
+        // ВАЖНО: response.text() можно вызвать только один раз, поэтому клонируем response
+        if (response.ok && (contentType.includes('application/json') || contentType.includes('text/json'))) {
+          try {
+            // Клонируем response, чтобы можно было прочитать его несколько раз
+            const clonedResponse = response.clone();
+            const responseText = await clonedResponse.text();
+
+            const jsonData = JSON.parse(responseText);
+
+            // Если это ответ от AutoFAQ режима, обрабатываем его специально
+            if (jsonData.autofaqMode) {
+
+              setLoading(false);
+              setUserInput('');
+              setUploadedFiles([]);
+
+              // Закрываем SSE соединение, т.к. это не SSE поток
+              closeResponse();
+
+              // Не бросаем ошибку, просто завершаем обработку
+              // Используем AbortController для корректного закрытия
+              throw new Error('AutoFAQ mode - closing SSE connection');
+            }
+          } catch (parseError: any) {
+            // Если это наша ошибка для закрытия соединения, просто пробрасываем её
+            if (parseError.message === 'AutoFAQ mode - closing SSE connection') {
+              throw parseError;
+            }
+            // Если не удалось распарсить JSON, продолжаем обычную обработку ошибки
+            console.error('[Bot] Ошибка парсинга JSON ответа:', parseError);
+          }
+        }
+
+        // Обработка ошибок
+        if (response.status === 429) {
+          const clonedResponse = response.clone();
+          const errMessage = (await clonedResponse.text()) ?? 'Too many requests. Please try again later.';
+          handleError(errMessage, true, { status: 429, response });
           throw new Error(errMessage);
         } else if (response.status === 403) {
-          const errMessage = (await response.text()) ?? 'Unauthorized';
-          handleError(errMessage);
+          const clonedResponse = response.clone();
+          const errMessage = (await clonedResponse.text()) ?? 'Unauthorized';
+          handleError(errMessage, false, { status: 403, response });
           throw new Error(errMessage);
         } else if (response.status === 401) {
-          const errMessage = (await response.text()) ?? 'Unauthenticated';
-          handleError(errMessage);
+          const clonedResponse = response.clone();
+          const errMessage = (await clonedResponse.text()) ?? 'Unauthenticated';
+          handleError(errMessage, false, { status: 401, response });
           throw new Error(errMessage);
         } else {
-          throw new Error();
+          // Для других статусов пытаемся прочитать текст ответа
+          try {
+            const clonedResponse = response.clone();
+            const errMessage = await clonedResponse.text();
+            console.error('[Bot] ❌ Ошибка SSE запроса:', {
+              status: response.status,
+              statusText: response.statusText,
+              message: errMessage.substring(0, 200),
+            });
+            handleError(errMessage, false, { status: response.status, statusText: response.statusText, response });
+            throw new Error(errMessage);
+          } catch (textError) {
+            const errMessage = `HTTP ${response.status}: ${response.statusText}`;
+          handleError(errMessage, false, { status: response.status, statusText: response.statusText, response });
+          throw new Error(errMessage);
+          }
         }
       },
       async onmessage(ev) {
         const payload = JSON.parse(ev.data);
         switch (payload.event) {
           case 'start':
-            setMessages((prevMessages) => [...prevMessages, { message: '', type: 'apiMessage' }]);
+            // Сообщение уже создано при начале загрузки, просто обновляем его если нужно
             break;
           case 'token':
+            if (!hasSoundPlayed) {
+              playReceiveSound();
+              hasSoundPlayed = true;
+            }
             updateLastMessage(payload.data);
             break;
           case 'sourceDocuments':
@@ -921,25 +1187,41 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             setLocalStorageChatflow(chatflowid, chatId);
             closeResponse();
             break;
-          case 'tts_start':
-            handleTTSStart(payload.data);
-            break;
-          case 'tts_data':
-            handleTTSDataChunk(payload.data.audioChunk);
-            break;
-          case 'tts_end':
-            handleTTSEnd();
-            break;
-          case 'tts_abort':
-            handleTTSAbort(payload.data);
-            break;
         }
       },
       async onclose() {
         closeResponse();
       },
       onerror(err) {
-        console.error('EventSource Error: ', err);
+        // Логируем полную информацию об ошибке в консоль
+        console.error('[Bot] ❌ EventSource Error:', {
+          error: err,
+          errorType: err?.constructor?.name,
+          errorMessage: err?.message,
+          errorStack: err?.stack,
+          url: `${props.apiHost}/api/v1/prediction/${chatflowid}`,
+          timestamp: new Date().toISOString(),
+        });
+
+        // Если запрос был прерван явно (AbortController), не считаем это ошибкой сервиса
+        if (err?.name === 'AbortError') {
+          closeResponse();
+          return;
+        }
+
+        // Если это наша ошибка для закрытия соединения при AutoFAQ режиме, не показываем ошибку
+        if (err?.message === 'AutoFAQ mode - closing SSE connection') {
+          closeResponse();
+          return; // Не бросаем ошибку дальше
+        }
+
+        // Если это CORS ошибка, показываем более понятное сообщение
+        if (err?.message?.includes('CORS') || err?.message?.includes('fetch')) {
+          console.error('[Bot] ❌ CORS ошибка при SSE запросе. Попробуйте использовать обычный запрос вместо SSE.');
+          handleError('Ошибка подключения к серверу. Проверьте настройки CORS на сервере.', false, err);
+        } else {
+        setHasServiceError(true);
+        }
         closeResponse();
         throw err;
       },
@@ -950,7 +1232,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     setLoading(false);
     setUserInput('');
     setUploadedFiles([]);
-    hasSoundPlayed = false;
     setTimeout(() => {
       scrollToBottom();
     }, 100);
@@ -958,10 +1239,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
   const abortMessage = () => {
     setIsMessageStopping(false);
-
-    // Stop all TTS when aborting message
-    stopAllTTS();
-
     setMessages((prevMessages) => {
       const allMessages = [...cloneDeep(prevMessages)];
       if (allMessages[allMessages.length - 1].type === 'userMessage') return allMessages;
@@ -1082,21 +1359,25 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     try {
       uploads = await handleFileUploads(uploads);
     } catch (error) {
-      handleError('Unable to upload documents', true);
+      handleError('Unable to upload documents', true, { error, uploads });
       return;
     }
 
     clearPreviews();
 
     setMessages((prevMessages) => {
-      const messages: MessageType[] = [...prevMessages, { message: value as string, type: 'userMessage', fileUploads: uploads, dateTime: new Date().toISOString() }];
+      const messages: MessageType[] = [
+        ...prevMessages,
+        { message: value as string, type: 'userMessage', fileUploads: uploads, dateTime: new Date().toISOString() },
+      ];
       addChatMessage(messages);
       return messages;
     });
 
+    const currentChatId = chatId();
     const body: IncomingInput = {
       question: value,
-      chatId: chatId(),
+      chatId: currentChatId,
     };
 
     if (startInputType() === 'formInput') {
@@ -1106,16 +1387,44 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
     if (uploads && uploads.length > 0) body.uploads = uploads;
 
+    // Используем данные пользователя, которые уже загружены в onMount
+    // Если данные еще не загрузились, используем то, что есть (или значения по умолчанию)
     const currentUserData = userData();
+
+    // Формируем userData для отправки в AI платформу
+    // Передаем user_id (id из ответа auth или guest_id для гостя), fio и email
     const userDataForRequest: Record<string, unknown> = {};
-    if (currentUserData.user_id) userDataForRequest.user_id = currentUserData.user_id;
-    if (currentUserData.fio) userDataForRequest.fio = currentUserData.fio;
-    if (currentUserData.email) userDataForRequest.email = currentUserData.email;
-    if ((currentUserData as any).login) userDataForRequest.login = (currentUserData as any).login;
-    if (currentUserData.shortname) userDataForRequest.shortname = currentUserData.shortname;
-    if (currentUserData.orn) userDataForRequest.orn = currentUserData.orn;
+    // Передаем user_id только если он есть (для авторизованных) или guest_id (для гостей)
+    if (currentUserData.user_id) {
+      userDataForRequest.user_id = currentUserData.user_id;
+    }
+    // Передаем fio (ФИО) если оно есть
+    if (currentUserData.fio) {
+      userDataForRequest.fio = currentUserData.fio;
+    }
+    // Передаем email если он есть
+    if (currentUserData.email) {
+      userDataForRequest.email = currentUserData.email;
+    }
+    // Передаем login если он есть (тестовые данные)
+    if ((currentUserData as any).login) {
+      userDataForRequest.login = (currentUserData as any).login;
+    }
+    // Передаем shortname если он есть (тестовые данные)
+    if ((currentUserData as any).shortname) {
+      userDataForRequest.shortname = (currentUserData as any).shortname;
+    }
+    // Передаем orn если он есть (тестовые данные)
+    if ((currentUserData as any).orn) {
+      userDataForRequest.orn = (currentUserData as any).orn;
+    }
+
+    // Если есть хотя бы одно поле, добавляем userData в overrideConfig
     if (Object.keys(userDataForRequest).length > 0) {
-      body.overrideConfig = { ...(props.chatflowConfig || {}), userData: userDataForRequest };
+      body.overrideConfig = {
+        ...(props.chatflowConfig || {}),
+        userData: userDataForRequest,
+      };
     } else if (props.chatflowConfig) {
       body.overrideConfig = props.chatflowConfig;
     }
@@ -1126,9 +1435,155 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
     if (humanInput) body.humanInput = humanInput;
 
-    if (isChatFlowAvailableToStream()) {
+    const hasTransferMessage = messages().some(
+      (msg) => msg.message && typeof msg.message === 'string' &&
+        msg.message.includes('Чат передан оператору')
+    );
+
+    const isTransferredToOperator = hasTransferMessage || isPollingActive;
+
+
+    if (isTransferredToOperator) {
+      // ВАЖНО: Создаем пустое сообщение для показа loading bubble перед отправкой запроса
+      // Это нужно для случая, когда чат возвращается из AutoFAQ в LLM режим
+      // Убеждаемся, что loading установлен в true, чтобы показать TypingBubble
+      setLoading(true);
+
+      setMessages((prevMessages) => {
+        const allMessages = [...cloneDeep(prevMessages)];
+        // Проверяем, есть ли уже пустое apiMessage (loading bubble)
+        const lastMessage = allMessages[allMessages.length - 1];
+        if (!lastMessage || lastMessage.type !== 'apiMessage' || lastMessage.message !== '') {
+          // Если последнее сообщение не является пустым apiMessage, создаем его
+          allMessages.push({ message: '', type: 'apiMessage', dateTime: new Date().toISOString() });
+        }
+        return allMessages;
+      });
+
+      try {
+        const result = await sendMessageQuery({
+          chatflowid: props.chatflowid,
+          apiHost: props.apiHost,
+          body,
+          onRequest: props.onRequest,
+        });
+
+        if (result.data) {
+          const data = result.data;
+          if (data.autofaqMode) {
+            // Если ответ указывает на AutoFAQ режим, удаляем пустое сообщение и переключаемся в AutoFAQ
+            setMessages((prevMessages) => {
+              const allMessages = [...cloneDeep(prevMessages)];
+              // Удаляем последнее пустое сообщение, если оно есть
+              if (allMessages[allMessages.length - 1]?.type === 'apiMessage' && allMessages[allMessages.length - 1]?.message === '') {
+                allMessages.pop();
+              }
+              return allMessages;
+            });
+            setLoading(false);
+            setUserInput('');
+            setUploadedFiles([]);
+            if (!isPollingActive) {
+              startAutoFAQPolling();
+            }
+            return;
+          }
+          // Обрабатываем обычный ответ (LLM режим)
+          // ВАЖНО: Если получили обычный ответ (не autofaqMode), значит чат вернулся в LLM режим
+          // Останавливаем polling AutoFAQ, если он был активен
+          if (isPollingActive) {
+            stopAutoFAQPolling();
+          }
+
+          let text = '';
+          if (data.text) text = data.text;
+          else if (data.json) text = JSON.stringify(data.json, null, 2);
+          else text = JSON.stringify(data, null, 2);
+
+          if (data?.chatId) setChatId(data.chatId);
+
+          setMessages((prevMessages) => {
+            const allMessages = [...cloneDeep(prevMessages)];
+            const lastMessage = allMessages[allMessages.length - 1];
+            // Обновляем пустое сообщение (loading bubble) содержимым ответа
+            if (lastMessage && lastMessage.type === 'apiMessage' && lastMessage.message === '') {
+              lastMessage.message = text;
+              lastMessage.id = data?.chatMessageId;
+              lastMessage.sourceDocuments = data?.sourceDocuments;
+              lastMessage.usedTools = data?.usedTools;
+              lastMessage.fileAnnotations = data?.fileAnnotations;
+              lastMessage.agentReasoning = data?.agentReasoning;
+              lastMessage.agentFlowExecutedData = data?.agentFlowExecutedData;
+              lastMessage.action = data?.action;
+              lastMessage.artifacts = data?.artifacts;
+              lastMessage.dateTime = data?.dateTime ?? new Date().toISOString();
+            } else {
+              // Если пустого сообщения нет, создаем новое
+              const newMessage = {
+                message: text,
+                id: data?.chatMessageId,
+                sourceDocuments: data?.sourceDocuments,
+                usedTools: data?.usedTools,
+                fileAnnotations: data?.fileAnnotations,
+                agentReasoning: data?.agentReasoning,
+                agentFlowExecutedData: data?.agentFlowExecutedData,
+                action: data?.action,
+                artifacts: data?.artifacts,
+                type: 'apiMessage' as messageType,
+                dateTime: data?.dateTime ?? new Date().toISOString(),
+              };
+              allMessages.push(newMessage);
+            }
+            addChatMessage(allMessages);
+            return allMessages;
+          });
+
+          updateMetadata(data, value);
+          setLoading(false);
+          setUserInput('');
+          setUploadedFiles([]);
+          scrollToBottom();
+        }
+        if (result.error) {
+          const error = result.error;
+          if (typeof error === 'object') {
+            handleError(`Error: ${error?.message.replaceAll('Error:', ' ')}`, false, error);
+            return;
+          }
+          if (typeof error === 'string') {
+            handleError(error, false, { errorString: error });
+            return;
+          }
+          handleError('Unknown error occurred', false, { error });
+          return;
+        }
+      } catch (error) {
+        console.error('[Bot] ❌ Ошибка при отправке сообщения в AutoFAQ:', error);
+        // Если это ошибка от AutoFAQ режима, не показываем её как ошибку
+        if ((error as any)?.response?.data?.autofaqMode) {
+          setLoading(false);
+          setUserInput('');
+          setUploadedFiles([]);
+          return;
+        }
+        // Для других ошибок показываем сообщение об ошибке
+        if ((error as any)?.response?.data?.message) {
+          handleError((error as any).response.data.message, false, error);
+        } else {
+          handleError((error as any)?.message || 'Произошла ошибка при отправке сообщения в AutoFAQ', false, error);
+        }
+        return;
+      }
+    } else if (isChatFlowAvailableToStream() && !isTransferredToOperator) {
+      // Создаем пустое сообщение сразу, чтобы показать индикатор загрузки
+      setMessages((prevMessages) => [...prevMessages, { message: '', type: 'apiMessage', dateTime: new Date().toISOString() }]);
+      hasSoundPlayed = false;
       fetchResponseFromEventStream(props.chatflowid, body);
     } else {
+      // Создаем пустое сообщение сразу для не-streaming запросов, чтобы показать индикатор загрузки
+      setMessages((prevMessages) => [...prevMessages, { message: '', type: 'apiMessage', dateTime: new Date().toISOString() }]);
+      hasSoundPlayed = false;
+
       const result = await sendMessageQuery({
         chatflowid: props.chatflowid,
         apiHost: props.apiHost,
@@ -1146,25 +1601,37 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
         if (data?.chatId) setChatId(data.chatId);
 
-        playReceiveSound();
-
         setMessages((prevMessages) => {
           const allMessages = [...cloneDeep(prevMessages)];
-          const newMessage = {
-            message: text,
-            id: data?.chatMessageId,
-            sourceDocuments: data?.sourceDocuments,
-            usedTools: data?.usedTools,
-            fileAnnotations: data?.fileAnnotations,
-            agentReasoning: data?.agentReasoning,
-            agentFlowExecutedData: data?.agentFlowExecutedData,
-            action: data?.action,
-            artifacts: data?.artifacts,
-            type: 'apiMessage' as messageType,
-            feedback: null,
-            dateTime: new Date().toISOString(),
-          };
-          allMessages.push(newMessage);
+          // Обновляем последнее пустое сообщение вместо создания нового
+          const lastMessage = allMessages[allMessages.length - 1];
+          if (lastMessage && lastMessage.type === 'apiMessage' && lastMessage.message === '') {
+            lastMessage.message = text;
+            lastMessage.id = data?.chatMessageId;
+            lastMessage.sourceDocuments = data?.sourceDocuments;
+            lastMessage.usedTools = data?.usedTools;
+            lastMessage.fileAnnotations = data?.fileAnnotations;
+            lastMessage.agentReasoning = data?.agentReasoning;
+            lastMessage.agentFlowExecutedData = data?.agentFlowExecutedData;
+            lastMessage.action = data?.action;
+            lastMessage.artifacts = data?.artifacts;
+            lastMessage.dateTime = data?.dateTime ?? new Date().toISOString();
+          } else {
+            const newMessage = {
+              message: text,
+              id: data?.chatMessageId,
+              sourceDocuments: data?.sourceDocuments,
+              usedTools: data?.usedTools,
+              fileAnnotations: data?.fileAnnotations,
+              agentReasoning: data?.agentReasoning,
+              agentFlowExecutedData: data?.agentFlowExecutedData,
+              action: data?.action,
+              artifacts: data?.artifacts,
+              type: 'apiMessage' as messageType,
+              dateTime: data?.dateTime ?? new Date().toISOString(),
+            };
+            allMessages.push(newMessage);
+          }
           addChatMessage(allMessages);
           return allMessages;
         });
@@ -1178,16 +1645,15 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       }
       if (result.error) {
         const error = result.error;
-        console.error(error);
         if (typeof error === 'object') {
-          handleError(`Error: ${error?.message.replaceAll('Error:', ' ')}`);
+          handleError(`Error: ${error?.message.replaceAll('Error:', ' ')}`, false, error);
           return;
         }
         if (typeof error === 'string') {
-          handleError(error);
+          handleError(error, false, { errorString: error });
           return;
         }
-        handleError();
+        handleError('Unknown error occurred', false, { error });
         return;
       }
     }
@@ -1237,7 +1703,87 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     }
   };
 
+
   const handleActionClick = async (elem: any, action: IAction | undefined | null) => {
+    // Проверяем, является ли это кнопкой связи с оператором (AutoFAQ)
+    const isOperatorHandoff =
+      elem.type === 'operator-handoff' ||
+      elem.value === 'operator_handoff' ||
+      elem.type === 'operator' ||
+      (elem.label && (elem.label.toLowerCase().includes('оператор') || elem.label.toLowerCase().includes('operator')));
+
+    if (isOperatorHandoff) {
+      try {
+        const currentUserData = userData();
+
+        // Формируем body с данными пользователя
+        const requestBody = {
+          chatId: chatId(),
+          userMessage: elem.label || 'Пользователь запросил связь с оператором',
+          email: currentUserData.email,
+          fio: currentUserData.fio,
+          overrideConfig: {
+            userData: {
+              email: currentUserData.email,
+              fullName: currentUserData.fio || currentUserData.user_name,
+              fio: currentUserData.fio || currentUserData.user_name,
+              login: (currentUserData as any).login,
+              userId: currentUserData.user_id,
+              shortname: (currentUserData as any).shortname,
+              orn: (currentUserData as any).orn,
+            },
+          },
+        };
+        const result = await transferChatHistoryToAutoFAQ({
+          chatflowid: props.chatflowid,
+          apiHost: props.apiHost,
+          body: requestBody,
+          onRequest: props.onRequest,
+        });
+
+        if (result.data) {
+          // Убираем кнопку из сообщения
+          setMessages((data) => {
+            const updated = data.map((item, i) => {
+              if (i === data.length - 1) {
+                return { ...item, action: null };
+              }
+              return item;
+            });
+            addChatMessage(updated);
+            return [...updated];
+          });
+
+          const transferMessage = {
+            message: 'Чат передан оператору. Ожидайте ответа...',
+            type: 'apiMessage' as const,
+            dateTime: new Date().toISOString(),
+          };
+          setMessages((prevMessages) => {
+            const updated = [...prevMessages, transferMessage];
+            addChatMessage(updated);
+            return updated;
+          });
+
+          setTimeout(() => {
+            startAutoFAQPolling();
+          }, 1000);
+
+          scrollToBottom();
+          return;
+        } else if (result.error) {
+          console.error('❌ [Bot] Ошибка передачи истории:', result.error);
+          handleError('Не удалось передать запрос оператору. Попробуйте еще раз.');
+          return;
+        }
+      } catch (error) {
+        console.error('❌ [Bot] Ошибка при передаче истории в AutoFAQ:', error);
+        handleError('Не удалось передать запрос оператору. Попробуйте еще раз.');
+        return;
+      }
+    }
+
+    // Обычная обработка кнопок
     setUserInput(elem.label);
     setMessages((data) => {
       const updated = data.map((item, i) => {
@@ -1249,6 +1795,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       addChatMessage(updated);
       return [...updated];
     });
+
     if (elem.type.includes('agentflowv2')) {
       const type = elem.type.includes('approve') ? 'proceed' : 'reject';
       setFeedbackType(type);
@@ -1266,18 +1813,29 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
   const clearChat = () => {
     try {
+      stopAutoFAQPolling();
+
+      // Если есть активный streaming-запрос (SSE), прерываем его
+      if (sseAbortController) {
+        sseAbortController.abort();
+        sseAbortController = null;
+      }
+
+      // Приводим состояние к такому же виду, как при завершении ответа
+      setLoading(false);
+      setUserInput('');
+      setUploadedFiles([]);
+
+      // Чистим cookies, связанные с текущим диалогом
+      deleteCookie('guest_id');
+      deleteCookie('chatbotDisclaimer');
+
       removeLocalStorageChatHistory(props.chatflowid);
       setChatId(
         (props.chatflowConfig?.vars as any)?.customerId ? `${(props.chatflowConfig?.vars as any).customerId.toString()}+${uuidv4()}` : uuidv4(),
       );
       setUploadedFiles([]);
-      const messages: MessageType[] = [
-        {
-          message: props.welcomeMessage ?? defaultWelcomeMessage,
-          type: 'apiMessage',
-          dateTime: new Date().toISOString(),
-        },
-      ];
+      const messages: MessageType[] = [];
       if (leadsConfig()?.status && !getLocalStorageChatflow(props.chatflowid)?.lead) {
         messages.push({ message: '', type: 'leadCaptureMessage' });
       }
@@ -1315,10 +1873,38 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     }
   });
 
-  // Auto scroll chat to bottom (but not during TTS actions)
+  // Создаем первый bubble с приветствием, если сообщений нет
+  createEffect(() => {
+    const currentMessages = messages();
+    const currentUserData = userData();
+
+    // Проверяем, что userData загружен и сообщений нет
+    // assistantGreeting всегда есть (либо из props, либо значение по умолчанию)
+    if (
+      currentMessages.length === 0 &&
+      Object.keys(currentUserData).length > 0 // userData загружен (не пустой объект)
+    ) {
+      const fio = currentUserData.fio || currentUserData.user_name;
+      const assistantGreeting = props.assistantGreeting ?? defaultAssistantGreeting;
+
+      let greeting = 'Здравствуйте';
+      if (fio && fio !== 'Гость') {
+        greeting = `Здравствуйте, ${fio}`;
+      }
+
+      const greetingMessage: MessageType = {
+        message: `${greeting}! ${assistantGreeting}`,
+        type: 'apiMessage',
+        dateTime: new Date().toISOString(),
+      };
+      setMessages([greetingMessage]);
+    }
+  });
+
+  // Auto scroll chat to bottom
   createEffect(() => {
     if (messages()) {
-      if (messages().length > 1 && !isTTSActionRef) {
+      if (messages().length > 1) {
         setTimeout(() => {
           chatContainer?.scrollTo(0, chatContainer.scrollHeight);
         }, 400);
@@ -1358,7 +1944,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 message: message.message,
                 type: message.type,
                 rating: message.rating,
-                dateTime: message.dateTime,
+                dateTime: message.dateTime || new Date().toISOString(), // Добавляем dateTime, если его нет
               };
               if (message.sourceDocuments) chatHistory.sourceDocuments = message.sourceDocuments;
               if (message.fileAnnotations) chatHistory.fileAnnotations = message.fileAnnotations;
@@ -1375,7 +1961,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                   typeof message.agentFlowExecutedData === 'string' ? JSON.parse(message.agentFlowExecutedData) : message.agentFlowExecutedData;
               return chatHistory;
             })
-          : [{ message: props.welcomeMessage ?? defaultWelcomeMessage, type: 'apiMessage' }];
+          : [];
 
       const filteredMessages = loadedMessages.filter((message) => message.type !== 'leadCaptureMessage');
       setMessages([...filteredMessages]);
@@ -1490,7 +2076,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           setFullFileUploadAllowedTypes(chatbotConfig.fullFileUpload?.allowedUploadFileTypes);
         }
       }
-      setIsTTSEnabled(!!chatbotConfig.isTTSEnabled);
     }
 
     // eslint-disable-next-line solid/reactivity
@@ -1498,54 +2083,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       setUserInput('');
       setUploadedFiles([]);
       setLoading(false);
-      setMessages([
-        {
-          message: props.welcomeMessage ?? defaultWelcomeMessage,
-          type: 'apiMessage',
-        },
-      ]);
+      setMessages([]);
     };
-  });
-
-  // TTS sourceBuffer updateend listener management
-  let currentSourceBuffer: SourceBuffer | null = null;
-  let updateEndHandler: (() => void) | null = null;
-
-  createEffect(() => {
-    const streamingState = ttsStreamingState();
-
-    // Remove previous listener if sourceBuffer changed
-    if (currentSourceBuffer && currentSourceBuffer !== streamingState.sourceBuffer && updateEndHandler) {
-      currentSourceBuffer.removeEventListener('updateend', updateEndHandler);
-      currentSourceBuffer = null;
-      updateEndHandler = null;
-    }
-
-    // Add listener to new sourceBuffer
-    if (streamingState.sourceBuffer && streamingState.sourceBuffer !== currentSourceBuffer) {
-      const sourceBuffer = streamingState.sourceBuffer;
-      currentSourceBuffer = sourceBuffer;
-
-      updateEndHandler = () => {
-        setTtsStreamingState((prevState) => ({
-          ...prevState,
-          isBuffering: false,
-        }));
-        setTimeout(() => processChunkQueue(), 0);
-      };
-
-      sourceBuffer.addEventListener('updateend', updateEndHandler);
-    }
-  });
-
-  // TTS cleanup on component unmount
-  onCleanup(() => {
-    cleanupTTSStreaming();
-    // Cleanup TTS timeout on unmount
-    if (ttsTimeoutRef) {
-      clearTimeout(ttsTimeoutRef);
-      ttsTimeoutRef = null;
-    }
   });
 
   createEffect(() => {
@@ -1558,31 +2097,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       }
     }
   });
-
-  const addRecordingToPreviews = (blob: Blob) => {
-    let mimeType = '';
-    const pos = blob.type.indexOf(';');
-    if (pos === -1) {
-      mimeType = blob.type;
-    } else {
-      mimeType = blob.type.substring(0, pos);
-    }
-
-    // read blob and add to previews
-    const reader = new FileReader();
-    reader.readAsDataURL(blob);
-    reader.onloadend = () => {
-      const base64data = reader.result as FilePreviewData;
-      const upload: FilePreview = {
-        data: base64data,
-        preview: '../assets/wave-sound.jpg',
-        type: 'audio',
-        name: `audio_${Date.now()}.wav`,
-        mime: mimeType,
-      };
-      setPreviews((prevPreviews) => [...prevPreviews, upload]);
-    };
-  };
 
   const isFileAllowedForUpload = (file: File) => {
     let acceptFile = false;
@@ -1718,9 +2232,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
               }
               const { result } = evt.target;
               let previewUrl;
-              if (file.type.startsWith('audio/')) {
-                previewUrl = '../assets/wave-sound.jpg';
-              } else if (file.type.startsWith('image/')) {
+              if (file.type.startsWith('image/')) {
                 previewUrl = URL.createObjectURL(file);
               }
               resolve({
@@ -1777,10 +2289,45 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
   const handleDeletePreview = (itemToDelete: FilePreview) => {
     if (itemToDelete.type === 'file') {
-      URL.revokeObjectURL(itemToDelete.preview); // Clean up for file
+      URL.revokeObjectURL(itemToDelete.preview);
     }
     setPreviews(previews().filter((item) => item !== itemToDelete));
   };
+
+  const addRecordingToPreviews = (blob: Blob) => {
+    let mimeType = '';
+    const pos = blob.type.indexOf(';');
+    if (pos === -1) {
+      mimeType = blob.type;
+    } else {
+      mimeType = blob.type.substring(0, pos);
+    }
+
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = () => {
+      const base64data = reader.result as FilePreviewData;
+      const upload: FilePreview = {
+        data: base64data,
+        preview: '../assets/wave-sound.jpg',
+        type: 'audio',
+        name: `audio_${Date.now()}.wav`,
+        mime: mimeType,
+      };
+      setPreviews((prevPreviews) => [...prevPreviews, upload]);
+    };
+  };
+
+  createEffect(
+    on(previews, (uploads) => {
+      const containsAudio = uploads.filter((item) => item.type === 'audio').length > 0;
+      if (uploads.length >= 1 && containsAudio) {
+        setIsRecording(false);
+        setRecordingNotSupported(false);
+        promptClick('');
+      }
+    }),
+  );
 
   const onMicrophoneClicked = () => {
     setIsRecording(true);
@@ -1804,547 +2351,14 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       loading() ||
       !props.chatflowid ||
       (leadsConfig()?.status && !isLeadSaved()) ||
-      (messagesArray[messagesArray.length - 1].action && Object.keys(messagesArray[messagesArray.length - 1].action as any).length > 0);
+      (messagesArray.length > 0 &&
+        messagesArray[messagesArray.length - 1]?.action &&
+        Object.keys(messagesArray[messagesArray.length - 1].action as any).length > 0);
     if (disabled) {
       return true;
     }
     return false;
   };
-
-  // TTS Functions
-  const processChunkQueue = () => {
-    const currentState = ttsStreamingState();
-    if (!currentState.sourceBuffer || currentState.sourceBuffer.updating || currentState.chunkQueue.length === 0) {
-      return;
-    }
-
-    const chunk = currentState.chunkQueue[0];
-    if (!chunk) return;
-
-    try {
-      currentState.sourceBuffer.appendBuffer(chunk);
-      setTtsStreamingState((prevState) => ({
-        ...prevState,
-        chunkQueue: prevState.chunkQueue.slice(1),
-        isBuffering: true,
-      }));
-    } catch (error) {
-      console.error('Error appending chunk to buffer:', error);
-    }
-  };
-
-  const handleTTSStart = (data: { chatMessageId: string; format: string }) => {
-    setTTSAction(true);
-
-    // Ensure complete cleanup before starting new TTS
-    stopAllTTS();
-
-    setIsTTSLoading((prevState) => ({
-      ...prevState,
-      [data.chatMessageId]: true,
-    }));
-
-    setMessages((prevMessages) => {
-      const allMessages = [...cloneDeep(prevMessages)];
-      const lastMessage = allMessages[allMessages.length - 1];
-      if (lastMessage.type === 'userMessage') return allMessages;
-      const existingId = lastMessage.id || lastMessage.messageId;
-      if (!existingId) {
-        allMessages[allMessages.length - 1].id = data.chatMessageId;
-      } else if (!lastMessage.id) {
-        allMessages[allMessages.length - 1].id = existingId;
-      }
-      return allMessages;
-    });
-
-    setTtsStreamingState({
-      mediaSource: null,
-      sourceBuffer: null,
-      audio: null,
-      chunkQueue: [],
-      isBuffering: false,
-      audioFormat: data.format,
-      abortController: null,
-    });
-
-    setTimeout(() => initializeTTSStreaming(data), 100);
-  };
-
-  const handleTTSDataChunk = (base64Data: string) => {
-    try {
-      const audioBuffer = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
-
-      setTtsStreamingState((prevState) => {
-        const newState = {
-          ...prevState,
-          chunkQueue: [...prevState.chunkQueue, audioBuffer],
-        };
-
-        // Schedule processing after state update
-        if (prevState.sourceBuffer && !prevState.sourceBuffer.updating) {
-          setTimeout(() => processChunkQueue(), 0);
-        }
-
-        return newState;
-      });
-    } catch (error) {
-      console.error('Error handling TTS data chunk:', error);
-    }
-  };
-
-  const handleTTSEnd = () => {
-    const currentState = ttsStreamingState();
-    if (currentState.mediaSource && currentState.mediaSource.readyState === 'open') {
-      try {
-        // Process any remaining chunks first
-        if (currentState.sourceBuffer && currentState.chunkQueue.length > 0 && !currentState.sourceBuffer.updating) {
-          const remainingChunks = [...currentState.chunkQueue];
-          remainingChunks.forEach((chunk, index) => {
-            setTimeout(() => {
-              const state = ttsStreamingState();
-              if (state.sourceBuffer && !state.sourceBuffer.updating) {
-                try {
-                  state.sourceBuffer.appendBuffer(chunk);
-                  if (index === remainingChunks.length - 1) {
-                    setTimeout(() => {
-                      const finalState = ttsStreamingState();
-                      if (finalState.mediaSource && finalState.mediaSource.readyState === 'open') {
-                        finalState.mediaSource.endOfStream();
-                      }
-                    }, 100);
-                  }
-                } catch (error) {
-                  console.error('Error appending remaining chunk:', error);
-                }
-              }
-            }, index * 50);
-          });
-
-          setTtsStreamingState((prevState) => ({
-            ...prevState,
-            chunkQueue: [],
-          }));
-        } else if (currentState.sourceBuffer && !currentState.sourceBuffer.updating) {
-          currentState.mediaSource.endOfStream();
-        } else if (currentState.sourceBuffer) {
-          const handleFinalUpdateEnd = () => {
-            const finalState = ttsStreamingState();
-            if (finalState.mediaSource && finalState.mediaSource.readyState === 'open') {
-              finalState.mediaSource.endOfStream();
-            }
-          };
-          currentState.sourceBuffer.addEventListener('updateend', handleFinalUpdateEnd, { once: true });
-        }
-      } catch (error) {
-        console.error('Error ending TTS stream:', error);
-      }
-    }
-  };
-
-  const initializeTTSStreaming = (data: { chatMessageId: string; format: string }) => {
-    try {
-      const mediaSource = new MediaSource();
-      const audio = new Audio();
-
-      // Pre-configure audio element
-      audio.preload = 'none';
-      audio.autoplay = false;
-
-      audio.src = URL.createObjectURL(mediaSource);
-
-      const sourceOpenHandler = () => {
-        try {
-          const mimeType = data.format === 'mp3' ? 'audio/mpeg' : 'audio/mpeg';
-
-          // Check if MediaSource supports the MIME type
-          if (!MediaSource.isTypeSupported(mimeType)) {
-            console.error('MediaSource does not support MIME type:', mimeType);
-            return;
-          }
-
-          const sourceBuffer = mediaSource.addSourceBuffer(mimeType);
-
-          setTtsStreamingState((prevState) => ({
-            ...prevState,
-            mediaSource,
-            sourceBuffer,
-            audio,
-          }));
-
-          // Start audio playback
-          audio.play().catch((playError) => {
-            console.error('Error starting audio playback:', playError);
-            // Cleanup on play error
-            cleanupTTSStreaming();
-          });
-        } catch (error) {
-          console.error('Error setting up source buffer:', error);
-          console.error('MediaSource readyState:', mediaSource.readyState);
-          // Cleanup on error
-          cleanupTTSStreaming();
-        }
-      };
-
-      const playingHandler = () => {
-        setIsTTSLoading((prevState) => {
-          const newState = { ...prevState };
-          delete newState[data.chatMessageId];
-          return newState;
-        });
-        setIsTTSPlaying((prevState) => ({
-          ...prevState,
-          [data.chatMessageId]: true,
-        }));
-      };
-
-      const endedHandler = () => {
-        setIsTTSPlaying((prevState) => {
-          const newState = { ...prevState };
-          delete newState[data.chatMessageId];
-          return newState;
-        });
-        cleanupTTSStreaming();
-      };
-
-      const errorHandler = (event: Event) => {
-        console.error('Audio error during TTS playback:', event);
-        setIsTTSLoading((prev) => {
-          const newState = { ...prev };
-          delete newState[data.chatMessageId];
-          return newState;
-        });
-        setIsTTSPlaying((prev) => {
-          const newState = { ...prev };
-          delete newState[data.chatMessageId];
-          return newState;
-        });
-        cleanupTTSStreaming();
-      };
-
-      mediaSource.addEventListener('sourceopen', sourceOpenHandler);
-      audio.addEventListener('playing', playingHandler);
-      audio.addEventListener('ended', endedHandler);
-      audio.addEventListener('error', errorHandler);
-    } catch (error) {
-      console.error('Error initializing TTS streaming:', error);
-      // Ensure cleanup on initialization error
-      setIsTTSLoading((prev) => {
-        const newState = { ...prev };
-        delete newState[data.chatMessageId];
-        return newState;
-      });
-    }
-  };
-
-  const cleanupTTSStreaming = () => {
-    const currentState = ttsStreamingState();
-
-    if (currentState.abortController) {
-      currentState.abortController.abort();
-    }
-
-    if (currentState.audio) {
-      currentState.audio.pause();
-      currentState.audio.currentTime = 0;
-      currentState.audio.removeAttribute('src');
-      currentState.audio.load(); // Force reload to clear buffer
-      if (currentState.audio.src) {
-        URL.revokeObjectURL(currentState.audio.src);
-      }
-      // Remove all event listeners
-      currentState.audio.removeEventListener('playing', () => console.log('Playing'));
-      currentState.audio.removeEventListener('ended', () => console.log('Ended'));
-    }
-
-    if (currentState.sourceBuffer) {
-      // Clear any pending data in the source buffer
-      if (currentState.sourceBuffer.updating) {
-        try {
-          currentState.sourceBuffer.abort();
-        } catch (e) {
-          // Ignore abort errors
-        }
-      }
-
-      // Remove buffered data if possible
-      try {
-        if (currentState.sourceBuffer.buffered.length > 0) {
-          const start = currentState.sourceBuffer.buffered.start(0);
-          const end = currentState.sourceBuffer.buffered.end(currentState.sourceBuffer.buffered.length - 1);
-          currentState.sourceBuffer.remove(start, end);
-        }
-      } catch (e) {
-        // Ignore remove errors during cleanup
-      }
-
-      // Remove update listeners
-      if (currentState.sourceBuffer.onupdateend) {
-        currentState.sourceBuffer.removeEventListener('updateend', currentState.sourceBuffer.onupdateend);
-        currentState.sourceBuffer.onupdateend = null;
-      }
-    }
-
-    if (currentState.mediaSource) {
-      if (currentState.mediaSource.readyState === 'open') {
-        try {
-          // Remove source buffers before ending stream
-          if (currentState.sourceBuffer && currentState.mediaSource.sourceBuffers.length > 0) {
-            currentState.mediaSource.removeSourceBuffer(currentState.sourceBuffer);
-          }
-          currentState.mediaSource.endOfStream();
-        } catch (e) {
-          // Ignore errors during cleanup
-        }
-      }
-      // Remove source open event listeners
-      currentState.mediaSource.removeEventListener('sourceopen', () => console.log('removed source open event listener'));
-    }
-
-    setTtsStreamingState({
-      mediaSource: null,
-      sourceBuffer: null,
-      audio: null,
-      chunkQueue: [],
-      isBuffering: false,
-      audioFormat: null,
-      abortController: null,
-    });
-  };
-
-  const cleanupTTSForMessage = (messageId: string) => {
-    const audioElements = ttsAudio();
-    if (audioElements[messageId]) {
-      audioElements[messageId].pause();
-      audioElements[messageId].currentTime = 0;
-      // Force cleanup of audio element
-      audioElements[messageId].src = '';
-      audioElements[messageId].load();
-      setTtsAudio((prev) => {
-        const newState = { ...prev };
-        delete newState[messageId];
-        return newState;
-      });
-    }
-
-    // Always cleanup streaming state when stopping any TTS
-    const streamingState = ttsStreamingState();
-    if (streamingState.audio || streamingState.mediaSource || streamingState.sourceBuffer) {
-      cleanupTTSStreaming();
-    }
-
-    setIsTTSPlaying((prev) => {
-      const newState = { ...prev };
-      delete newState[messageId];
-      return newState;
-    });
-
-    setIsTTSLoading((prev) => {
-      const newState = { ...prev };
-      delete newState[messageId];
-      return newState;
-    });
-  };
-
-  const handleTTSStop = async (messageId: string) => {
-    setTTSAction(true);
-
-    // Abort TTS request if active
-    try {
-      await abortTTSQuery({
-        apiHost: props.apiHost,
-        body: {
-          chatflowId: props.chatflowid,
-          chatId: chatId(),
-          chatMessageId: messageId,
-        },
-        onRequest: props.onRequest,
-      });
-    } catch (error) {
-      console.warn(`Error aborting TTS for message ${messageId}:`, error);
-    }
-
-    cleanupTTSForMessage(messageId);
-  };
-
-  const stopAllTTS = () => {
-    const audioElements = ttsAudio();
-    Object.keys(audioElements).forEach((messageId) => {
-      if (audioElements[messageId]) {
-        audioElements[messageId].pause();
-        audioElements[messageId].currentTime = 0;
-        // Force cleanup of each audio element
-        audioElements[messageId].src = '';
-        audioElements[messageId].load();
-      }
-    });
-    setTtsAudio({});
-
-    const streamingState = ttsStreamingState();
-    if (streamingState.abortController) {
-      streamingState.abortController.abort();
-    }
-
-    // Always cleanup streaming state
-    cleanupTTSStreaming();
-
-    setIsTTSPlaying({});
-    setIsTTSLoading({});
-  };
-
-  const handleTTSAbortAll = async () => {
-    const activeTTSMessages = Object.keys(isTTSLoading()).concat(Object.keys(isTTSPlaying()));
-    for (const messageId of activeTTSMessages) {
-      try {
-        await abortTTSQuery({
-          apiHost: props.apiHost,
-          body: {
-            chatflowId: props.chatflowid,
-            chatId: chatId(),
-            chatMessageId: messageId,
-          },
-          onRequest: props.onRequest,
-        });
-      } catch (error) {
-        console.warn(`Error aborting TTS for message ${messageId}:`, error);
-      }
-    }
-  };
-
-  const handleTTSClick = async (messageId: string, messageText: string) => {
-    const loadingState = isTTSLoading();
-    if (loadingState[messageId]) return;
-
-    const playingState = isTTSPlaying();
-    const audioElement = ttsAudio()[messageId];
-    if (playingState[messageId] || audioElement) {
-      await handleTTSStop(messageId);
-      return;
-    }
-
-    setTTSAction(true);
-
-    // Ensure complete cleanup before starting new TTS
-    await handleTTSAbortAll();
-    stopAllTTS();
-
-    handleTTSStart({ chatMessageId: messageId, format: 'mp3' });
-
-    try {
-      const abortController = new AbortController();
-      setTtsStreamingState((prev) => ({ ...prev, abortController }));
-
-      const response = await generateTTSQuery({
-        apiHost: props.apiHost,
-        body: {
-          chatId: chatId(),
-          chatflowId: props.chatflowid,
-          chatMessageId: messageId,
-          text: messageText,
-        },
-        onRequest: props.onRequest,
-        signal: abortController.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(`TTS request failed: ${response.status}`);
-      }
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      if (reader) {
-        let buffer = '';
-        let done = false;
-        while (!done) {
-          if (abortController.signal.aborted) {
-            break;
-          }
-
-          const result = await reader.read();
-          done = result.done;
-          if (done) break;
-
-          const value = result.value;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (line.trim() && line.startsWith('data: ')) {
-              try {
-                const eventData = line.slice(6);
-                if (eventData === '[DONE]') break;
-
-                const event = JSON.parse(eventData);
-                switch (event.event) {
-                  case 'tts_start':
-                    break;
-                  case 'tts_data':
-                    if (!abortController.signal.aborted) {
-                      handleTTSDataChunk(event.data.audioChunk);
-                    }
-                    break;
-                  case 'tts_end':
-                    if (!abortController.signal.aborted) {
-                      handleTTSEnd();
-                    }
-                    break;
-                }
-              } catch (parseError) {
-                console.error('Error parsing SSE event:', parseError);
-              }
-            }
-          }
-        }
-      }
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        cleanupTTSForMessage(messageId);
-      } else {
-        console.error('Error with TTS:', error);
-        // Show error feedback to user
-        setIsTTSLoading((prev) => {
-          const newState = { ...prev };
-          delete newState[messageId];
-          return newState;
-        });
-        setIsTTSPlaying((prev) => {
-          const newState = { ...prev };
-          delete newState[messageId];
-          return newState;
-        });
-        cleanupTTSForMessage(messageId);
-      }
-    } finally {
-      setIsTTSLoading((prev) => {
-        const newState = { ...prev };
-        delete newState[messageId];
-        return newState;
-      });
-    }
-  };
-
-  const handleTTSAbort = (data: { chatMessageId: string }) => {
-    const messageId = data.chatMessageId;
-    cleanupTTSForMessage(messageId);
-  };
-
-  createEffect(
-    // listen for changes in previews
-    on(previews, (uploads) => {
-      // wait for audio recording to load and then send
-      const containsAudio = uploads.filter((item) => item.type === 'audio').length > 0;
-      if (uploads.length >= 1 && containsAudio) {
-        setIsRecording(false);
-        setRecordingNotSupported(false);
-        promptClick('');
-      }
-
-      return () => {
-        setPreviews([]);
-      };
-    }),
-  );
 
   const previewDisplay = (item: FilePreview) => {
     if (item.mime.startsWith('image/')) {
@@ -2359,12 +2373,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           </span>
         </button>
       );
-    } else if (item.mime.startsWith('audio/')) {
+    } else if (item.mime.startsWith('audio/') || item.type === 'audio') {
       return (
         <div
           class={`inline-flex basis-auto flex-grow-0 flex-shrink-0 justify-between items-center rounded-xl h-12 p-1 mr-1 bg-gray-500`}
           style={{
-            width: `${chatContainer ? (botProps.isFullPage ? chatContainer?.offsetWidth / 4 : chatContainer?.offsetWidth / 2) : '200'}px`,
+            width: `${chatContainer ? (props.isFullPage ? chatContainer?.offsetWidth / 4 : chatContainer?.offsetWidth / 2) : '200'}px`,
           }}
         >
           <audio class="block bg-cover bg-center w-full h-full rounded-none text-transparent" controls src={item.data as string} />
@@ -2391,7 +2405,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       ) : (
         <div
           ref={botContainer}
-          class={'relative flex w-full h-full text-base overflow-hidden bg-cover bg-center flex-col items-center chatbot-container ' + props.class}
+          class={
+            'relative flex w-full h-full text-base overflow-hidden bg-cover bg-center flex-col items-center chatbot-container font-sans bg-white ' +
+            props.class
+          }
           onDragEnter={handleDrag}
         >
           {isDragActive() && (
@@ -2405,10 +2422,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             />
           )}
           {isDragActive() && (uploadsConfig()?.isImageUploadAllowed || isFileUploadAllowed()) && (
-            <div
-              class="absolute top-0 left-0 bottom-0 right-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm text-white z-40 gap-2 border-2 border-dashed"
-              style={{ 'border-color': 'var(--chatbot-button-bg-color)' }}
-            >
+            <div class="absolute top-0 left-0 bottom-0 right-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm text-white z-40 gap-2 border-2 border-dashed">
               <h2 class="text-xl font-semibold">Drop here to upload</h2>
               <For each={[...(uploadsConfig()?.imgUploadSizeAndTypes || []), ...(uploadsConfig()?.fileUploadSizeAndTypes || [])]}>
                 {(allowed) => {
@@ -2423,170 +2437,208 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             </div>
           )}
 
-          {props.showTitle ? (
-            <div
-              class={`sticky top-0 z-10 flex flex-row items-center justify-between w-full chatbot-header border-b py-3 ${
-                props.isFullPage || props.isFullscreen ? 'px-4 md:px-6 lg:px-8' : 'px-4'
-              } ${props.isFullPage ? 'h-[50px] border-t' : ''}`}
-              style={{
-                background: defaultTitleBackgroundColor,
-                color: defaultTextColor,
-                'border-top-left-radius': props.isFullPage || props.isFullscreen ? '0px' : 'var(--chatbot-border-radius)',
-                'border-top-right-radius': props.isFullPage || props.isFullscreen ? '0px' : 'var(--chatbot-border-radius)',
-              }}
-            >
-              {!props.isFullPage && (
-                <div class="flex flex-row items-center gap-2">
-                  {props.closeBot && (
-                    <IconButton type="button" onClick={props.closeBot} ariaLabel="Закрыть чат" icon={<XIcon color={defaultTextColor} />} />
-                  )}
-                  {props.toggleFullscreen && (
-                    <IconButton
-                      type="button"
-                      onClick={props.toggleFullscreen}
-                      ariaLabel="Развернуть на весь экран"
-                      icon={<ResizeIcon color={defaultTextColor} />}
-                    />
-                  )}
-                </div>
-              )}
-              <div style={{ flex: 1 }} />
-              <DeleteButton
-                type="button"
-                isDisabled={messages().length < 1}
-                class="ml-auto text-gray-880"
-                on:click={clearChat}
-                text="Очистить диалог"
-              />
-            </div>
-          ) : null}
-          <div class={`flex flex-col w-full h-full justify-start z-0 ${!props.isFullPage && !props.isFullscreen ? 'bg-white' : 'bg-[var(--chatbot-container-bg-color)]'}`}>
-            <div
-              ref={chatContainer}
-              class="overflow-y-scroll flex flex-col flex-grow min-w-full w-full px-3 pt-4 pb-20 relative scrollable-container chatbot-chat-view scroll-smooth"
-            >
-              <Show when={messages().length >= 1}>
+          {/* Шапка чата */}
+          <div
+            class={`sticky top-0 flex flex-row items-center justify-between w-full border-b py-3 ${
+              props.isFullPage || props.isFullscreen ? 'px-4 md:px-6 lg:px-8' : 'px-4'
+            } ${props.isFullPage ? 'border-t' : ''}`}
+            style={{
+              background: defaultTitleBackgroundColor,
+              color: defaultTextColor,
+            }}
+          >
+            {/* Кнопки слева (только в режиме bubble, не fullPage) */}
+            {!props.isFullPage && (
+              <div class="flex flex-row items-center gap-2">
+                {/* Кнопка закрытия чата */}
+                {props.closeBot && (
+                  <IconButton type="button" onClick={props.closeBot} ariaLabel="Закрыть чат" icon={<XIcon color={defaultTextColor} />} />
+                )}
+                {/* Кнопка полноэкранного режима */}
+                {props.toggleFullscreen && (
+                  <IconButton
+                    type="button"
+                    onClick={props.toggleFullscreen}
+                    ariaLabel="Развернуть на весь экран"
+                    icon={<ResizeIcon color={defaultTextColor} />}
+                  />
+                )}
+              </div>
+            )}
+            {/* Кнопка очистки чата справа */}
+            <DeleteButton
+              type="button"
+              class="ml-auto text-gray-880"
+              isDisabled={messages().length < 1}
+              text="Очистить диалог"
+              on:click={clearChat}
+            />
+          </div>
+          <Show
+            when={!hasServiceError()}
+            fallback={
+              <div
+                class={`flex flex-col w-full h-full justify-start z-0 ${!props.isFullPage ? 'bg-white' : 'bg-[var(--chatbot-container-bg-color)]'}`}
+              >
+                <ServiceErrorScreen
+                  onRefresh={() => {
+                    setHasServiceError(false);
+                    window.location.reload();
+                  }}
+                  class="h-full"
+                />
+              </div>
+            }
+          >
+            <div class={`flex flex-col w-full h-full justify-start z-0 ${!props.isFullPage ? 'bg-white' : 'bg-[var(--chatbot-container-bg-color)]'}`}>
+              <div
+                ref={chatContainer}
+                class="overflow-y-scroll text flex flex-col flex-grow min-w-full w-full px-3 pt-[48px] pb-20 relative scrollable-container chatbot-chat-view scroll-smooth"
+              >
+                {/* Приветственное сообщение в начале чата */}
                 <WelcomeMessage
                   welcomeTitle={props.welcomeTitle ?? defaultWelcomeTitle}
-                  welcomeText={props.welcomeText ?? defaultWelcomeText}
+                  welcomeText={formattedWelcomeText()}
                   fontSize={props.fontSize}
                   showWelcomeImage={typeof props.showWelcomeImage === 'boolean' ? props.showWelcomeImage : true}
                   starterPrompts={starterPrompts()}
                   isLoading={loading()}
                   onPromptClick={promptClick}
-                  starterPromptFontSize={botProps.starterPromptFontSize}
                 />
-                <div class="mt-4" />
-              </Show>
-              <For each={[...messages()]}>
-                {(message, index) => {
-                  const getDateOnly = (dateTime?: string): string | null => {
-                    if (!dateTime) return null;
-                    try {
-                      const date = new Date(dateTime);
-                      if (isNaN(date.getTime())) return null;
-                      const y = date.getFullYear();
-                      const m = date.getMonth() + 1;
-                      const d = date.getDate();
-                      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                    } catch {
-                      return null;
-                    }
-                  };
-                  const shouldShowDateDivider = () => {
-                    // Перед самым первым сообщением всегда показываем плашку даты
-                    if (index() === 0) return true;
-                    const currentDate = getDateOnly(message.dateTime);
-                    if (!currentDate) return false;
-                    const prevMessage = messages()[index() - 1];
-                    const prevDate = getDateOnly(prevMessage?.dateTime);
-                    // Не показывать разделитель, если у предыдущего сообщения нет даты — считаем тот же день, иначе «Сегодня» дублируется
-                    if (prevDate == null) return false;
-                    return prevDate !== currentDate;
-                  };
+                <For each={[...messages()]}>
+                  {(message, index) => {
+                    // Функция для получения даты из ISO строки (только дата, без времени)
+                    const getDateOnly = (dateTime?: string): string | null => {
+                      if (!dateTime) return null;
+                      try {
+                        const date = new Date(dateTime);
+                        if (isNaN(date.getTime())) return null;
+                        return date.toISOString().split('T')[0]; // Возвращаем YYYY-MM-DD
+                      } catch {
+                        return null;
+                      }
+                    };
 
-                  const dateForDivider = () => message.dateTime ?? new Date().toISOString();
+                    // Проверяем, нужно ли показать разделитель даты
+                    const shouldShowDateDivider = () => {
+                      const currentDate = getDateOnly(message.dateTime);
+                      if (!currentDate) return false;
 
-                  return (
-                    <>
-                      {shouldShowDateDivider() && <DateDivider date={dateForDivider()} />}
-                      {message.type === 'userMessage' && (
-                        <GuestBubble
-                          message={message}
-                          apiHost={props.apiHost}
-                          chatflowid={props.chatflowid}
-                          chatId={chatId()}
-                          showAvatar={props.userMessage?.showAvatar}
-                          avatarSrc={props.userMessage?.avatarSrc}
-                          fontSize={props.fontSize}
-                          renderHTML={props.renderHTML}
-                          userName={userData().user_name}
-                        />
-                      )}
-                      {message.type === 'apiMessage' && (
-                        <BotBubble
-                          message={message}
-                          fileAnnotations={message.fileAnnotations}
-                          chatflowid={props.chatflowid}
-                          chatId={chatId()}
-                          apiHost={props.apiHost}
-                          showAvatar={props.botMessage?.showAvatar}
-                          avatarSrc={props.botMessage?.useDefaultBotIcon ? undefined : (props.botMessage?.avatarSrc ?? props.titleAvatarSrc)}
-                          botTitle={props.title ?? 'Умный помощник'}
-                          chatFeedbackStatus={index() > 0 ? chatFeedbackStatus() : false}
-                          enableCopyMessage={false}
-                          fontSize={props.fontSize}
-                          isLoading={loading() && index() === messages().length - 1}
-                          showAgentMessages={props.showAgentMessages}
-                          handleActionClick={(elem, action) => handleActionClick(elem, action)}
-                          sourceDocsTitle={props.sourceDocsTitle}
-                          handleSourceDocumentsClick={(sourceDocuments) => {
-                            setSourcePopupSrc(sourceDocuments);
-                            setSourcePopupOpen(true);
-                          }}
-                          dateTimeToggle={props.dateTimeToggle}
-                          renderHTML={props.renderHTML}
-                          isFullPage={props.isFullPage}
-                          isFullscreen={props.isFullscreen}
-                          isPopup={!props.isFullPage}
-                          isTTSEnabled={isTTSEnabled()}
-                          isTTSLoading={isTTSLoading()}
-                          isTTSPlaying={isTTSPlaying()}
-                          handleTTSClick={handleTTSClick}
-                          handleTTSStop={handleTTSStop}
-                          feedbackReasons={props.feedback?.reasons}
-                          userData={{
-                            fio: userData().fio,
-                            email: userData().email,
-                            user_name: userData().user_name,
-                            user_id: userData().user_id,
-                            shortname: userData().shortname,
-                            orn: userData().orn,
-                          }}
-                        />
-                      )}
-                      {message.type === 'leadCaptureMessage' && leadsConfig()?.status && !getLocalStorageChatflow(props.chatflowid)?.lead && (
-                        <LeadCaptureBubble
-                          message={message}
-                          chatflowid={props.chatflowid}
-                          chatId={chatId()}
-                          apiHost={props.apiHost}
-                          fontSize={props.fontSize}
-                          showAvatar={props.botMessage?.showAvatar}
-                          avatarSrc={props.botMessage?.avatarSrc}
-                          leadsConfig={leadsConfig()}
-                          isLeadSaved={isLeadSaved()}
-                          setIsLeadSaved={setIsLeadSaved}
-                          setLeadEmail={setLeadEmail}
-                        />
-                      )}
-                      {message.type === 'userMessage' && loading() && index() === messages().length - 1 && <LoadingBubble />}
-                      {message.type === 'apiMessage' && message.message === '' && loading() && index() === messages().length - 1 && <LoadingBubble />}
-                    </>
-                  );
-                }}
-              </For>
-            </div>
+                      // Для первого сообщения всегда показываем дату
+                      if (index() === 0) return true;
+
+                      // Для остальных - сравниваем с предыдущим сообщением
+                      const prevMessage = messages()[index() - 1];
+                      const prevDate = getDateOnly(prevMessage?.dateTime);
+
+                      return prevDate !== currentDate;
+                    };
+
+                    return (
+                      <>
+                        {shouldShowDateDivider() && <DateDivider date={message.dateTime} />}
+                        {message.type === 'userMessage' && (
+                          <GuestBubble
+                            message={message}
+                            apiHost={props.apiHost}
+                            chatflowid={props.chatflowid}
+                            chatId={chatId()}
+                            showAvatar={props.userMessage?.showAvatar}
+                            avatarSrc={props.userMessage?.avatarSrc}
+                            fontSize={props.fontSize}
+                            renderHTML={props.renderHTML}
+                            dateTimeToggle={props.dateTimeToggle}
+                            isFullPage={props.isFullPage}
+                            isFullscreen={props.isFullscreen}
+                            isPopup={!props.isFullPage}
+                            enableCopyMessage={props.enableCopyMessage}
+                            userName={userData().user_name} // Передаем user_name (fio) для отображения
+                          />
+                        )}
+                        {message.type === 'apiMessage' && (
+                          <BotBubble
+                            message={message}
+                            fileAnnotations={message.fileAnnotations}
+                            chatflowid={props.chatflowid}
+                            chatId={chatId()}
+                            apiHost={props.apiHost}
+                            showAvatar={props.botMessage?.showAvatar ?? true}
+                            avatarSrc={props.botMessage?.avatarSrc ?? props.titleAvatarSrc}
+                            chatFeedbackStatus={index() > 0 ? chatFeedbackStatus() : false}
+                            fontSize={props.fontSize}
+                            isLoading={loading() && index() === messages().length - 1}
+                            showAgentMessages={props.showAgentMessages}
+                            botTitle={props.title}
+                            isTTSEnabled={isTTSEnabled()}
+                            isTTSLoading={isTTSLoading()}
+                            isTTSPlaying={isTTSPlaying()}
+                            handleTTSClick={handleTTSClick}
+                            handleTTSStop={handleTTSStop}
+                            handleActionClick={(elem, action) => handleActionClick(elem, action)}
+                            onMessageAdd={(newMessage) => {
+                              setMessages((prevMessages) => {
+                                const updated = [...prevMessages, newMessage];
+                                addChatMessage(updated);
+
+                                if (
+                                  newMessage.message &&
+                                  typeof newMessage.message === 'string' &&
+                                  (newMessage.message.includes('Чат передан оператору') || newMessage.message.includes('оператору'))
+                                ) {
+                                  setTimeout(() => {
+                                    startAutoFAQPolling();
+                                  }, 1000);
+                                }
+
+                                return updated;
+                              });
+                              scrollToBottom();
+                            }}
+                            sourceDocsTitle={props.sourceDocsTitle}
+                            handleSourceDocumentsClick={(sourceDocuments) => {
+                              setSourcePopupSrc(sourceDocuments);
+                              setSourcePopupOpen(true);
+                            }}
+                            dateTimeToggle={props.dateTimeToggle}
+                            renderHTML={props.renderHTML}
+                            enableCopyMessage={props.enableCopyMessage}
+                            isFullPage={props.isFullPage}
+                            isFullscreen={props.isFullscreen}
+                            isPopup={!props.isFullPage}
+                            feedbackReasons={props.feedback?.reasons}
+                            userData={{
+                              fio: userData().fio,
+                              email: userData().email,
+                              user_name: userData().user_name,
+                              user_id: userData().user_id,
+                              login: (userData() as any).login,
+                              shortname: (userData() as any).shortname,
+                              orn: (userData() as any).orn,
+                              phone: (userData() as any).phone,
+                            }}
+                            isOperatorConnected={isOperatorConnected()}
+                          />
+                        )}
+                        {message.type === 'leadCaptureMessage' && leadsConfig()?.status && !getLocalStorageChatflow(props.chatflowid)?.lead && (
+                          <LeadCaptureBubble
+                            message={message}
+                            chatflowid={props.chatflowid}
+                            chatId={chatId()}
+                            apiHost={props.apiHost}
+                            fontSize={props.fontSize}
+                            showAvatar={props.botMessage?.showAvatar}
+                            avatarSrc={props.botMessage?.avatarSrc}
+                            leadsConfig={leadsConfig()}
+                            isLeadSaved={isLeadSaved()}
+                            setIsLeadSaved={setIsLeadSaved}
+                            setLeadEmail={setLeadEmail}
+                          />
+                        )}
+                      </>
+                    );
+                  }}
+                </For>
+              </div>
             <Show when={messages().length > 2 && followUpPromptsStatus()}>
               <Show when={followUpPrompts().length > 0}>
                 <>
@@ -2596,13 +2648,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                   </div>
                   <div class="w-full flex flex-row flex-wrap px-5 py-[10px] gap-2">
                     <For each={[...followUpPrompts()]}>
-                      {(prompt, index) => (
-                        <FollowUpPromptBubble
-                          prompt={prompt}
-                          onPromptClick={() => followUpPromptClick(prompt)}
-                          starterPromptFontSize={botProps.starterPromptFontSize} // Pass it here as a number
-                        />
-                      )}
+                      {(prompt, index) => <FollowUpPromptBubble prompt={prompt} onPromptClick={() => followUpPromptClick(prompt)} />}
                     </For>
                   </div>
                 </>
@@ -2613,81 +2659,61 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 <For each={[...previews()]}>{(item) => <>{previewDisplay(item)}</>}</For>
               </div>
             </Show>
-            {isRecording() ? (
-                <>
+            <div class="sticky bottom-0 w-full z-10">
+              <Show when={isRecording()}>
+                <div class="w-full flex justify-center px-5 pt-2 pb-1">
                   {recordingNotSupported() ? (
-                    <div class="w-full flex items-center justify-between p-4 border border-[#eeeeee]">
+                    <div class="w-full max-w-[796px] flex items-center justify-between p-4 border border-[#eeeeee] bg-white">
                       <div class="w-full flex items-center justify-between gap-3">
-                        <span class="text-base">To record audio, use modern browsers like Chrome or Firefox that support audio recording.</span>
+                        <span class="text-base">Для записи аудио используйте современные браузеры, такие как Chrome или Firefox, которые поддерживают запись аудио.</span>
                         <button
                           class="py-2 px-4 justify-center flex items-center bg-red-500 text-white rounded-md"
                           type="button"
                           onClick={() => onRecordingCancelled()}
                         >
-                          Okay
+                          Ок
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <div
-                      class="h-[58px] flex items-center justify-between chatbot-input border border-[#eeeeee]"
-                      data-testid="input"
-                      style={{ margin: 'auto', 'background-color': 'var(--chatbot-input-bg-color)' }}
+                    <button
+                      class="h-[44px] w-fit flex items-center gap-3 rounded-full bg-[#29292C] px-5 text-white"
+                      data-testid="voice-input"
+                      type="button"
+                      onClick={onRecordingStopped}
                     >
-                      <div class="flex items-center gap-3 px-4 py-2">
-                        <span>
-                          <CircleDotIcon color="red" />
-                        </span>
-                        <span>{elapsedTime() || '00:00'}</span>
-                        {isLoadingRecording() && <span class="ml-1.5">Sending...</span>}
-                      </div>
-                      <div class="flex items-center">
-                        <CancelButton buttonColor={props.textInput?.sendButtonColor} type="button" class="m-0" on:click={onRecordingCancelled}>
-                          <span style={{ 'font-family': 'Poppins, sans-serif' }}>Send</span>
-                        </CancelButton>
-                        <SendButton
-                          sendButtonColor={props.textInput?.sendButtonColor}
-                          type="button"
-                          isDisabled={loading()}
-                          class="m-0"
-                          on:click={onRecordingStopped}
-                        >
-                          <span style={{ 'font-family': 'Poppins, sans-serif' }}>Send</span>
-                        </SendButton>
-                      </div>
-                    </div>
+                      <span class="w-3 h-3 rounded-[2px] bg-[#FF4978]" />
+                      <span class="text-sm font-medium">Остановить загрузку</span>
+                    </button>
                   )}
-                </>
-              ) : (
-                <TextInput
-                  placeholder={props.textInput?.placeholder}
-                  maxChars={props.textInput?.maxChars}
-                  maxCharsWarningMessage={props.textInput?.maxCharsWarningMessage}
-                  autoFocus={props.textInput?.autoFocus}
-                  fontSize={props.fontSize}
-                  disabled={getInputDisabled()}
-                  inputValue={userInput()}
-                  onInputChange={(value) => setUserInput(value)}
-                  onSubmit={handleSubmit}
-                  uploadsConfig={uploadsConfig()}
-                  isFullFileUpload={fullFileUpload()}
-                  fullFileUploadAllowedTypes={fullFileUploadAllowedTypes()}
-                  setPreviews={setPreviews}
-                  onMicrophoneClicked={onMicrophoneClicked}
-                  handleFileChange={handleFileChange}
-                  sendMessageSound={props.textInput?.sendMessageSound}
-                  sendSoundLocation={props.textInput?.sendSoundLocation}
-                  enableInputHistory={true}
-                  maxHistorySize={10}
-                  isFullPage={props.isFullPage || props.isFullscreen}
-                />
-              )}
-            <Badge
-              footer={props.footer}
-              botContainer={botContainer}
-              showBadge={props.showBadge}
-            />
+                </div>
+              </Show>
+              <SendArea
+                placeholder={props.textInput?.placeholder}
+                maxChars={props.textInput?.maxChars}
+                maxCharsWarningMessage={props.textInput?.maxCharsWarningMessage}
+                autoFocus={props.textInput?.autoFocus}
+                fontSize={props.fontSize}
+                disabled={getInputDisabled()}
+                inputValue={userInput()}
+                onInputChange={(value) => setUserInput(value)}
+                onSubmit={handleSubmit}
+                uploadsConfig={uploadsConfig()}
+                isFullFileUpload={fullFileUpload()}
+                fullFileUploadAllowedTypes={fullFileUploadAllowedTypes()}
+                setPreviews={setPreviews}
+                handleFileChange={handleFileChange}
+                enableInputHistory={true}
+                maxHistorySize={10}
+                isFullscreen={props.isFullscreen}
+                onMicrophoneClicked={onMicrophoneClicked}
+                sendMessageSound={props.textInput?.sendMessageSound}
+                sendSoundLocation={props.textInput?.sendSoundLocation}
+              />
+            </div>
+            <Badge footer={props.footer} botContainer={botContainer} showBadge={props.showBadge} />
           </div>
+        </Show>
         </div>
       )}
       {sourcePopupOpen() && <Popup isOpen={sourcePopupOpen()} value={sourcePopupSrc()} onClose={() => setSourcePopupOpen(false)} />}

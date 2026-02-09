@@ -22,7 +22,7 @@ export const IconButton = (props: IconButtonProps) => {
         focus:outline-none 
         shadow-xs 
         disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
-        hover:text-[var(--chatbot-button-bg-color)] hover:scale-105 ` + (props.class || '')
+        hover:text-[var(--chatbot-button-bg-color)] hover:scale-105 ` + props.class
       }
     >
       {props.icon}

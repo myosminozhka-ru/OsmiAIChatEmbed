@@ -1,357 +1,569 @@
-<!-- markdownlint-disable MD030 -->
+# Osmi AI Chat Embed
 
-# Sk Chatwidget Embed
+Библиотека для встраивания чат-бота на веб-сайты. Все настройки передаются через параметры инициализации.
 
-Javascript library to display sk chatwidget chatbot on your website
+## 📋 Содержание
 
-![Sk Chatwidget](https://github.com/SkChatwidget/SkChatwidgetEmbed/blob/main/images/ChatEmbed.gif?raw=true)
+- [Быстрый старт](#быстрый-старт)
+- [Установка и сборка](#установка-и-сборка)
+- [Развертывание с Docker](#развертывание-с-docker)
+- [Использование](#использование)
+- [Параметры инициализации](#параметры-инициализации)
+- [Примеры](#примеры)
 
-Install:
+---
+
+## Быстрый старт
+
+### 1. Клонирование репозитория
 
 ```bash
+git clone <repository-url>
+cd FlowiseChatEmbed
+```
+
+### 2. Установка зависимостей
+
+```bash
+npm install
+# или
 yarn install
 ```
 
-Dev:
+### 3. Сборка проекта
 
 ```bash
-yarn dev
-```
-
-A development server will be running on http://localhost:5678 automatically. Update `public/index.html` to connect directly to Sk Chatwidget:
-
-```html
-<!-- public/index.html -->
-<script type="module">
-  import Chatbot from 'https://localhost:5678/web.js'; // Change to from './web.js' to 'https://localhost:5678/web.js'
-  Chatbot.init({
-    chatflowid: '91e9c803-5169-4db9-8207-3c0915d71c5f', // Add your Sk Chatwidget chatflowid
-    apiHost: 'https://your-sk-chatwidget-instance.com', // Add your Sk Chatwidget apiHost
-  });
-</script>
-```
-
-Build:
-
-```bash
+npm run build
+# или
 yarn build
 ```
 
-## Embed in your HTML
+После сборки файлы будут в папке `dist/`:
 
-### PopUp
+- `dist/web.js` - ES модуль
+- `dist/web.umd.js` - UMD модуль
+
+---
+
+## Установка и сборка
+
+### Разработка
+
+Для разработки с автоматической пересборкой при изменениях:
+
+```bash
+npm run dev:build
+```
+
+Это запустит Rollup в watch-режиме и будет автоматически пересобирать проект при изменении файлов.
+
+### Продакшн сборка
+
+```bash
+npm run build
+```
+
+---
+
+## Использование
+
+### Popup чат (Bubble)
 
 ```html
 <script type="module">
-  import Chatbot from 'https://cdn.jsdelivr.net/npm/osmi-ai-embed/dist/web.js';
+  import Chatbot from 'https://your-cdn.com/web.js';
+
   Chatbot.init({
-    chatflowid: '<chatflowid>',
-    apiHost: 'http://localhost:3000',
+    chatflowid: 'your-chatflow-id',
+    apiHost: 'https://your-api-host.com',
+    apiKey: 'your-api-key', // Опционально
   });
 </script>
 ```
 
-### FullPage
+### Полноэкранный чат
 
 ```html
-<script type="module">
-  import Chatbot from 'https://cdn.jsdelivr.net/npm/osmi-ai-embed/dist/web.js';
-  Chatbot.initFull({
-    chatflowid: '<chatflowid>',
-    apiHost: 'http://localhost:3000',
-  });
-</script>
 <osmi-ai-fullchatbot></osmi-ai-fullchatbot>
-```
 
-To enable full screen, add `margin: 0` to <code>body</code> style, and confirm you don't set height and width
-
-```html
-<body style="margin: 0">
-  <script type="module">
-    import Chatbot from 'https://cdn.jsdelivr.net/npm/osmi-ai-embed/dist/web.js';
-    Chatbot.initFull({
-      chatflowid: '<chatflowid>',
-      apiHost: 'http://localhost:3000',
-      theme: {
-        chatWindow: {
-          // height: 700, don't set height
-          // width: 400, don't set width
-        },
-      },
-    });
-  </script>
-</body>
-```
-
-## Configuration
-
-You can also customize chatbot with different configuration
-
-```html
 <script type="module">
-  import Chatbot from 'https://cdn.jsdelivr.net/npm/osmi-ai-embed/dist/web.js';
-  Chatbot.init({
-    chatflowid: '91e9c803-5169-4db9-8207-3c0915d71c5f',
-    apiHost: 'http://localhost:3000',
-    chatflowConfig: {
-      // topK: 2
+  import Chatbot from 'https://your-cdn.com/web.js';
+
+  Chatbot.initFull({
+    chatflowid: 'your-chatflow-id',
+    apiHost: 'https://your-api-host.com',
+    apiKey: 'your-api-key', // Опционально
+  });
+</script>
+```
+
+---
+
+## Параметры инициализации
+
+### Основные параметры
+
+| Параметр          | Тип                                       | Описание                                                             |
+| ----------------- | ----------------------------------------- | -------------------------------------------------------------------- |
+| `chatflowid`      | `string`                                  | UUID вашего chatflow из AI платформы (обязательно)                   |
+| `apiHost`         | `string`                                  | URL вашего AI инстанса (обязательно)                                 |
+| `apiKey`          | `string`                                  | API ключ для авторизации (опционально, добавляется как Bearer token) |
+| `onRequest`       | `(request: RequestInit) => Promise<void>` | Callback для модификации запросов перед отправкой (опционально)      |
+| `chatflowConfig`  | `Record<string, unknown>`                 | Дополнительная конфигурация chatflow (опционально)                   |
+| `observersConfig` | `observersConfigType`                     | Конфигурация наблюдателей (callbacks для событий) (опционально)      |
+| `theme`           | `BubbleTheme`                             | Настройки темы (опционально)                                         |
+
+### Параметры темы (через объект `theme`)
+
+#### `theme.chatWindow` - Окно чата
+
+| Параметр            | Тип        | Описание                                     |
+| ------------------- | ---------- | -------------------------------------------- |
+| `showTitle`         | `boolean`  | Показывать заголовок чата                    |
+| `showAgentMessages` | `boolean`  | Показывать сообщения агента (для agentflows) |
+| `title`             | `string`   | Текст заголовка                              |
+| `titleAvatarSrc`    | `string`   | URL аватара в заголовке                      |
+| `welcomeTitle`      | `string`   | Заголовок приветственного сообщения          |
+| `welcomeText`       | `string`   | Текст приветственного сообщения. По умолчанию: "Задавайте мне вопросы так, будто общаетесь с реальным человеком" |
+| `assistantGreeting` | `string`   | Приветствие ассистента для первого bubble. Если не указано, используется значение по умолчанию: "Я ваш AI-ассистент. Чем могу помочь?" |
+| `showWelcomeImage`  | `boolean`  | Показывать изображение приветствия           |
+| `errorMessage`      | `string`   | Сообщение об ошибке                          |
+| `backgroundImage`   | `string`   | URL фонового изображения                     |
+| `height`            | `number`   | Высота окна в пикселях                       |
+| `width`             | `number`   | Ширина окна в пикселях                       |
+| `fontSize`          | `number`   | Размер шрифта                                |
+| `sourceDocsTitle`   | `string`   | Заголовок для документов-источников          |
+| `starterPrompts`    | `string[]` | Массив стартовых подсказок                   |
+| `clearChatOnReload` | `boolean`  | Очищать чат при перезагрузке страницы        |
+| `renderHTML`        | `boolean`  | Рендерить HTML в сообщениях                  |
+| `enableTTS`         | `boolean`  | Включить функцию озвучки ответов (TTS). По умолчанию: `false` |
+
+#### `theme.chatWindow.userMessage` - Сообщения пользователя
+
+| Параметр     | Тип       | Описание          |
+| ------------ | --------- | ----------------- |
+| `showAvatar` | `boolean` | Показывать аватар |
+| `avatarSrc`  | `string`  | URL аватара       |
+
+#### `theme.chatWindow.botMessage` - Сообщения бота
+
+| Параметр     | Тип       | Описание          |
+| ------------ | --------- | ----------------- |
+| `showAvatar` | `boolean` | Показывать аватар |
+| `avatarSrc`  | `string`  | URL аватара       |
+
+#### `theme.chatWindow.textInput` - Поле ввода
+
+| Параметр                 | Тип       | Описание                         |
+| ------------------------ | --------- | -------------------------------- |
+| `placeholder`            | `string`  | Текст placeholder                |
+| `maxChars`               | `number`  | Максимальное количество символов |
+| `maxCharsWarningMessage` | `string`  | Сообщение при превышении лимита  |
+| `autoFocus`              | `boolean` | Автофокус на поле ввода          |
+
+#### `theme.chatWindow.feedback` - Обратная связь
+
+| Параметр  | Тип        | Описание                                       |
+| --------- | ---------- | ---------------------------------------------- |
+| `reasons` | `string[]` | Массив причин для отрицательной обратной связи |
+
+#### `theme.chatWindow.footer` - Футер
+
+| Параметр      | Тип       | Описание                |
+| ------------- | --------- | ----------------------- |
+| `showFooter`  | `boolean` | Показывать футер        |
+| `text`        | `string`  | Текст футера            |
+| `company`     | `string`  | Название компании       |
+| `companyLink` | `string`  | Ссылка на сайт компании |
+
+#### `theme.chatWindow.dateTimeToggle` - Дата и время
+
+| Параметр | Тип       | Описание         |
+| -------- | --------- | ---------------- |
+| `date`   | `boolean` | Показывать дату  |
+| `time`   | `boolean` | Показывать время |
+
+#### `theme.button` - Кнопка чата (только для popup)
+
+| Параметр         | Тип                                        | Описание                             |
+| ---------------- | ------------------------------------------ | ------------------------------------ |
+| `size`           | `'small' \| 'medium' \| 'large' \| number` | Размер кнопки (или число в пикселях) |
+| `customIconSrc`  | `string`                                   | URL кастомной иконки                 |
+| `bottom`         | `number`                                   | Отступ снизу в пикселях              |
+| `right`          | `number`                                   | Отступ справа в пикселях             |
+| `dragAndDrop`    | `boolean`                                  | Включить перетаскивание кнопки       |
+| `autoWindowOpen` | `autoWindowOpenTheme`                      | Настройки автоматического открытия   |
+
+##### `theme.button.autoWindowOpen`
+
+| Параметр           | Тип       | Описание                             |
+| ------------------ | --------- | ------------------------------------ |
+| `autoOpen`         | `boolean` | Автоматически открывать окно         |
+| `openDelay`        | `number`  | Задержка открытия в секундах         |
+| `autoOpenOnMobile` | `boolean` | Автоматически открывать на мобильных |
+
+#### `theme.tooltip` - Подсказка (только для popup)
+
+| Параметр          | Тип       | Описание                |
+| ----------------- | --------- | ----------------------- |
+| `showTooltip`     | `boolean` | Показывать подсказку    |
+| `tooltipMessage`  | `string`  | Текст подсказки         |
+| `tooltipFontSize` | `number`  | Размер шрифта подсказки |
+
+#### `theme.disclaimer` - Окно отказа от ответственности
+
+| Параметр         | Тип      | Описание                            |
+| ---------------- | -------- | ----------------------------------- |
+| `title`          | `string` | Заголовок окна                      |
+| `message`        | `string` | Текст сообщения (поддерживает HTML) |
+| `buttonText`     | `string` | Текст кнопки принятия               |
+| `denyButtonText` | `string` | Текст кнопки отмены                 |
+
+#### `theme.customCSS` - Кастомный CSS
+
+| Параметр    | Тип      | Описание            |
+| ----------- | -------- | ------------------- |
+| `customCSS` | `string` | Кастомные CSS стили |
+
+**Примечание:** Все цвета настраиваются через Tailwind классы в `customCSS` или через CSS переменные.
+
+---
+
+## Примеры
+
+### Минимальная инициализация
+
+```javascript
+import Chatbot from 'https://your-cdn.com/web.js';
+
+Chatbot.init({
+  chatflowid: '91e9c803-5169-4db9-8207-3c0915d71c5f',
+  apiHost: 'https://ai-platform.example.com',
+  apiKey: 'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+});
+```
+
+### С темой
+
+```javascript
+import Chatbot from 'https://your-cdn.com/web.js';
+
+Chatbot.init({
+  chatflowid: 'your-chatflow-id',
+  apiHost: 'https://ai-platform.example.com',
+  apiKey: 'your-api-key',
+  theme: {
+    chatWindow: {
+      showTitle: true,
+      title: 'Умный помощник',
+      welcomeText: 'Задавайте мне вопросы так, будто общаетесь с реальным человеком',
+      assistantGreeting: 'Я ваш AI-ассистент Сколково. Чем могу помочь?',
+      botMessage: {
+        showAvatar: true,
+      },
+      userMessage: {
+        showAvatar: true,
+      },
+      textInput: {
+        placeholder: 'Введите сообщение...',
+      },
     },
-    observersConfig: {
-      // (optional) Allows you to execute code in parent based upon signal observations within the chatbot.
-      // The userinput field submitted to bot ("" when reset by bot)
-      observeUserInput: (userInput) => {
-        console.log({ userInput });
-      },
-      // The bot message stack has changed
-      observeMessages: (messages) => {
-        console.log({ messages });
-      },
-      // The bot loading signal changed
-      observeLoading: (loading) => {
-        console.log({ loading });
-      },
+    button: {
+      size: 'large',
     },
-    theme: {
-      button: {
-        backgroundColor: '#3B81F6',
-        right: 20,
-        bottom: 20,
-        size: 48, // small | medium | large | number
-        dragAndDrop: true,
-        iconColor: 'white',
-        customIconSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
-        autoWindowOpen: {
-          autoOpen: true, //parameter to control automatic window opening
-          openDelay: 2, // Optional parameter for delay time in seconds
-          autoOpenOnMobile: false, //parameter to control automatic window opening in mobile
-        },
-      },
-      tooltip: {
-        showTooltip: true,
-        tooltipMessage: 'Hi There 👋!',
-        tooltipBackgroundColor: 'black',
-        tooltipTextColor: 'white',
-        tooltipFontSize: 16,
-      },
-      disclaimer: {
-        title: 'Disclaimer',
-        message: 'By using this chatbot, you agree to the Terms & Condition.',
-        textColor: 'black',
-        buttonColor: '#3b82f6',
-        buttonText: 'Start Chatting',
-        buttonTextColor: 'white',
-        blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)', //The color of the blurred background that overlays the chat interface
-        backgroundColor: 'white',
-        denyButtonText: 'Cancel',
-        denyButtonBgColor: '#ef4444',
-      },
-      form: {
-        backgroundColor: 'white',
-        textColor: 'black',
+    customCSS: `
+      .chatbot-container {
+        @apply bg-white;
       }
-      customCSS: ``, // Add custom CSS styles. Use !important to override default styles
-      chatWindow: {
-        showTitle: true,
-        showAgentMessages: true,
-        title: 'Sk Chatwidget Bot',
-        titleAvatarSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
-        titleBackgroundColor: '#3B81F6',
-        titleTextColor: '#ffffff',
-        welcomeMessage: 'Hello! This is custom welcome message',
-        errorMessage: 'This is a custom error message',
-        backgroundColor: '#ffffff',
-        backgroundImage: 'enter image path or link', // If set, this will overlap the background color of the chat window.
-        height: 700,
-        width: 400,
-        fontSize: 16,
-        starterPrompts: ['What is a bot?', 'Who are you?'], // It overrides the starter prompts set by the chat flow passed
-        starterPromptFontSize: 15,
-        clearChatOnReload: false, // If set to true, the chat will be cleared when the page reloads
-        sourceDocsTitle: 'Sources:',
-        renderHTML: true,
-        botMessage: {
-          backgroundColor: '#f7f8ff',
-          textColor: '#303235',
-          showAvatar: true,
-          avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/parroticon.png',
-        },
-        userMessage: {
-          backgroundColor: '#3B81F6',
-          textColor: '#ffffff',
-          showAvatar: true,
-          avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png',
-        },
-        textInput: {
-          placeholder: 'Type your question',
-          backgroundColor: '#ffffff',
-          textColor: '#303235',
-          sendButtonColor: '#3B81F6',
-          maxChars: 50,
-          maxCharsWarningMessage: 'You exceeded the characters limit. Please input less than 50 characters.',
-          autoFocus: true, // If not used, autofocus is disabled on mobile and enabled on desktop. true enables it on both, false disables it on both.
-          sendMessageSound: true,
-          // sendSoundLocation: "send_message.mp3", // If this is not used, the default sound effect will be played if sendSoundMessage is true.
-          receiveMessageSound: true,
-          // receiveSoundLocation: "receive_message.mp3", // If this is not used, the default sound effect will be played if receiveSoundMessage is true.
-        },
-        feedback: {
-          color: '#303235',
-        },
-        dateTimeToggle: {
-          date: true,
-          time: true,
-        },
-        footer: {
-          textColor: '#303235',
-          text: 'Powered by',
-          company: 'Sk Chatwidget',
-          companyLink: '',
-        },
+      .bot-message {
+        @apply bg-gray-100;
+      }
+      .user-message {
+        @apply bg-blue-500 text-white;
+      }
+    `,
+  },
+});
+```
+
+### Полноэкранный чат
+
+```javascript
+import Chatbot from 'https://your-cdn.com/web.js';
+
+Chatbot.initFull({
+  chatflowid: 'your-chatflow-id',
+  apiHost: 'https://ai-platform.example.com',
+  apiKey: 'your-api-key',
+  theme: {
+    chatWindow: {
+      showTitle: true,
+      title: 'Умный помощник',
+      welcomeText: 'Задавайте мне вопросы так, будто общаетесь с реальным человеком',
+      assistantGreeting: 'Я ваш AI-ассистент Сколково. Чем могу помочь?',
+      botMessage: {
+        showAvatar: true,
+      },
+      dateTimeToggle: {
+        date: false,
+        time: true,
       },
     },
-  });
-</script>
+  },
+});
 ```
 
-## (Experimental) Proxy Server Setup
+### С кастомным onRequest
 
-The Sk Chatwidget Embed Proxy Server enhances the security of your chatbot implementation by acting as a protective intermediary layer. This server eliminates the need to expose sensitive Sk Chatwidget instance details in your frontend code and provides several key security benefits:
+```javascript
+import Chatbot from 'https://your-cdn.com/web.js';
 
-![Proxy Server](https://github.com/SkChatwidget/SkChatwidgetEmbed/blob/main/images/proxyserver.png?raw=true)
+Chatbot.init({
+  chatflowid: 'your-chatflow-id',
+  apiHost: 'https://ai-platform.example.com',
+  onRequest: async (request) => {
+    // Добавляем кастомные заголовки
+    if (!request.headers) {
+      request.headers = {};
+    }
+    request.headers['X-Custom-Header'] = 'value';
 
-- **Enhanced Security**: Conceals your Sk Chatwidget API host and chatflow IDs from client-side exposure
-- **Access Control**: Implements strict domain-based restrictions for chatbot embedding
-- **Secure Communication**: Acts as a secure gateway for all interactions between your website and Sk Chatwidget instance
-- **Authentication Management**: Handles API key authentication securely on the server side, away from client exposure
+    // Или используем apiKey напрямую
+    request.headers['Authorization'] = `Bearer your-api-key`;
+  },
+});
+```
 
-This proxy server can be deployed to any Node.js hosting platform.
+---
 
-## Quick Start
+## Развертывание с Docker
 
-1. Configure environment:
+### Быстрый старт
+
+1. Клонируйте репозиторий:
 
 ```bash
-# Copy .env.example to .env and configure required settings:
-API_HOST=https://your-sk-chatwidget-instance.com
-SK_CHATWIDGET_API_KEY=your-api-key
-
-# Configure your chatflows:
-# Format: [identifier]=[chatflowId],[allowedDomain1],[allowedDomain2],...
-#
-# identifier: Any name you choose (e.g., agent1, support, salesbot)
-# chatflowId: The UUID of your Sk Chatwidget chatflow
-# allowedDomains: Comma-separated list of domains where this chat can be embedded
-#
-# Examples:
-support=abc123-def456,https://example.com
-agent1=xyz789-uvw456,https://sales.example.com
-helpdesk=ghi123-jkl456,https://help.example.com,https://support.example.com
+git clone <repository-url>
+cd FlowiseChatEmbed
 ```
 
-2. Install dependencies: (assuming you did not run `yarn install` yet)
+2. Соберите и запустите Docker контейнер:
 
 ```bash
-yarn install
+docker-compose up -d --build
 ```
 
-3. Start proxy server:
+Сервер будет доступен по адресу: `http://localhost:5678`
 
-```bash
-yarn start
-# Server will be available at:
-# - Local:  http://localhost:3001
-# - Cloud:  [Your Platform URL] (e.g., https://your-app.herokuapp.com)
-```
+### Использование после развертывания
 
-4. Once the proxy server is running in production, you will be able to embed your chatbots safely without exposing your Sk Chatwidget API host and chatflow IDs as below:
+После запуска Docker контейнера файлы будут доступны по следующим URL:
+
+- `http://your-server.com/web.js` - основной модуль чат-бота
+- `http://your-server.com/dist/web.js` - альтернативный путь
+- `http://your-server.com/index.html` - демо страница (popup)
+- `http://your-server.com/fullchat.html` - демо страница (full page)
+
+### Пример использования на сайте клиента
 
 ```html
 <script type="module">
-  import Chatbot from 'your-proxy-server-url/web.js'; // Must be 'your-proxy-server-url/web.js'
+  import Chatbot from 'https://your-server.com/web.js';
+
   Chatbot.init({
-    chatflowid: 'your-identifier-here', // Must match an identifier from your .env
-    apiHost: 'your-proxy-server-url', // Must match the URL of your proxy server
-    chatflowConfig: {
-      // ...
-    },
+    chatflowid: 'your-chatflow-id',
+    apiHost: 'https://your-api-host.com',
+    apiKey: 'your-api-key',
   });
 </script>
 ```
 
-5. (optional) If you want to test any identifier in public/index.html, you can update it as below:
+### Настройка переменных окружения
 
-```html
-<!-- public/index.html -->
-chatflowid: 'your-identifier-here' // Must match an identifier from your .env
+В `docker-compose.yml` можно настроить следующие переменные окружения:
+
+| Переменная | Описание | Значение по умолчанию |
+|------------|----------|----------------------|
+| `CHATFLOW_ID` | UUID вашего chatflow | `` |
+| `API_HOST` | URL вашего AI инстанса | `http://localhost:3000` |
+| `WELCOME_TITLE` | Заголовок приветственного сообщения | `Привет! Я ваш виртуальный ассистент от Фонда «Сколково».` |
+| `WELCOME_TEXT` | Текст приветственного сообщения | `Задавайте мне вопросы об экосистеме так, словно обращаетесь к сотруднику Сколково.` |
+| `PORT` | Порт для запуска сервера | `3001` |
+| `HOST` | Хост для запуска сервера | `0.0.0.0` |
+
+#### Использование через .env файл
+
+Создайте файл `.env` в корне проекта:
+
+```env
+CHATFLOW_ID=your-chatflow-id
+API_HOST=https://your-api-host.com
+WELCOME_TITLE=Ваш заголовок
+WELCOME_TEXT=Ваш текст приветствия
+PORT=3001
+HOST=0.0.0.0
 ```
 
-**Important Notes:**
+Docker Compose автоматически загрузит переменные из `.env` файла.
 
-- To ensure secure embedding, you must explicitly whitelist the websites authorized to embed each chatbot. This configuration is done within the .env file. Note that this also applies to your server's URL when deployed to a cloud environment, or http://localhost:3001 for local development, if needed you must whitelist it as well.
-- Wildcard domains (\*) are not supported for security reasons
-- Identifiers are case-insensitive (e.g., 'Support' and 'support' are treated the same)
-
-## Cloud Deployment Requirements
-
-When deploying to cloud platforms, you must configure the environment variables directly in your platform. The proxy server will not start without these variables being properly set. Compatible with Nixpacks for automatic deployment configuration.
-
-## Development Mode (For Local Testing)
-
-1. Configure your environment variables (see above)
-
-2. Start the proxy server:
+#### Использование через переменные окружения
 
 ```bash
-yarn start
-# Server will be available at:
-# - Local:  http://localhost:3001
+CHATFLOW_ID=your-chatflow-id API_HOST=https://your-api-host.com docker-compose up -d
 ```
 
-3. Update the test page configuration:
+#### Настройка порта
 
-- Open `public/index.html` in your code editor
-- Modify the `chatflowid` and `apiHost` to match your `.env` settings:
+По умолчанию контейнер использует порт 3001. Чтобы изменить порт, установите переменную окружения:
+
+```bash
+PORT=8080 docker-compose up -d
+```
+
+Или отредактируйте `docker-compose.yml`:
+
+```yaml
+ports:
+  - '8080:3001'
+```
+
+### Обновление приложения
+
+Для обновления приложения до последней версии:
+
+```bash
+# Получите последние изменения из репозитория
+git pull origin main
+
+# Пересоберите и перезапустите контейнер
+docker-compose up -d --build
+```
+
+### Просмотр логов
+
+```bash
+# Все логи
+docker-compose logs
+
+# Логи в реальном времени
+docker-compose logs -f
+
+# Последние 100 строк
+docker-compose logs --tail=100
+```
+
+### Остановка и удаление
+
+```bash
+# Остановка
+docker-compose down
+
+# Остановка с удалением volumes
+docker-compose down -v
+```
+
+---
+
+## Развертывание без Docker
+
+После сборки проекта (`npm run build`) файлы будут в папке `dist/`:
+
+- `dist/web.js` - ES модуль (рекомендуется)
+- `dist/web.umd.js` - UMD модуль
+
+Загрузите эти файлы на ваш CDN или веб-сервер и используйте их в ваших HTML страницах.
+
+### Пример развертывания на статический хостинг
+
+1. Соберите проект: `npm run build`
+2. Загрузите папку `dist/` на ваш хостинг
+3. Используйте файлы в ваших HTML страницах:
 
 ```html
-<!-- public/index.html -->
 <script type="module">
-  import Chatbot from './web.js';
+  import Chatbot from 'https://your-domain.com/web.js';
   Chatbot.init({
-    chatflowid: 'agent1', // Must match an identifier from your .env
-    apiHost: 'http://localhost:3001', // Change this from window.location.origin to 'http://localhost:3001'
+    chatflowid: 'your-chatflow-id',
+    apiHost: 'https://your-api-host.com',
+    apiKey: 'your-api-key',
   });
 </script>
 ```
 
-For full page testing, use this configuration instead:
+---
 
-```html
-<!-- public/index.html -->
-<osmi-ai-fullchatbot></osmi-ai-fullchatbot>
-<script type="module">
-  import Chatbot from './web.js';
-  Chatbot.initFull({
-    chatflowid: 'agent1', // Must match an identifier from your .env
-    apiHost: 'http://localhost:3001', // Change this from window.location.origin to 'http://localhost:3001'
-  });
-</script>
+## Примечания
+
+1. **API ключ**: Если указан `apiKey`, он автоматически добавляется как `Authorization: Bearer <apiKey>` во все запросы к API.
+
+2. **CORS**: Убедитесь, что ваш AI инстанс настроен для работы с CORS и разрешает запросы с ваших доменов.
+
+3. **Безопасность**: Не храните API ключи в открытом виде в клиентском коде. Рассмотрите использование прокси-сервера для защиты ключей.
+
+4. **Полноэкранный режим**: Для `initFull()` параметры `theme.button` и `theme.tooltip` не применяются.
+
+5. **Стилизация**: Все цвета настраиваются через Tailwind классы в `customCSS`. Параметры цветов не поддерживаются в публичном API.
+
+---
+
+## Устранение неполадок
+
+### Ошибка загрузки модуля
+
+Убедитесь, что путь к `web.js` правильный и файл доступен.
+
+### CORS ошибки
+
+Проверьте настройки CORS на вашем AI инстансе. Убедитесь, что ваш домен разрешен для запросов.
+
+### Ошибки авторизации
+
+Проверьте правильность `apiKey` и что он имеет необходимые права в AI платформе.
+
+### Chatflow не найден
+
+Убедитесь, что `chatflowid` правильный (UUID) и chatflow существует в AI платформе.
+
+---
+
+## Новая функция: озвучка ответов (TTS)
+
+### Что это такое
+
+Виджет умеет озвучивать ответы бота. Для каждого сообщения бота появляется отдельная кнопка TTS (иконка громкости рядом с лайками), по нажатию текст конвертируется в аудио и воспроизводится в браузере.
+
+### Требования к backend
+
+- Backend должен поддерживать следующие эндпоинты:
+  - `POST /api/v1/text-to-speech/generate` — принимает `chatId`, `chatflowId`, `chatMessageId`, `text` и возвращает аудио (blob).
+  - `POST /api/v1/text-to-speech/abort` — отмена генерации/проигрывания для конкретного сообщения.
+- `apiHost`, который вы передаёте в `Chatbot.init(...)`, должен указывать на инстанс, где эти эндпоинты доступны.
+
+### Как включить и протестировать TTS
+
+1. **Запустите backend** с поддержкой TTS по адресу, который вы используете как `apiHost`.
+2. **Запустите фронтенд**:
+   ```bash
+   yarn dev
+   # или
+   yarn build
+   ```
+3. Откройте демо‑страницу (по умолчанию `http://localhost:5678` или адрес вашего хостинга).
+4. Отправьте сообщение в чат и дождитесь ответа бота.
+5. Справа от сообщения бота должна отобразиться кнопка TTS:
+   - первый клик — запрос к `/api/v1/text-to-speech/generate` и воспроизведение аудио;
+   - повторный клик — остановка аудио и запрос к `/api/v1/text-to-speech/abort`.
+
+### Как временно отключить TTS (для отладки)
+
+В файле `src/components/Bot.tsx` TTS управляется сигналом:
+
+```ts
+const [isTTSEnabled, setIsTTSEnabled] = createSignal(true);
 ```
 
-4. While the proxy server is running, open a new terminal and start the development server:
+Чтобы скрыть TTS‑кнопки без удаления кода, установите `false`:
 
-```bash
-yarn dev
-# This will serve the test page on http://localhost:5678 automatically
+```ts
+const [isTTSEnabled, setIsTTSEnabled] = createSignal(false);
 ```
-
-5. Test the chatbot:
-
-- Navigate to http://localhost:5678
-- The chatbot should now be visible and functional
-
-**Note:** The development URL (http://localhost:5678) is automatically added to allowed domains in development mode. You don't need to add it manually.
-
-## License
-
-Source code in this repository is made available under the [MIT License](https://github.com/SkChatwidget/SkChatwidgetEmbed/blob/master/LICENSE.md).

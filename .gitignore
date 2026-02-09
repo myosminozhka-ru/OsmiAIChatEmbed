@@ -1,5 +1,5 @@
 node_modules
 .idea
 .env
-robots.txt
 dist
+robots.txt

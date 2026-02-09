@@ -48,13 +48,12 @@ export const Full = (props: FullProps, { element }: { element: HTMLElement }) =>
       <style>{styles}</style>
       <Show when={isBotDisplayed()}>
         <div
-          class="chatbot-container"
           style={{
-            'background-color': 'var(--chatbot-container-bg-color)',
+            'background-color': 'var(--chatbot-container-bg-color, #ffffff)',
             height: props.theme?.chatWindow?.height ? `${props.theme?.chatWindow?.height.toString()}px` : '100dvh',
             width: props.theme?.chatWindow?.width ? `${props.theme?.chatWindow?.width.toString()}px` : '100%',
             margin: '0px',
-            overflow: 'hidden',
+            overflow: 'hidden', // Ensure no extra scrolling due to content overflow
           }}
         >
           <Bot
@@ -62,9 +61,9 @@ export const Full = (props: FullProps, { element }: { element: HTMLElement }) =>
             showAgentMessages={props.theme?.chatWindow?.showAgentMessages}
             title={props.theme?.chatWindow?.title}
             titleAvatarSrc={props.theme?.chatWindow?.titleAvatarSrc}
-            welcomeMessage={props.theme?.chatWindow?.welcomeMessage}
             welcomeTitle={props.theme?.chatWindow?.welcomeTitle}
             welcomeText={props.theme?.chatWindow?.welcomeText}
+            assistantGreeting={props.theme?.chatWindow?.assistantGreeting}
             showWelcomeImage={props.theme?.chatWindow?.showWelcomeImage}
             errorMessage={props.theme?.chatWindow?.errorMessage}
             textInput={props.theme?.chatWindow?.textInput}
@@ -80,11 +79,11 @@ export const Full = (props: FullProps, { element }: { element: HTMLElement }) =>
             onRequest={props.onRequest}
             isFullPage={true}
             observersConfig={props.observersConfig}
-            starterPromptFontSize={props.theme?.chatWindow?.starterPromptFontSize}
             clearChatOnReload={props.theme?.chatWindow?.clearChatOnReload}
             disclaimer={props.theme?.disclaimer}
             dateTimeToggle={props.theme?.chatWindow?.dateTimeToggle}
             renderHTML={props.theme?.chatWindow?.renderHTML}
+            chatWindow={props.theme?.chatWindow}
           />
         </div>
       </Show>

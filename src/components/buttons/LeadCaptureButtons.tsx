@@ -15,7 +15,7 @@ export const CancelLeadCaptureButton = (props: LeadCaptureButtonProps) => {
       {...props}
       class={
         'h-10 p-2 justify-center font-semibold focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 ' +
-        (props.class || '')
+        props.class
       }
       style={{ background: 'transparent', border: 'none' }}
       title="Cancel Lead Capture"

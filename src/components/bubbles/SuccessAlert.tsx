@@ -8,7 +8,6 @@ type SuccessAlertProps = {
   onClose: () => void;
   message?: string;
 };
-
 export const SuccessAlert = (props: SuccessAlertProps) => {
   return (
     <Show when={props.isOpen}>

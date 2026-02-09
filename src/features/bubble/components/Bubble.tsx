@@ -2,9 +2,12 @@ import { createSignal, Show, splitProps, onCleanup, createEffect } from 'solid-j
 import styles from '../../../assets/index.css';
 import { BubbleButton } from './BubbleButton';
 import { BubbleParams } from '../types';
-import { Bot, BotProps } from '../../../components/Bot';
+import { Bot, BotProps } from '@/components/Bot';
 import Tooltip from './Tooltip';
 import { getBubbleButtonSize } from '@/utils';
+
+const defaultButtonColor = '#3B81F6';
+const defaultIconColor = 'white';
 
 export type BubbleProps = BotProps & BubbleParams;
 
@@ -22,16 +25,25 @@ export const Bubble = (props: BubbleProps) => {
 
   const toggleFullscreen = () => {
     if (!isFullscreen()) {
+      // Переход в полноэкранный режим: сначала исчезаем и уменьшаемся
       setIsTransitioning(true);
+      // Затем перемещаемся в центр и меняем размеры
       setTimeout(() => {
         setIsFullscreen(true);
-        setTimeout(() => setIsTransitioning(false), 50);
+        // Затем появляемся и увеличиваемся
+        setTimeout(() => {
+          setIsTransitioning(false);
+        }, 50);
       }, 200);
     } else {
+      // Возврат из полноэкранного режима: сначала уменьшаемся и исчезаем
       setIsTransitioning(true);
       setTimeout(() => {
         setIsFullscreen(false);
-        setTimeout(() => setIsTransitioning(false), 50);
+        // Затем появляемся в исходном месте
+        setTimeout(() => {
+          setIsTransitioning(false);
+        }, 50);
       }, 200);
     }
   };
@@ -93,8 +105,6 @@ export const Bubble = (props: BubbleProps) => {
         position={buttonPosition()}
         buttonSize={buttonSize}
         tooltipMessage={bubbleProps.theme?.tooltip?.tooltipMessage}
-        tooltipBackgroundColor={bubbleProps.theme?.tooltip?.tooltipBackgroundColor}
-        tooltipTextColor={bubbleProps.theme?.tooltip?.tooltipTextColor}
         tooltipFontSize={bubbleProps.theme?.tooltip?.tooltipFontSize} // Set the tooltip font size
       />
       <BubbleButton
@@ -131,14 +141,16 @@ export const Bubble = (props: BubbleProps) => {
               : 'scale3d(0, 0, 1)',
           opacity: isTransitioning() ? '0' : isFullscreen() ? '1' : isBotOpened() ? '1' : '0',
           'box-shadow': 'rgb(0 0 0 / 16%) 0px 5px 40px',
-          'background-color': 'var(--chatbot-container-bg-color)',
+          'background-color': 'var(--chatbot-container-bg-color, #ffffff)',
           'background-image': bubbleProps.theme?.chatWindow?.backgroundImage ? `url(${bubbleProps.theme?.chatWindow?.backgroundImage})` : 'none',
           'background-size': 'cover',
           'background-position': 'center',
           'background-repeat': 'no-repeat',
           'z-index': isFullscreen() ? 99999999 : 42424242,
           bottom: isFullscreen() ? undefined : `${Math.min(buttonPosition().bottom + buttonSize + 10, window.innerHeight - chatWindowBottom)}px`,
-          right: isFullscreen() ? undefined : `${Math.max(0, Math.min(buttonPosition().right, window.innerWidth - (bubbleProps.theme?.chatWindow?.width ?? 410) - 10))}px`,
+          right: isFullscreen()
+            ? undefined
+            : `${Math.max(0, Math.min(buttonPosition().right, window.innerWidth - (bubbleProps.theme?.chatWindow?.width ?? 410) - 10))}px`,
           left: isFullscreen() ? '50%' : undefined,
           top: isFullscreen() ? '50%' : undefined,
           'border-radius': isFullscreen() ? '0' : undefined,
@@ -146,7 +158,7 @@ export const Bubble = (props: BubbleProps) => {
         class={
           `fixed ${isFullscreen() ? '' : 'sm:right-5'} ${isFullscreen() ? 'rounded-none' : 'rounded-lg'} ${
             isFullscreen() ? 'w-screen h-screen' : 'w-full sm:w-[400px] max-h-[704px]'
-          }` + (isFullscreen() ? '' : isBotOpened() ? ' opacity-1' : ' opacity-0 pointer-events-none') + (isFullscreen() ? '' : ` bottom-${chatWindowBottom}px`)
+          }` + (isFullscreen() ? '' : isBotOpened() ? ' opacity-1' : ' opacity-0 pointer-events-none')
         }
       >
         <Show when={isBotStarted()}>
@@ -156,9 +168,9 @@ export const Bubble = (props: BubbleProps) => {
               showAgentMessages={bubbleProps.theme?.chatWindow?.showAgentMessages}
               title={bubbleProps.theme?.chatWindow?.title}
               titleAvatarSrc={bubbleProps.theme?.chatWindow?.titleAvatarSrc}
-              welcomeMessage={bubbleProps.theme?.chatWindow?.welcomeMessage}
               welcomeTitle={bubbleProps.theme?.chatWindow?.welcomeTitle}
               welcomeText={bubbleProps.theme?.chatWindow?.welcomeText}
+              assistantGreeting={bubbleProps.theme?.chatWindow?.assistantGreeting}
               showWelcomeImage={bubbleProps.theme?.chatWindow?.showWelcomeImage}
               errorMessage={bubbleProps.theme?.chatWindow?.errorMessage}
               textInput={bubbleProps.theme?.chatWindow?.textInput}
@@ -169,7 +181,6 @@ export const Bubble = (props: BubbleProps) => {
               footer={bubbleProps.theme?.chatWindow?.footer}
               sourceDocsTitle={bubbleProps.theme?.chatWindow?.sourceDocsTitle}
               starterPrompts={bubbleProps.theme?.chatWindow?.starterPrompts}
-              starterPromptFontSize={bubbleProps.theme?.chatWindow?.starterPromptFontSize}
               chatflowid={props.chatflowid}
               chatflowConfig={props.chatflowConfig}
               apiHost={props.apiHost}
@@ -179,7 +190,9 @@ export const Bubble = (props: BubbleProps) => {
               disclaimer={bubbleProps.theme?.disclaimer}
               dateTimeToggle={bubbleProps.theme?.chatWindow?.dateTimeToggle}
               renderHTML={props.theme?.chatWindow?.renderHTML}
+              chatWindow={bubbleProps.theme?.chatWindow}
               closeBot={closeBot}
+              isFullPage={false}
               toggleFullscreen={toggleFullscreen}
               isFullscreen={isFullscreen()}
             />

@@ -11,19 +11,14 @@ export type BubbleTheme = {
   form?: FormTheme;
 };
 
-export type FormTheme = {
-  backgroundColor?: string;
-  textColor?: string;
-};
+export type FormTheme = Record<string, never>;
 
 export type TextInputTheme = {
-  backgroundColor?: string;
-  textColor?: string;
   placeholder?: string;
-  sendButtonColor?: string;
   maxChars?: number;
   maxCharsWarningMessage?: string;
   autoFocus?: boolean;
+  // Звуковые настройки (перенесены из исходного проекта)
   sendMessageSound?: boolean;
   sendSoundLocation?: string;
   receiveMessageSound?: boolean;
@@ -31,31 +26,23 @@ export type TextInputTheme = {
 };
 
 export type UserMessageTheme = {
-  backgroundColor?: string;
-  textColor?: string;
   showAvatar?: boolean;
   avatarSrc?: string;
 };
 
 export type BotMessageTheme = {
-  backgroundColor?: string;
-  textColor?: string;
   showAvatar?: boolean;
   avatarSrc?: string;
-  /** При true всегда показывать иконку по умолчанию (смайлик), а не картинку из avatarSrc */
-  useDefaultBotIcon?: boolean;
 };
 
 export type FooterTheme = {
   showFooter?: boolean;
-  textColor?: string;
   text?: string;
   company?: string;
   companyLink?: string;
 };
 
 export type FeedbackTheme = {
-  color?: string;
   reasons?: string[];
 };
 
@@ -64,14 +51,11 @@ export type ChatWindowTheme = {
   showAgentMessages?: boolean; // parameter to show agent reasonings when using agentflows
   title?: string;
   titleAvatarSrc?: string;
-  titleTextColor?: string;
-  titleBackgroundColor?: string;
-  welcomeMessage?: string;
   welcomeTitle?: string;
   welcomeText?: string;
+  assistantGreeting?: string; // Приветствие ассистента (например: "Я ваш AI-ассистент Сколково. Чем могу помочь?")
   showWelcomeImage?: boolean;
   errorMessage?: string;
-  backgroundColor?: string;
   backgroundImage?: string;
   height?: number;
   width?: number;
@@ -82,18 +66,15 @@ export type ChatWindowTheme = {
   feedback?: FeedbackTheme;
   footer?: FooterTheme;
   sourceDocsTitle?: string;
-  poweredByTextColor?: string;
   starterPrompts?: string[];
-  starterPromptFontSize?: number;
   clearChatOnReload?: boolean;
   dateTimeToggle?: DateTimeToggleTheme;
   renderHTML?: boolean;
+  enableTTS?: boolean;
 };
 
 export type ButtonTheme = {
   size?: 'small' | 'medium' | 'large' | number; // custom size of chatbot in pixels
-  backgroundColor?: string;
-  iconColor?: string;
   customIconSrc?: string;
   bottom?: number;
   right?: number;
@@ -104,8 +85,6 @@ export type ButtonTheme = {
 export type ToolTipTheme = {
   showTooltip?: boolean; // parameter to enable tooltip(true or false)
   tooltipMessage?: string;
-  tooltipBackgroundColor?: string;
-  tooltipTextColor?: string;
   tooltipFontSize?: number;
 };
 
@@ -118,13 +97,7 @@ export type autoWindowOpenTheme = {
 export type DisclaimerPopUpTheme = {
   title?: string;
   message?: string;
-  textColor?: string;
-  buttonColor?: string;
-  buttonTextColor?: string;
   buttonText?: string;
-  blurredBackgroundColor?: string;
-  backgroundColor?: string;
-  denyButtonBgColor?: string;
   denyButtonText?: string;
 };
 

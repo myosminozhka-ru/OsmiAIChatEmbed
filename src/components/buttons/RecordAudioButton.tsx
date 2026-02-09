@@ -1,9 +1,9 @@
 import { Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
 import { RecordIcon } from '../icons';
+import { IconButton } from './IconButton';
 
 type RecordAudioButtonProps = {
-  buttonColor?: string;
   isDisabled?: boolean;
   isLoading?: boolean;
   disableIcon?: boolean;
@@ -11,20 +11,18 @@ type RecordAudioButtonProps = {
 
 export const RecordAudioButton = (props: RecordAudioButtonProps) => {
   return (
-    <button
+    <IconButton
       type="submit"
       disabled={props.isDisabled || props.isLoading}
+      ariaLabel="Записать аудио"
       {...props}
-      class={
-        'py-2 px-4 justify-center font-semibold focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 chatbot-button ' +
-        props.class
+      class={props.class}
+      icon={
+        <Show when={!props.isLoading} fallback={<Spinner class="text-gray-880" />}>
+          <RecordIcon class={props.disableIcon ? 'hidden' : ''} />
+        </Show>
       }
-      style={{ background: 'transparent', border: 'none' }}
-    >
-      <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
-        <RecordIcon color={props.buttonColor} />
-      </Show>
-    </button>
+    />
   );
 };
 
