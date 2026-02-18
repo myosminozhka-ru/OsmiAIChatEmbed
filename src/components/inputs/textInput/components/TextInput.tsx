@@ -193,60 +193,64 @@ export const TextInput = (props: TextInputProps) => {
         </div>
       </Show>
       <div class="w-full flex items-center justify-between gap-4 relative">
-        {props.uploadsConfig?.isImageUploadAllowed ? (
-          <>
-            <ImageUploadButton
-              buttonColor={props.sendButtonColor}
-              type="button"
-              class="m-0 h-14 flex items-center justify-center"
-              isDisabled={props.disabled || isSendButtonDisabled()}
-              on:click={handleImageUploadClick}
-            >
-              <span style={{ 'font-family': 'Montserrat, sans-serif' }}>Image Upload</span>
-            </ImageUploadButton>
-            <input
-              style={{ display: 'none' }}
-              multiple
-              ref={imgUploadRef as HTMLInputElement}
-              type="file"
-              onChange={handleFileChange}
-              accept={
-                props.uploadsConfig?.imgUploadSizeAndTypes?.length
-                  ? props.uploadsConfig?.imgUploadSizeAndTypes.map((allowed) => allowed.fileTypes).join(',')
-                  : '*'
-              }
+        <div class="flex-1 relative flex min-h-[56px] min-w-0">
+          <div class="absolute left-0 top-0 bottom-0 flex items-center z-10 pointer-events-none">
+            <div class="pointer-events-auto flex items-center gap-1">
+              <Show when={props.uploadsConfig?.isImageUploadAllowed}>
+                <ImageUploadButton
+                  buttonColor="#FFFFFF"
+                  type="button"
+                  class="m-0 h-[56px] w-10 flex items-center justify-center p-0"
+                  isDisabled={props.disabled || isSendButtonDisabled()}
+                  on:click={handleImageUploadClick}
+                />
+                <input
+                  style={{ display: 'none' }}
+                  multiple
+                  ref={imgUploadRef as HTMLInputElement}
+                  type="file"
+                  onChange={handleFileChange}
+                  accept={
+                    props.uploadsConfig?.imgUploadSizeAndTypes?.length
+                      ? props.uploadsConfig?.imgUploadSizeAndTypes.map((allowed) => allowed.fileTypes).join(',')
+                      : '*'
+                  }
+                />
+              </Show>
+              <Show when={props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload}>
+                <AttachmentUploadButton
+                  buttonColor="#FFFFFF"
+                  type="button"
+                  class="m-0 h-[56px] w-10 flex items-center justify-center p-0"
+                  isDisabled={props.disabled || isSendButtonDisabled()}
+                  on:click={handleFileUploadClick}
+                />
+                <input
+                  style={{ display: 'none' }}
+                  multiple
+                  ref={fileUploadRef as HTMLInputElement}
+                  type="file"
+                  onChange={handleFileChange}
+                  accept={getFileType()}
+                />
+              </Show>
+            </div>
+          </div>
+          <div
+            class={`flex-1 flex min-w-0 ${
+              props.uploadsConfig?.isImageUploadAllowed || props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload ? 'pl-12' : ''
+            }`}
+          >
+            <ShortTextInput
+              ref={inputRef as HTMLTextAreaElement}
+              onInput={handleInput}
+              value={props.inputValue}
+              fontSize={props.fontSize}
+              disabled={props.disabled}
+              placeholder={props.placeholder ?? 'Спроси что-нибудь :)'}
             />
-          </>
-        ) : null}
-        {props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload ? (
-          <>
-            <AttachmentUploadButton
-              buttonColor={props.sendButtonColor}
-              type="button"
-              class="m-0 h-14 flex items-center justify-center"
-              isDisabled={props.disabled || isSendButtonDisabled()}
-              on:click={handleFileUploadClick}
-            >
-              <span style={{ 'font-family': 'Montserrat, sans-serif' }}>File Upload</span>
-            </AttachmentUploadButton>
-            <input
-              style={{ display: 'none' }}
-              multiple
-              ref={fileUploadRef as HTMLInputElement}
-              type="file"
-              onChange={handleFileChange}
-              accept={getFileType()}
-            />
-          </>
-        ) : null}
-        <ShortTextInput
-          ref={inputRef as HTMLTextAreaElement}
-          onInput={handleInput}
-          value={props.inputValue}
-          fontSize={props.fontSize}
-          disabled={props.disabled}
-          placeholder={props.placeholder ?? 'Спроси что-нибудь :)'}
-        />
+          </div>
+        </div>
         <RecordAudioButton
           buttonColor={props.sendButtonColor}
           type="button"
