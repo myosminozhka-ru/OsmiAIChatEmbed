@@ -2414,7 +2414,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                   <Avatar initialAvatarSrc={props.titleAvatarSrc} />
                 </Show>
               </div>
-              <div class="flex flex-1 justify-center items-center min-w-0">
+              <div class="flex flex-1 absolute w-full justify-center items-center min-w-0">
                 <span class="px-3 whitespace-pre-wrap font-semibold text-center uppercase truncate">{props.title || 'чат-бот'}</span>
               </div>
               <div class="flex shrink-0 w-[72px] md:w-[80px]" aria-hidden="true" />
