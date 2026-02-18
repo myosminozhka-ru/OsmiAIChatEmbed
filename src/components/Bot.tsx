@@ -11,7 +11,7 @@ import {
   generateTTSQuery,
   abortTTSQuery,
 } from '@/queries/sendMessageQuery';
-import { TextInput } from './inputs/textInput';
+import { DeleteButton, TextInput } from './inputs/textInput';
 import { GuestBubble } from './bubbles/GuestBubble';
 import { BotBubble } from './bubbles/BotBubble';
 import { LoadingBubble } from './bubbles/LoadingBubble';
@@ -339,7 +339,7 @@ const FormInputView = (props: {
     <div
       class="w-full h-full flex flex-col items-center justify-center px-4 py-8 rounded-lg"
       style={{
-        'font-family': 'Poppins, sans-serif',
+        'font-family': 'Montserrat, sans-serif',
         'font-size': props.fontSize ? `${props.fontSize}px` : '16px',
         background: props.parentBackgroundColor || defaultBackgroundColor,
         color: props.textColor || defaultTextColor,
@@ -348,7 +348,7 @@ const FormInputView = (props: {
       <div
         class="w-full max-w-md bg-white shadow-lg rounded-lg overflow-hidden"
         style={{
-          'font-family': 'Poppins, sans-serif',
+          'font-family': 'Montserrat, sans-serif',
           'font-size': props.fontSize ? `${props.fontSize}px` : '16px',
           background: props.backgroundColor || defaultBackgroundColor,
           color: props.textColor || defaultTextColor,
@@ -2393,20 +2393,31 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
           {props.showTitle ? (
             <div
-              class="flex flex-row items-center w-full h-[60px] md:h-[80px] absolute top-0 left-0 z-10 justify-between"
+              class="flex flex-row items-center w-full h-[60px] md:h-[80px] absolute top-0 left-0 z-10"
               style={{
                 background: 'var(--chatbot-header-bg-color)',
                 color: 'var(--chatbot-header-color)',
               }}
             >
-              <Show when={props.titleAvatarSrc}>
-                <>
-                  <div style={{ width: '15px' }} />
+              <div class="flex shrink-0 items-center gap-1 pl-3">
+                <DeleteButton
+                  sendButtonColor={props.bubbleTextColor}
+                  type="button"
+                  isDisabled={messages().length === 1}
+                  class="p-2"
+                  onClick={clearChat}
+                  title="Очистить чат"
+                >
+                  <span style={{ 'font-family': 'Montserrat, sans-serif' }}>Clear</span>
+                </DeleteButton>
+                <Show when={props.titleAvatarSrc}>
                   <Avatar initialAvatarSrc={props.titleAvatarSrc} />
-                </>
-              </Show>
-              <span class="px-3 whitespace-pre-wrap font-semibold max-w-full w-full text-center absolute uppercase">{props.title || 'чат-бот'}</span>
-              <div style={{ flex: 1 }} />
+                </Show>
+              </div>
+              <div class="flex flex-1 justify-center items-center min-w-0">
+                <span class="px-3 whitespace-pre-wrap font-semibold text-center uppercase truncate">{props.title || 'чат-бот'}</span>
+              </div>
+              <div class="flex shrink-0 w-[72px] md:w-[80px]" aria-hidden="true" />
             </div>
           ) : null}
           <div class="flex flex-col w-full h-full justify-start z-0">
@@ -2414,7 +2425,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
               ref={chatContainer}
               class="overflow-y-scroll flex flex-col flex-grow mx-auto w-full px-3 pt-[80px] relative scrollable-container chatbot-chat-view scroll-smooth"
             >
-              <div class="flex flex-row items-center justify-center pt-[89px] pb-[95px]">
+              <div class="flex flex-row items-center justify-center pt-[69px] pb-[65px] sm:pt-[89px] sm:pb-[95px]">
                 <LogoIcon class="w-auto flex shrink-0" />
               </div>
               <For each={[...messages()]}>
@@ -2467,6 +2478,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                           starterPrompts={index() === 0 && messages().length === 1 ? starterPrompts() : []}
                           starterPromptFontSize={botProps.starterPromptFontSize}
                           onStarterPromptClick={(prompt) => promptClick(prompt)}
+                          showFeedback={!(index() === 0 && message.message === (props.welcomeMessage ?? defaultWelcomeMessage))}
                         />
                       )}
                       {message.type === 'leadCaptureMessage' && leadsConfig()?.status && !getLocalStorageChatflow(props.chatflowid)?.lead && (
@@ -2543,7 +2555,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                     onClick={onRecordingStopped}
                   >
                     <span class="w-3 h-3 rounded-[2px] bg-[#FF4978]" />
-                    <span class="text-sm font-medium">Остановить загрузку</span>
+                    <span class="text-sm font-medium">Остановить запись</span>
                   </button>
                 )}
               </Show>
@@ -2552,7 +2564,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 textColor={props.textInput?.textColor}
                 placeholder={props.textInput?.placeholder}
                 sendButtonColor={props.textInput?.sendButtonColor}
-                clearButtonColor={props.bubbleTextColor}
                 maxChars={props.textInput?.maxChars}
                 maxCharsWarningMessage={props.textInput?.maxCharsWarningMessage}
                 autoFocus={props.textInput?.autoFocus}
@@ -2567,10 +2578,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 setPreviews={setPreviews}
                 onMicrophoneClicked={onMicrophoneClicked}
                 handleFileChange={handleFileChange}
-                onClearChat={clearChat}
-                clearButtonDisabled={messages().length === 1}
-                clearButtonClass="absolute bottom-[16px] right-[76px]"
-                clearButtonLabel="Clear"
                 sendMessageSound={props.textInput?.sendMessageSound}
                 sendSoundLocation={props.textInput?.sendSoundLocation}
                 enableInputHistory={true}

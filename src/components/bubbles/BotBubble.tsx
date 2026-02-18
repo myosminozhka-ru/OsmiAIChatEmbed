@@ -43,6 +43,7 @@ type Props = {
   starterPrompts?: string[];
   starterPromptFontSize?: number;
   onStarterPromptClick?: (prompt: string) => void;
+  showFeedback?: boolean;
 };
 
 const defaultBackgroundColor = '#19191b';
@@ -574,23 +575,25 @@ export const BotBubble = (props: Props) => {
               }}
             />
           </Show>
-          <CopyToClipboardButton feedbackColor={props.feedbackColor} onClick={() => copyMessageToClipboard()} />
-          <Show when={copiedMessage()}>
-            <div class="copied-message" style={{ color: props.feedbackColor ?? defaultFeedbackColor }}>
-              Скопировано!
-            </div>
+          <Show when={props.showFeedback !== false}>
+            <CopyToClipboardButton feedbackColor={props.feedbackColor} onClick={() => copyMessageToClipboard()} />
+            <Show when={copiedMessage()}>
+              <div class="copied-message" style={{ color: props.feedbackColor ?? defaultFeedbackColor }}>
+                Скопировано!
+              </div>
+            </Show>
+            {rating() === '' || rating() === 'THUMBS_UP' ? (
+              <ThumbsUpButton feedbackColor={thumbsUpColor()} isDisabled={rating() === 'THUMBS_UP'} rating={rating()} onClick={onThumbsUpClick} />
+            ) : null}
+            {rating() === '' || rating() === 'THUMBS_DOWN' ? (
+              <ThumbsDownButton
+                feedbackColor={thumbsDownColor()}
+                isDisabled={rating() === 'THUMBS_DOWN'}
+                rating={rating()}
+                onClick={onThumbsDownClick}
+              />
+            ) : null}
           </Show>
-          {rating() === '' || rating() === 'THUMBS_UP' ? (
-            <ThumbsUpButton feedbackColor={thumbsUpColor()} isDisabled={rating() === 'THUMBS_UP'} rating={rating()} onClick={onThumbsUpClick} />
-          ) : null}
-          {rating() === '' || rating() === 'THUMBS_DOWN' ? (
-            <ThumbsDownButton
-              feedbackColor={thumbsDownColor()}
-              isDisabled={rating() === 'THUMBS_DOWN'}
-              rating={rating()}
-              onClick={onThumbsDownClick}
-            />
-          ) : null}
           <Show when={props.message.dateTime}>
             <div class="text-sm text-gray-500 ml-2">
               {formatDateTime(props.message.dateTime, props?.dateTimeToggle?.date, props?.dateTimeToggle?.time)}

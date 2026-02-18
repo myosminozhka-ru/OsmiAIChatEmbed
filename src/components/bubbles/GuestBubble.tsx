@@ -69,7 +69,7 @@ export const GuestBubble = (props: Props) => {
       const fileData = `${props.apiHost}/api/v1/get-upload-file?chatflowId=${props.chatflowid}&chatId=${props.chatId}&fileName=${item.name}`;
       const src = (item.data as string) ?? fileData;
       return (
-        <audio class="w-[200px] h-10 block bg-cover bg-center rounded-none text-transparent" controls>
+        <audio class="min-w-[269px] w-full h-10 block bg-cover bg-center rounded-none text-transparent" controls>
           Your browser does not support the &lt;audio&gt; tag.
           <source src={src} type={item.mime} />
         </audio>
