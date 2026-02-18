@@ -4,7 +4,7 @@ import { BubbleButton } from './BubbleButton';
 import { BubbleParams } from '../types';
 import { Bot, BotProps } from '../../../components/Bot';
 import Tooltip from './Tooltip';
-import { ExpandIcon } from '../../../components/icons/ExpandIcon';
+import { CollapseIcon, ExpandIcon } from '../../../components/icons/ExpandIcon';
 import { getBubbleButtonSize } from '@/utils';
 
 const defaultButtonColor = '#3B81F6';
@@ -131,7 +131,11 @@ export const Bubble = (props: BubbleProps) => {
                 class="py-3 hidden md:block md:py-[22px] pr-3 absolute top-0 right-[32px] m-[6px] bg-transparent text-white rounded-full z-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75"
                 title={isFullScreen() ? 'Exit Fullscreen' : 'Enter Fullscreen'}
               >
-                <ExpandIcon class="w-6 h-6" color={bubbleProps.theme?.button?.iconColor ?? defaultIconColor} />
+                {isFullScreen() ? (
+                  <CollapseIcon class="w-6 h-6" color={bubbleProps.theme?.button?.iconColor ?? defaultIconColor} />
+                ) : (
+                  <ExpandIcon class="w-6 h-6" color={bubbleProps.theme?.button?.iconColor ?? defaultIconColor} />
+                )}
               </button>
               {/* Cross button For only mobile screen use this <Show when={isBotOpened() && window.innerWidth <= 640}>  */}
               <button

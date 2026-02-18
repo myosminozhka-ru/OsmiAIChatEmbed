@@ -29,6 +29,7 @@ type Props = {
     starterPrompts?: string[];
     starterPromptFontSize?: number;
     onStarterPromptClick?: (prompt: string) => void;
+    showFeedback?: boolean;
 };
 export declare const BotBubble: (props: Props) => import("solid-js").JSX.Element;
 export {};

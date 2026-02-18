@@ -42,7 +42,7 @@ export const ThumbsUpButton = (props: RatingButtonProps) => {
         props.class
       }
       style={{ background: 'transparent', border: 'none' }}
-      title="Оценить ответ"
+      title="Понравилось"
     >
       <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
         <ThumbsUpIcon color={props.feedbackColor ?? defaultFeedbackColor} class={'send-icon flex ' + (props.disableIcon ? 'hidden' : '')} />
@@ -62,7 +62,7 @@ export const ThumbsDownButton = (props: RatingButtonProps) => {
         props.class
       }
       style={{ background: 'transparent', border: 'none' }}
-      title="Оценить ответ"
+      title="Не понравилось"
     >
       <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
         <ThumbsDownIcon color={props.feedbackColor ?? defaultFeedbackColor} class={'send-icon flex ' + (props.disableIcon ? 'hidden' : '')} />

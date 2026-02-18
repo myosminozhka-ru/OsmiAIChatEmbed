@@ -179,7 +179,7 @@ export const TextInput = (props: TextInputProps) => {
 
   return (
     <div
-      class="w-full h-auto max-h-[192px] pb-9 md:pb-0 min-h-[54px] flex flex-col items-end justify-between"
+      class="w-full h-auto max-h-[192px] pb-2 min-h-[54px] flex flex-col items-end justify-between"
       data-testid="input"
       style={{
         margin: 'auto',
@@ -192,7 +192,7 @@ export const TextInput = (props: TextInputProps) => {
           {warningMessage()}
         </div>
       </Show>
-      <div class="w-full flex items-end justify-between gap-4 relative">
+      <div class="w-full flex items-center justify-between gap-4 relative">
         {props.uploadsConfig?.isImageUploadAllowed ? (
           <>
             <ImageUploadButton
@@ -202,7 +202,7 @@ export const TextInput = (props: TextInputProps) => {
               isDisabled={props.disabled || isSendButtonDisabled()}
               on:click={handleImageUploadClick}
             >
-              <span style={{ 'font-family': 'Poppins, sans-serif' }}>Image Upload</span>
+              <span style={{ 'font-family': 'Montserrat, sans-serif' }}>Image Upload</span>
             </ImageUploadButton>
             <input
               style={{ display: 'none' }}
@@ -227,7 +227,7 @@ export const TextInput = (props: TextInputProps) => {
               isDisabled={props.disabled || isSendButtonDisabled()}
               on:click={handleFileUploadClick}
             >
-              <span style={{ 'font-family': 'Poppins, sans-serif' }}>File Upload</span>
+              <span style={{ 'font-family': 'Montserrat, sans-serif' }}>File Upload</span>
             </AttachmentUploadButton>
             <input
               style={{ display: 'none' }}
@@ -245,37 +245,26 @@ export const TextInput = (props: TextInputProps) => {
           value={props.inputValue}
           fontSize={props.fontSize}
           disabled={props.disabled}
-          placeholder={props.placeholder ?? 'Спроси что-то'}
+          placeholder={props.placeholder ?? 'Спроси что-нибудь :)'}
         />
         <RecordAudioButton
           buttonColor={props.sendButtonColor}
           type="button"
-          class="absolute right-[92px] m-0 mr-4 start-recording-button h-[54px] flex items-center justify-center"
+          class="absolute right-[60px] m-0 mr-4 start-recording-button h-[54px] flex items-center justify-center"
           isDisabled={props.disabled || isSendButtonDisabled()}
           on:click={props.onMicrophoneClicked}
         >
-          <span style={{ 'font-family': 'Poppins, sans-serif' }}>Record Audio</span>
+          <span style={{ 'font-family': 'Montserrat, sans-serif' }}>Record Audio</span>
         </RecordAudioButton>
-        <Show when={props.onClearChat}>
-          <DeleteButton
-            sendButtonColor={props.clearButtonColor}
-            type="button"
-            isDisabled={props.clearButtonDisabled}
-            class={props.clearButtonClass ?? ''}
-            on:click={props.onClearChat}
-          >
-            <span style={{ 'font-family': 'Poppins, sans-serif' }}>{props.clearButtonLabel ?? 'Clear'}</span>
-          </DeleteButton>
-        </Show>
         <SendButton
           sendButtonColor={props.sendButtonColor}
           type="button"
-          isDisabled={props.disabled || isSendButtonDisabled()}
+          isDisabled={props.disabled || isSendButtonDisabled() || !props.inputValue?.trim()}
           active={props.inputValue.length > 0}
-          class="m-0 h-[54px] flex items-center justify-center"
+          class="m-0 h-[56px] min-h-[56px] flex items-center justify-center"
           on:click={submit}
         >
-          <span style={{ 'font-family': 'Poppins, sans-serif' }}>Send</span>
+          <span style={{ 'font-family': 'Montserrat, sans-serif' }}>Send</span>
         </SendButton>
       </div>
     </div>
