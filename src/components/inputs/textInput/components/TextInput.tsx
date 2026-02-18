@@ -236,7 +236,11 @@ export const TextInput = (props: TextInputProps) => {
               </Show>
             </div>
           </div>
-          <div class={`flex-1 flex min-w-0 ${props.uploadsConfig?.isImageUploadAllowed || props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload ? 'pl-12' : ''}`}>
+          <div
+            class={`flex-1 flex min-w-0 ${
+              props.uploadsConfig?.isImageUploadAllowed || props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload ? 'pl-12' : ''
+            }`}
+          >
             <ShortTextInput
               ref={inputRef as HTMLTextAreaElement}
               onInput={handleInput}
