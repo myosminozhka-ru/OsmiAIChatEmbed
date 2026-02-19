@@ -192,11 +192,11 @@ export const TextInput = (props: TextInputProps) => {
           {warningMessage()}
         </div>
       </Show>
-      <div class="w-full flex items-center justify-between gap-4 relative">
-        <div class="flex-1 relative flex min-h-[56px] min-w-0">
-          <div class="absolute left-0 top-0 bottom-0 flex items-center z-10 pointer-events-none">
-            <div class="pointer-events-auto flex items-center gap-1">
-              <Show when={props.uploadsConfig?.isImageUploadAllowed}>
+      <div class="w-full flex items-center justify-between gap-4 relative min-w-0 overflow-hidden">
+        <div class="flex-1 relative flex min-h-[56px] min-w-0 overflow-hidden">
+          <div class="absolute left-0 top-0 bottom-0 flex items-center pl-2 z-10 pointer-events-none">
+            <div class="pointer-events-auto flex items-center gap-1 flex-shrink-0">
+              <Show when={Boolean(props.uploadsConfig && props.uploadsConfig.isImageUploadAllowed)}>
                 <ImageUploadButton
                   buttonColor="#FFFFFF"
                   type="button"
@@ -217,7 +217,7 @@ export const TextInput = (props: TextInputProps) => {
                   }
                 />
               </Show>
-              <Show when={props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload}>
+              <Show when={Boolean(props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload)}>
                 <AttachmentUploadButton
                   buttonColor="#FFFFFF"
                   type="button"
@@ -254,7 +254,7 @@ export const TextInput = (props: TextInputProps) => {
         <RecordAudioButton
           buttonColor={props.sendButtonColor}
           type="button"
-          class="absolute right-[60px] m-0 mr-4 start-recording-button h-[54px] flex items-center justify-center"
+          class="absolute right-[60px] m-0 mr-4 start-recording-button h-[54px] min-h-[54px] flex items-center justify-center flex-shrink-0"
           isDisabled={props.disabled || isSendButtonDisabled()}
           on:click={props.onMicrophoneClicked}
         >
@@ -263,9 +263,9 @@ export const TextInput = (props: TextInputProps) => {
         <SendButton
           sendButtonColor={props.sendButtonColor}
           type="button"
-          isDisabled={props.disabled || isSendButtonDisabled() || !props.inputValue?.trim()}
-          active={props.inputValue.length > 0}
-          class="m-0 h-[56px] min-h-[56px] flex items-center justify-center"
+          isDisabled={props.disabled || isSendButtonDisabled() || !String(props.inputValue ?? '').trim()}
+          active={(props.inputValue ?? '').length > 0}
+          class="m-0 h-[56px] min-h-[56px] flex items-center justify-center flex-shrink-0"
           on:click={submit}
         >
           <span style={{ 'font-family': 'Montserrat, sans-serif' }}>Send</span>
