@@ -2414,10 +2414,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                   <Avatar initialAvatarSrc={props.titleAvatarSrc} />
                 </Show>
               </div>
-              <div class="flex flex-1 absolute w-full justify-center items-center min-w-0">
-                <span class="px-3 whitespace-pre-wrap font-semibold text-center uppercase truncate">{props.title || 'чат-бот'}</span>
+              <div class="flex flex-1 absolute left-0 right-0 top-0 bottom-0 justify-center items-center pointer-events-none">
+                <span class="px-3 whitespace-pre-wrap font-semibold text-center uppercase truncate max-w-full">{props.title || 'чат-бот'}</span>
               </div>
-              <div class="flex shrink-0 w-[72px] md:w-[80px]" aria-hidden="true" />
+              <div class="flex shrink-0 w-[72px] md:w-[80px] pointer-events-none" aria-hidden="true" />
             </div>
           ) : null}
           <div class="flex flex-col w-full h-full justify-start z-0">
