@@ -190,6 +190,15 @@ textarea {
   border-radius: 100%;
 }
 
+/* Убираем обводку фокуса у всех кнопок виджета (белое кольцо при клике) */
+[part='bot'] button:focus,
+[part='bot'] button:focus-visible,
+.chatbot-container button:focus,
+.chatbot-container button:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 .chatbot-button.selectable {
   color: var(--chatbot-host-bubble-color);
   background-color: #f7f8ff;

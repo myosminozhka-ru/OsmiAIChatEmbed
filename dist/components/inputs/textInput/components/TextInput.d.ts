@@ -29,8 +29,10 @@ type TextInputProps = {
     fullFileUploadAllowedTypes?: string;
     enableInputHistory?: boolean;
     maxHistorySize?: number;
+    isLoading?: boolean;
+    onAbortMessage?: () => void;
 };
-type DeleteButtonProps = {
+export type DeleteButtonProps = {
     sendButtonColor?: string;
     isDisabled?: boolean;
     isLoading?: boolean;

@@ -8,7 +8,7 @@ import { ImageUploadButton } from '@/components/buttons/ImageUploadButton';
 import { RecordAudioButton } from '@/components/buttons/RecordAudioButton';
 import { AttachmentUploadButton } from '@/components/buttons/AttachmentUploadButton';
 import { ChatInputHistory } from '@/utils/chatInputHistory';
-import { DeleteIcon } from '@/components/icons';
+import { ResetIcon } from '@/components/icons';
 
 type TextInputProps = {
   placeholder?: string;
@@ -38,6 +38,8 @@ type TextInputProps = {
   fullFileUploadAllowedTypes?: string;
   enableInputHistory?: boolean;
   maxHistorySize?: number;
+  isLoading?: boolean;
+  onAbortMessage?: () => void;
 };
 
 const defaultBackgroundColor = '#19191B';
@@ -45,7 +47,7 @@ const defaultTextColor = '#9E9E9E';
 // CDN link for default send sound
 const defaultSendSound = 'https://cdn.jsdelivr.net/npm/osmi-ai-embed@latest/src/assets/send_message.mp3';
 
-type DeleteButtonProps = {
+export type DeleteButtonProps = {
   sendButtonColor?: string;
   isDisabled?: boolean;
   isLoading?: boolean;
@@ -71,7 +73,7 @@ export const DeleteButton = (props: DeleteButtonProps) => {
       title="Reset Chat"
     >
       <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
-        <DeleteIcon color={props.sendButtonColor} class={'send-icon flex ' + (props.disableIcon ? 'hidden' : '')} />
+        <ResetIcon color={props.sendButtonColor} class={'send-icon flex ' + (props.disableIcon ? 'hidden' : '')} />
       </Show>
     </button>
   );
@@ -264,7 +266,9 @@ export const TextInput = (props: TextInputProps) => {
           sendButtonColor={props.sendButtonColor}
           type="button"
           isDisabled={props.disabled || isSendButtonDisabled() || !String(props.inputValue ?? '').trim()}
-          active={(props.inputValue ?? '').length > 0}
+          isLoading={props.isLoading}
+          onStop={props.onAbortMessage}
+          active={String(props.inputValue ?? '').trim().length > 0}
           class="m-0 h-[56px] min-h-[56px] flex items-center justify-center flex-shrink-0"
           on:click={submit}
         >

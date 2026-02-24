@@ -11,7 +11,7 @@ import {
   generateTTSQuery,
   abortTTSQuery,
 } from '@/queries/sendMessageQuery';
-import { DeleteButton, TextInput } from './inputs/textInput';
+import { TextInput } from './inputs/textInput';
 import { GuestBubble } from './bubbles/GuestBubble';
 import { BotBubble } from './bubbles/BotBubble';
 import { LoadingBubble } from './bubbles/LoadingBubble';
@@ -29,13 +29,14 @@ import { Popup, DisclaimerPopup } from '@/features/popup';
 import { Avatar } from '@/components/avatars/Avatar';
 import { SendButton } from '@/components/buttons/SendButton';
 import { FilePreview } from '@/components/inputs/textInput/components/FilePreview';
-import { CircleDotIcon, SparklesIcon, TrashIcon, MenuIcon, ExpandIcon, LogoIcon } from './icons';
+import { CircleDotIcon, SparklesIcon, TrashIcon, MenuIcon, ExpandIcon, CollapseIcon, LogoIcon } from './icons';
 import { CancelButton } from './buttons/CancelButton';
 import { cancelAudioRecording, startAudioRecording, stopAudioRecording } from '@/utils/audioRecording';
 import { LeadCaptureBubble } from '@/components/bubbles/LeadCaptureBubble';
 import { removeLocalStorageChatHistory, getLocalStorageChatflow, setLocalStorageChatflow, setCookie, getCookie } from '@/utils';
 import { cloneDeep } from 'lodash';
 import { FollowUpPromptBubble } from '@/components/bubbles/FollowUpPromptBubble';
+import { SuggestionPromptsBar } from '@/components/SuggestionPromptsBar';
 import { fetchEventSource, EventStreamContentType } from '@microsoft/fetch-event-source';
 
 export type FileEvent<T = EventTarget> = {
@@ -173,7 +174,8 @@ export type BotProps = {
   dateTimeToggle?: DateTimeToggleTheme;
   renderHTML?: boolean;
   closeBot?: () => void;
-  isFullScreen?: boolean;
+  onFullScreenChange?: (value: boolean) => void;
+  registerClearChat?: (clear: () => void, getCanClear: () => boolean) => void;
 };
 
 export type LeadsConfig = {
@@ -486,6 +488,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   const [isLeadSaved, setIsLeadSaved] = createSignal(false);
   const [leadEmail, setLeadEmail] = createSignal('');
   const [disclaimerPopupOpen, setDisclaimerPopupOpen] = createSignal(false);
+  const [isFullScreen, setIsFullScreen] = createSignal(false);
 
   const [openFeedbackDialog, setOpenFeedbackDialog] = createSignal(false);
   const [feedback, setFeedback] = createSignal('');
@@ -536,6 +539,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   // TTS auto-scroll prevention refs
   let isTTSActionRef = false;
   let ttsTimeoutRef: ReturnType<typeof setTimeout> | null = null;
+  let streamAbortController: AbortController | null = null;
 
   createMemo(() => {
     const customerId = (props.chatflowConfig?.vars as any)?.customerId;
@@ -825,8 +829,14 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     const chatId = params.chatId;
     const input = params.question;
     params.streaming = true;
+    if (streamAbortController) {
+      streamAbortController.abort();
+      streamAbortController = null;
+    }
+    streamAbortController = new AbortController();
     fetchEventSource(`${props.apiHost}/api/v1/prediction/${chatflowid}`, {
       openWhenHidden: true,
+      signal: streamAbortController.signal,
       method: 'POST',
       body: JSON.stringify(params),
       headers: {
@@ -892,7 +902,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             break;
           case 'abort':
             abortMessage();
-            closeResponse();
             break;
           case 'end':
             setLocalStorageChatflow(chatflowid, chatId);
@@ -924,6 +933,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   };
 
   const closeResponse = () => {
+    streamAbortController = null;
     setLoading(false);
     setUserInput('');
     setUploadedFiles([]);
@@ -934,6 +944,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   };
 
   const abortMessage = () => {
+    if (streamAbortController) {
+      streamAbortController.abort();
+      streamAbortController = null;
+    }
     setIsMessageStopping(false);
 
     // Stop all TTS when aborting message
@@ -948,6 +962,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       }
       return allMessages;
     });
+    closeResponse();
   };
 
   const handleFileUploads = async (uploads: IUploads) => {
@@ -1066,7 +1081,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     clearPreviews();
 
     setMessages((prevMessages) => {
-      const messages: MessageType[] = [...prevMessages, { message: value as string, type: 'userMessage', fileUploads: uploads }];
+      const messages: MessageType[] = [
+        ...prevMessages,
+        { message: value as string, type: 'userMessage', fileUploads: uploads, dateTime: new Date().toISOString() },
+      ];
       addChatMessage(messages);
       return messages;
     });
@@ -1252,15 +1270,16 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     }
   };
 
-  onMount(() => {
-    if (props.clearChatOnReload) {
-      clearChat();
-      window.addEventListener('beforeunload', clearChat);
-      return () => {
-        window.removeEventListener('beforeunload', clearChat);
-      };
-    }
+  const toggleFullScreen = () => setIsFullScreen((prev) => !prev);
+
+  createEffect(() => {
+    props.onFullScreenChange?.(isFullScreen());
   });
+  createEffect(() => {
+    props.registerClearChat?.(clearChat, () => messages().length === 1);
+  });
+
+  // Chat is only cleared when user clicks Clear; no clear on page load/refresh so history persists
 
   createEffect(() => {
     if (props.starterPrompts) {
@@ -1462,12 +1481,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       setUserInput('');
       setUploadedFiles([]);
       setLoading(false);
-      setMessages([
-        {
-          message: props.welcomeMessage ?? defaultWelcomeMessage,
-          type: 'apiMessage',
-        },
-      ]);
+      // Do not reset messages here so loaded history is not overwritten when effect re-runs
     };
   });
 
@@ -2400,16 +2414,18 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
               }}
             >
               <div class="flex shrink-0 items-center gap-1 pl-3">
-                <DeleteButton
-                  sendButtonColor={props.bubbleTextColor}
+                <button
                   type="button"
-                  isDisabled={messages().length === 1}
-                  class="p-2"
-                  onClick={clearChat}
-                  title="Очистить чат"
+                  onClick={toggleFullScreen}
+                  class="p-2 bg-transparent text-white rounded-full hover:opacity-90 active:opacity-75 transition-opacity"
+                  title={isFullScreen() ? 'Выйти из полноэкранного режима' : 'Полноэкранный режим'}
                 >
-                  <span style={{ 'font-family': 'Montserrat, sans-serif' }}>Clear</span>
-                </DeleteButton>
+                  {isFullScreen() ? (
+                    <CollapseIcon class="w-6 h-6" color={props.bubbleTextColor} />
+                  ) : (
+                    <ExpandIcon class="w-6 h-6" color={props.bubbleTextColor} />
+                  )}
+                </button>
                 <Show when={props.titleAvatarSrc}>
                   <Avatar initialAvatarSrc={props.titleAvatarSrc} />
                 </Show>
@@ -2420,10 +2436,32 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
               <div class="flex shrink-0 w-[72px] md:w-[80px] pointer-events-none" aria-hidden="true" />
             </div>
           ) : null}
+          {!props.showTitle && props.onFullScreenChange ? (
+            <div
+              class="absolute top-0 left-0 z-10 flex items-center pl-2 pt-2"
+              style={{
+                background: 'var(--chatbot-header-bg-color)',
+                color: 'var(--chatbot-header-color)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={toggleFullScreen}
+                class="p-2 bg-transparent text-white rounded-full hover:opacity-90 active:opacity-75 transition-opacity"
+                title={isFullScreen() ? 'Выйти из полноэкранного режима' : 'Полноэкранный режим'}
+              >
+                {isFullScreen() ? (
+                  <CollapseIcon class="w-6 h-6" color={props.bubbleTextColor} />
+                ) : (
+                  <ExpandIcon class="w-6 h-6" color={props.bubbleTextColor} />
+                )}
+              </button>
+            </div>
+          ) : null}
           <div class="flex flex-col w-full h-full justify-start z-0">
             <div
               ref={chatContainer}
-              class="overflow-y-scroll flex flex-col flex-grow mx-auto w-full px-3 pt-[80px] relative scrollable-container chatbot-chat-view scroll-smooth"
+              class="overflow-y-scroll flex flex-col flex-grow mx-auto w-full px-5 pt-[80px] relative scrollable-container chatbot-chat-view scroll-smooth"
             >
               <div class="flex flex-row items-center justify-center pt-[69px] pb-[65px] sm:pt-[89px] sm:pb-[95px]">
                 <LogoIcon class="w-auto flex shrink-0" />
@@ -2444,6 +2482,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                           avatarSrc={props.userMessage?.avatarSrc}
                           fontSize={props.fontSize}
                           renderHTML={props.renderHTML}
+                          dateTime={message.dateTime}
+                          dateTimeToggle={props.dateTimeToggle}
                         />
                       )}
                       {message.type === 'apiMessage' && (
@@ -2499,8 +2539,18 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                           setLeadEmail={setLeadEmail}
                         />
                       )}
-                      {message.type === 'userMessage' && loading() && index() === messages().length - 1 && <LoadingBubble />}
-                      {message.type === 'apiMessage' && message.message === '' && loading() && index() === messages().length - 1 && <LoadingBubble />}
+                      {message.type === 'userMessage' && loading() && index() === messages().length - 1 && (
+                        <LoadingBubble
+                          showAvatar={props.botMessage?.showAvatar}
+                          avatarSrc={props.botMessage?.avatarSrc}
+                        />
+                      )}
+                      {message.type === 'apiMessage' && message.message === '' && loading() && index() === messages().length - 1 && (
+                        <LoadingBubble
+                          showAvatar={props.botMessage?.showAvatar}
+                          avatarSrc={props.botMessage?.avatarSrc}
+                        />
+                      )}
                     </>
                   );
                 }}
@@ -2533,6 +2583,14 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
               </div>
             </Show>
             <div class="mx-auto max-w-[796px] w-full px-5 pt-2 pb-1 flex flex-col gap-4 items-center">
+              <Show when={messages().length > 1}>
+                <SuggestionPromptsBar
+                  onSelect={(text) => handleSubmit(text)}
+                  borderColor="#FF4978"
+                  textColor="#d1d5db"
+                  class="pb-1"
+                />
+              </Show>
               <Show when={isRecording()}>
                 {recordingNotSupported() ? (
                   <div class="w-full flex items-center justify-between p-4 border border-[#eeeeee]">
@@ -2582,6 +2640,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 sendSoundLocation={props.textInput?.sendSoundLocation}
                 enableInputHistory={true}
                 maxHistorySize={10}
+                isLoading={loading()}
+                onAbortMessage={abortMessage}
               />
             </div>
             <Badge

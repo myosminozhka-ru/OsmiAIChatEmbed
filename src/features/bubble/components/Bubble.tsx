@@ -4,7 +4,7 @@ import { BubbleButton } from './BubbleButton';
 import { BubbleParams } from '../types';
 import { Bot, BotProps } from '../../../components/Bot';
 import Tooltip from './Tooltip';
-import { CollapseIcon, ExpandIcon } from '../../../components/icons/ExpandIcon';
+import { DeleteButton } from '../../../components/inputs/textInput';
 import { getBubbleButtonSize } from '@/utils';
 
 const defaultButtonColor = '#3B81F6';
@@ -12,12 +12,23 @@ const defaultIconColor = 'white';
 
 export type BubbleProps = BotProps & BubbleParams;
 
+const CHAT_OPEN_KEY = (chatflowid: string) => `${chatflowid}_CHAT_OPEN`;
+
 export const Bubble = (props: BubbleProps) => {
   const [bubbleProps] = splitProps(props, ['theme']);
 
-  const [isBotOpened, setIsBotOpened] = createSignal(false);
-  const [isBotStarted, setIsBotStarted] = createSignal(false);
-  const [isFullScreen, setIsFullScreen] = createSignal(false); // New state for fullscreen
+  const storedOpen = () => {
+    try {
+      return typeof window !== 'undefined' && localStorage.getItem(CHAT_OPEN_KEY(props.chatflowid)) === 'true';
+    } catch {
+      return false;
+    }
+  };
+
+  const [isBotOpened, setIsBotOpened] = createSignal(storedOpen());
+  const [isBotStarted, setIsBotStarted] = createSignal(storedOpen());
+  const [isFullScreen, setIsFullScreen] = createSignal(false);
+  const [clearChatRef, setClearChatRef] = createSignal<{ clear: () => void; getCanClear: () => boolean } | null>(null);
   const [buttonPosition, setButtonPosition] = createSignal({
     bottom: bubbleProps.theme?.button?.bottom ?? 20,
     right: bubbleProps.theme?.button?.right ?? 20,
@@ -26,18 +37,20 @@ export const Bubble = (props: BubbleProps) => {
   const openBot = () => {
     if (!isBotStarted()) setIsBotStarted(true);
     setIsBotOpened(true);
+    try {
+      localStorage.setItem(CHAT_OPEN_KEY(props.chatflowid), 'true');
+    } catch (_) {}
   };
 
   const closeBot = () => {
     setIsBotOpened(false);
+    try {
+      localStorage.setItem(CHAT_OPEN_KEY(props.chatflowid), 'false');
+    } catch (_) {}
   };
 
   const toggleBot = () => {
     isBotOpened() ? closeBot() : openBot();
-  };
-
-  const toggleFullScreen = () => {
-    setIsFullScreen((prev) => !prev);
   };
 
   onCleanup(() => {
@@ -124,20 +137,16 @@ export const Bubble = (props: BubbleProps) => {
         <Show when={isBotStarted()}>
           <div class="relative h-full bg-transparent">
             <Show when={isBotOpened()}>
-              {/* Cross button For only mobile screen use this <Show when={isBotOpened() && window.innerWidth <= 640}>  */}
-              {/* Fullscreen button */}
-              <button
-                onClick={toggleFullScreen}
-                class="py-3 hidden md:block md:py-[22px] pr-3 absolute top-0 right-[32px] m-[6px] bg-transparent text-white rounded-full z-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75"
-                title={isFullScreen() ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+              <DeleteButton
+                sendButtonColor={bubbleProps.theme?.button?.iconColor ?? defaultIconColor}
+                type="button"
+                isDisabled={clearChatRef()?.getCanClear() ?? true}
+                class="py-3 md:py-[22px] pr-2 absolute top-0 right-10 md:right-12 m-[6px] bg-transparent rounded-full z-50"
+                onClick={() => clearChatRef()?.clear()}
+                title="Очистить чат"
               >
-                {isFullScreen() ? (
-                  <CollapseIcon class="w-6 h-6" color={bubbleProps.theme?.button?.iconColor ?? defaultIconColor} />
-                ) : (
-                  <ExpandIcon class="w-6 h-6" color={bubbleProps.theme?.button?.iconColor ?? defaultIconColor} />
-                )}
-              </button>
-              {/* Cross button For only mobile screen use this <Show when={isBotOpened() && window.innerWidth <= 640}>  */}
+                <span style={{ 'font-family': 'Montserrat, sans-serif' }}>Clear</span>
+              </DeleteButton>
               <button
                 onClick={closeBot}
                 class="py-3 md:py-[22px] pr-3 absolute top-0 right-0 m-[6px] bg-transparent text-white rounded-full z-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75"
@@ -186,7 +195,8 @@ export const Bubble = (props: BubbleProps) => {
               dateTimeToggle={bubbleProps.theme?.chatWindow?.dateTimeToggle}
               renderHTML={props.theme?.chatWindow?.renderHTML}
               closeBot={closeBot}
-              isFullScreen={isFullScreen()} // Pass isFullScreen state
+              onFullScreenChange={setIsFullScreen}
+              registerClearChat={(clear, getCanClear) => setClearChatRef({ clear, getCanClear })}
             />
           </div>
         </Show>
