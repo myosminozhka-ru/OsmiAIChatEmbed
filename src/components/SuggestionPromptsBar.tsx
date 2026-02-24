@@ -11,13 +11,9 @@ type SuggestionPromptsBarProps = {
 };
 
 export const SuggestionPromptsBar = (props: SuggestionPromptsBarProps) => {
-  const list = () => props.suggestions?.length ? props.suggestions : [...DEFAULT_SUGGESTIONS];
+  const list = () => (props.suggestions?.length ? props.suggestions : [...DEFAULT_SUGGESTIONS]);
   return (
-    <div
-      class={'flex flex-wrap items-center gap-2 w-full ' + (props.class ?? '')}
-      role="list"
-      aria-label="Предложения"
-    >
+    <div class={'flex flex-wrap items-center gap-2 w-full ' + (props.class ?? '')} role="list" aria-label="Предложения">
       <For each={list()}>
         {(label) => (
           <button

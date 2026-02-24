@@ -2540,16 +2540,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                         />
                       )}
                       {message.type === 'userMessage' && loading() && index() === messages().length - 1 && (
-                        <LoadingBubble
-                          showAvatar={props.botMessage?.showAvatar}
-                          avatarSrc={props.botMessage?.avatarSrc}
-                        />
+                        <LoadingBubble showAvatar={props.botMessage?.showAvatar} avatarSrc={props.botMessage?.avatarSrc} />
                       )}
                       {message.type === 'apiMessage' && message.message === '' && loading() && index() === messages().length - 1 && (
-                        <LoadingBubble
-                          showAvatar={props.botMessage?.showAvatar}
-                          avatarSrc={props.botMessage?.avatarSrc}
-                        />
+                        <LoadingBubble showAvatar={props.botMessage?.showAvatar} avatarSrc={props.botMessage?.avatarSrc} />
                       )}
                     </>
                   );
@@ -2584,12 +2578,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             </Show>
             <div class="mx-auto max-w-[796px] w-full px-5 pt-2 pb-1 flex flex-col gap-4 items-center">
               <Show when={messages().length > 1}>
-                <SuggestionPromptsBar
-                  onSelect={(text) => handleSubmit(text)}
-                  borderColor="#FF4978"
-                  textColor="#d1d5db"
-                  class="pb-1"
-                />
+                <SuggestionPromptsBar onSelect={(text) => handleSubmit(text)} borderColor="#FF4978" textColor="#d1d5db" class="pb-1" />
               </Show>
               <Show when={isRecording()}>
                 {recordingNotSupported() ? (

@@ -39,14 +39,18 @@ export const Bubble = (props: BubbleProps) => {
     setIsBotOpened(true);
     try {
       localStorage.setItem(CHAT_OPEN_KEY(props.chatflowid), 'true');
-    } catch (_) {}
+    } catch {
+      // ignore localStorage errors (e.g. private mode, quota)
+    }
   };
 
   const closeBot = () => {
     setIsBotOpened(false);
     try {
       localStorage.setItem(CHAT_OPEN_KEY(props.chatflowid), 'false');
-    } catch (_) {}
+    } catch {
+      // ignore localStorage errors (e.g. private mode, quota)
+    }
   };
 
   const toggleBot = () => {

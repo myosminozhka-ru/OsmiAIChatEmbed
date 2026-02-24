@@ -121,8 +121,7 @@ export const GuestBubble = (props: Props) => {
     }
   };
 
-  const formattedTime = () =>
-    props.dateTime ? formatDateTime(props.dateTime, props.dateTimeToggle?.date, props.dateTimeToggle?.time) : '';
+  const formattedTime = () => (props.dateTime ? formatDateTime(props.dateTime, props.dateTimeToggle?.date, props.dateTimeToggle?.time) : '');
 
   return (
     <div class="flex flex-col mb-2 items-end guest-container mt-7" style={{ 'margin-left': '50px' }}>

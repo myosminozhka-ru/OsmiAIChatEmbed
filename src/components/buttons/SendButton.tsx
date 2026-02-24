@@ -15,10 +15,10 @@ type SendButtonProps = {
 
 export const SendButton = (props: SendButtonProps) => {
   const isStoppable = () => props.isLoading && props.onStop;
-  const disabled = () => (isStoppable() ? false : (props.isDisabled || props.isLoading));
+  const disabled = () => (isStoppable() ? false : props.isDisabled || props.isLoading);
   return (
     <button
-      type={isStoppable() ? 'button' : (props.type ?? 'submit')}
+      type={isStoppable() ? 'button' : props.type ?? 'submit'}
       disabled={disabled()}
       {...props}
       onClick={(e: MouseEvent) => {
@@ -35,13 +35,7 @@ export const SendButton = (props: SendButtonProps) => {
       }
       style={{ border: 'none', background: props.active ? '#FF4978' : '' }}
     >
-      <Show when={!props.isLoading} fallback={
-        isStoppable() ? (
-          <PauseIcon class="w-5 h-5 flex" color="white" />
-        ) : (
-          <Spinner class="text-white" />
-        )
-      }>
+      <Show when={!props.isLoading} fallback={isStoppable() ? <PauseIcon class="w-5 h-5 flex" color="white" /> : <Spinner class="text-white" />}>
         <SendIcon class={'send-icon flex' + (props.disableIcon ? 'hidden' : '')} />
       </Show>
     </button>
