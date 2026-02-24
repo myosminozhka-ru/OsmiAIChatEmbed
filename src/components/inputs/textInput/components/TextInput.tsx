@@ -194,9 +194,9 @@ export const TextInput = (props: TextInputProps) => {
       </Show>
       <div class="w-full flex items-center justify-between gap-4 relative min-w-0 overflow-hidden">
         <div class="flex-1 relative flex min-h-[56px] min-w-0 overflow-hidden">
-          <div class="absolute left-0 top-0 bottom-0 flex items-center pl-2 z-10 pointer-events-none">
+          <div class="absolute left-0 top-0 bottom-0 flex items-center z-10 pointer-events-none">
             <div class="pointer-events-auto flex items-center gap-1 flex-shrink-0">
-              <Show when={Boolean(props.uploadsConfig && props.uploadsConfig.isImageUploadAllowed)}>
+              {/* <Show when={Boolean(props.uploadsConfig && props.uploadsConfig.isImageUploadAllowed)}>
                 <ImageUploadButton
                   buttonColor="#FFFFFF"
                   type="button"
@@ -216,7 +216,7 @@ export const TextInput = (props: TextInputProps) => {
                       : '*'
                   }
                 />
-              </Show>
+              </Show> */}
               <Show when={Boolean(props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload)}>
                 <AttachmentUploadButton
                   buttonColor="#FFFFFF"
