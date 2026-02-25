@@ -1,6 +1,7 @@
 import { Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
 import { SendIcon } from '../icons';
+import { PauseIcon } from '../icons/PauseIcon';
 
 type SendButtonProps = {
   sendButtonColor?: string;
@@ -8,21 +9,33 @@ type SendButtonProps = {
   isLoading?: boolean;
   disableIcon?: boolean;
   active?: boolean;
+  /** When set and isLoading is true, button shows Pause icon and calls onStop on click (stop generation) */
+  onStop?: () => void;
 } & JSX.ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const SendButton = (props: SendButtonProps) => {
+  const isStoppable = () => props.isLoading && props.onStop;
+  const disabled = () => (isStoppable() ? false : props.isDisabled || props.isLoading);
   return (
     <button
-      type="submit"
-      disabled={props.isDisabled || props.isLoading}
+      type={isStoppable() ? 'button' : props.type ?? 'submit'}
+      disabled={disabled()}
       {...props}
+      onClick={(e: MouseEvent) => {
+        if (isStoppable()) {
+          e.preventDefault();
+          props.onStop?.();
+        } else {
+          (props as any).onClick?.(e);
+        }
+      }}
       class={
         'py-2 px-4 justify-center font-semibold text-white rounded-full overflow-hidden focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:bg-[#FF4978] active:brightness-75 chatbot-button ' +
         props.class
       }
       style={{ border: 'none', background: props.active ? '#FF4978' : '' }}
     >
-      <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
+      <Show when={!props.isLoading} fallback={isStoppable() ? <PauseIcon class="w-5 h-5 flex" color="white" /> : <Spinner class="text-white" />}>
         <SendIcon class={'send-icon flex' + (props.disableIcon ? 'hidden' : '')} />
       </Show>
     </button>

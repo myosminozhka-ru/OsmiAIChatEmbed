@@ -118,7 +118,8 @@ export type BotProps = {
     dateTimeToggle?: DateTimeToggleTheme;
     renderHTML?: boolean;
     closeBot?: () => void;
-    isFullScreen?: boolean;
+    onFullScreenChange?: (value: boolean) => void;
+    registerClearChat?: (clear: () => void, getCanClear: () => boolean) => void;
 };
 export type LeadsConfig = {
     status: boolean;

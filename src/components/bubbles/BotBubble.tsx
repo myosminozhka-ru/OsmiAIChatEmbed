@@ -1,17 +1,19 @@
 import { createEffect, Show, createSignal, onMount, For } from 'solid-js';
 import { Avatar } from '../avatars/Avatar';
 import { Marked } from '@ts-stack/markdown';
-import { FeedbackRatingType, sendFeedbackQuery, sendFileDownloadQuery, updateFeedbackQuery } from '@/queries/sendMessageQuery';
+import { FeedbackRatingType, sendFeedbackQuery, sendFileDownloadQuery, sendMessageQuery, updateFeedbackQuery } from '@/queries/sendMessageQuery';
 import { FileUpload, IAction, MessageType } from '../Bot';
 import { CopyToClipboardButton, ThumbsDownButton, ThumbsUpButton } from '../buttons/FeedbackButtons';
 import { TTSButton } from '../buttons/TTSButton';
 import FeedbackContentDialog from '../FeedbackContentDialog';
 import { AgentReasoningBubble } from './AgentReasoningBubble';
-import { TickIcon, XIcon } from '../icons';
+import { DeleteIcon, TickIcon, XIcon } from '../icons';
 import { SourceBubble } from '../bubbles/SourceBubble';
 import { DateTimeToggleTheme } from '@/features/bubble/types';
 import { WorkflowTreeView } from '../treeview/WorkflowTreeView';
 import { StarterPromptBubble } from './StarterPromptBubble';
+import { DeleteButtonProps } from '../inputs/textInput/components/TextInput';
+import { Spinner } from '../buttons/SendButton';
 
 type Props = {
   message: MessageType;
@@ -50,6 +52,30 @@ const defaultBackgroundColor = '#19191b';
 const defaultTextColor = '#ffffff';
 const defaultFontSize = 16;
 const defaultFeedbackColor = '#3B81F6';
+
+export const RetryButton = (props: DeleteButtonProps) => {
+  // Check if <chatbot-full> is present in the DOM
+  const isFullChatbot = document.querySelector('chatbot-full') !== null;
+  const paddingClass = isFullChatbot ? 'px-4' : 'px-2';
+
+  return (
+    <button
+      type="submit"
+      disabled={props.isDisabled || props.isLoading}
+      {...props}
+      class={
+        `${paddingClass} justify-center font-semibold text-white focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 chatbot-button ` +
+        props.class
+      }
+      style={{ background: 'transparent', border: 'none' }}
+      title="Reset Chat"
+    >
+      <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
+        <DeleteIcon color={props.sendButtonColor} class={'send-icon flex ' + (props.disableIcon ? 'hidden' : '')} />
+      </Show>
+    </button>
+  );
+};
 
 export const BotBubble = (props: Props) => {
   let botDetailsEl: HTMLDetailsElement | undefined;
@@ -144,6 +170,15 @@ export const BotBubble = (props: Props) => {
     } catch (error) {
       console.error('Download failed:', error);
     }
+  };
+
+  const retryChat = async () => {
+    // try {
+    //   const response = await sendMessageQuery({
+    //     apiHost: props.apiHost,
+    //     body: { chatflowid: props.chatflowid, chatId: props.chatId, humanInput: props.message.message },
+    //   });
+    // }
   };
 
   const copyMessageToClipboard = async () => {
@@ -363,15 +398,16 @@ export const BotBubble = (props: Props) => {
     try {
       const date = new Date(dateTimeString);
 
-      // Check if the date is valid
       if (isNaN(date.getTime())) {
         console.error('Invalid ISO date string:', dateTimeString);
         return '';
       }
 
+      const showDateVal = showDate === true;
+      const showTimeVal = showTime !== false; // show time by default when dateTime is present
       let formatted = '';
 
-      if (showDate) {
+      if (showDateVal) {
         const dateFormatter = new Intl.DateTimeFormat('en-US', {
           year: 'numeric',
           month: 'short',
@@ -382,14 +418,14 @@ export const BotBubble = (props: Props) => {
         formatted = `${month.charAt(0).toUpperCase() + month.slice(1)} ${day}, ${year}`;
       }
 
-      if (showTime) {
+      if (showTimeVal) {
         const timeFormatter = new Intl.DateTimeFormat('en-US', {
           hour: 'numeric',
           minute: '2-digit',
-          hour12: true,
+          hour12: false,
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         });
-        const timeString = timeFormatter.format(date).toLowerCase();
+        const timeString = timeFormatter.format(date);
         formatted = formatted ? `${formatted}, ${timeString}` : timeString;
       }
 
@@ -464,7 +500,7 @@ export const BotBubble = (props: Props) => {
                 'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
               }}
             >
-              <div ref={setBotMessageRef} class="prose text-white" />
+              <div ref={setBotMessageRef} class="prose text-gray-300" />
               <Show when={props.starterPrompts && props.starterPrompts.length > 0}>
                 <div class="mt-3 flex flex-row flex-wrap gap-1.5">
                   <For each={[...props.starterPrompts!]}>
@@ -593,6 +629,7 @@ export const BotBubble = (props: Props) => {
                 onClick={onThumbsDownClick}
               />
             ) : null}
+            <RetryButton sendButtonColor={props.feedbackColor} onClick={() => retryChat()} />
           </Show>
           <Show when={props.message.dateTime}>
             <div class="text-sm text-gray-500 ml-2">

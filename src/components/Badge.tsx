@@ -42,7 +42,7 @@ export const Badge = (props: Props) => {
     <>
       <Show when={props.footer?.showFooter === undefined || props.footer?.showFooter === null || props.footer?.showFooter === true}>
         <span
-          class="hidden md:block w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto text-[13px]"
+          class="hidden md:block w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto font-normal text-[12px]"
           style={{
             color: props.footer?.textColor ?? props.poweredByTextColor ?? defaultTextColor,
             'background-color': props.badgeBackgroundColor ?? '#4D5164',
@@ -55,7 +55,7 @@ export const Badge = (props: Props) => {
             rel="noopener noreferrer"
             class="lite-badge"
             id="lite-badge"
-            style={{ 'font-weight': 'bold', color: props.footer?.textColor ?? props.poweredByTextColor ?? defaultTextColor }}
+            style={{ color: props.footer?.textColor ?? props.poweredByTextColor ?? defaultTextColor }}
           >
             <span>Разработано OsmiIt</span>
           </a>
@@ -63,7 +63,7 @@ export const Badge = (props: Props) => {
       </Show>
       <Show when={props.footer?.showFooter === false}>
         <span
-          class="w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto text-[13px]"
+          class="w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto font-normal text-[12px]"
           style={{
             color: props.footer?.textColor ?? props.poweredByTextColor ?? defaultTextColor,
             'background-color': props.badgeBackgroundColor ?? '#ffffff',
