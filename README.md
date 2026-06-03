@@ -1,357 +1,330 @@
 <!-- markdownlint-disable MD030 -->
 
-# Chatbot Embed
+# Osmi AI Chat Embed
 
-Javascript library to display a chatbot on your website
+JavaScript-библиотека для встраивания чат-бота Osmi AI на сайт. Виджет реализован на [Solid.js](https://www.solidjs.com/) и поставляется вместе с прокси-сервером, который скрывает API-ключ и UUID chatflow от браузера.
 
-![Chatbot Embed](./images/ChatEmbed.gif)
+## Возможности
 
-Install:
+- **Виджет (popup)** — плавающая кнопка с окном чата
+- **Полноэкранный режим** — чат на всю страницу через `<chatbot-full>`
+- **Прокси-сервер** — безопасная прокси-прослойка между сайтом и бэкендом Osmi AI
+- **Контроль доменов** — whitelist разрешённых origin для каждого chatflow
+- **Кастомизация** — темы, CSS, стартовые подсказки, disclaimer и др.
+- **Docker** — готовый образ для деплоя
+
+## Требования
+
+- Node.js 20+
+- Yarn
+- Рабочий инстанс Osmi AI с API-ключом
+
+## Быстрый старт
+
+### 1. Установка
 
 ```bash
 yarn install
-```
-
-Dev:
-
-```bash
-yarn dev
-```
-
-A development server will be running on http://localhost:5678 automatically. Update `public/index.html` to connect directly to your chatbot backend:
-
-```html
-<!-- public/index.html -->
-<script type="module">
-  import Chatbot from 'https://localhost:5678/web.js'; // Change to from './web.js' to 'https://localhost:5678/web.js'
-  Chatbot.init({
-    chatflowid: '91e9c803-5169-4db9-8207-3c0915d71c5f', // Add your chatflowid
-    apiHost: 'https://your-chatbot-instance.com', // Add your apiHost
-  });
-</script>
-```
-
-Build:
-
-```bash
 yarn build
 ```
 
-## Embed in your HTML
+### 2. Настройка окружения
 
-### PopUp
+```bash
+cp .env.example .env
+```
+
+Заполните обязательные переменные в `.env`:
+
+```bash
+# URL бэкенда Osmi AI (без завершающего слэша)
+API_HOST=https://your-chatbot-instance.ru
+
+# API-ключ из настроек бэкенда (только на сервере, не в браузере)
+CHATBOT_API_KEY=your-api-key
+
+# Маппинг chatflow: ИДЕНТИФИКАТОР=UUID,РАЗРЕШЁННЫЙ_ORIGIN_1,...
+agent1=20db97c6-64c9-4411-bab4-7d6202171600,https://example.com
+support=1c28f529-a70f-5001-9bc5-4f4c5d03d8c0,https://app.example.com
+```
+
+**Формат chatflow-записей:**
+
+| Часть           | Описание                                                           |
+| --------------- | ------------------------------------------------------------------ |
+| `ИДЕНТИФИКАТОР` | Произвольное имя (например, `agent1`, `support`); регистр не важен |
+| `UUID`          | UUID chatflow в бэкенде                                            |
+| `ORIGIN`        | Полный origin сайта: `https://host[:port]`                         |
+
+**Важно:**
+
+- Wildcard (`*`) в доменах запрещён
+- В `chatflowid` на сайте указывается **идентификатор** из `.env`, а не UUID
+- Добавьте в whitelist URL прокси-сервера, если `web.js` загружается с него (например, `https://your-proxy.example.com`)
+- В режиме разработки (`NODE_ENV=development`) автоматически разрешается `http://localhost:5678`
+
+### 3. Запуск прокси-сервера
+
+```bash
+yarn start
+# Локально: http://localhost:3001
+```
+
+При старте сервер выводит в консоль готовые embed-скрипты для popup и fullpage режимов.
+
+Альтернатива — сборка и запуск одной командой:
+
+```bash
+yarn preview
+```
+
+### 4. Встраивание на сайт
+
+После запуска прокси используйте скрипт из консоли или шаблон ниже.
+
+**Popup (виджет):**
 
 ```html
 <script type="module">
-  import Chatbot from 'https://cdn.jsdelivr.net/npm/osmi-ai-embed/dist/web.js';
+  import Chatbot from 'https://your-proxy.example.ru/web.js';
   Chatbot.init({
-    chatflowid: '<chatflowid>',
-    apiHost: 'http://localhost:3000',
+    chatflowid: 'agent1',
+    apiHost: 'https://your-proxy.example.com',
   });
 </script>
 ```
 
-### FullPage
-
-```html
-<script type="module">
-  import Chatbot from 'https://cdn.jsdelivr.net/npm/osmi-ai-embed/dist/web.js';
-  Chatbot.initFull({
-    chatflowid: '<chatflowid>',
-    apiHost: 'http://localhost:3000',
-  });
-</script>
-<chatbot-full></chatbot-full>
-```
-
-To enable full screen, add `margin: 0` to <code>body</code> style, and confirm you don't set height and width
+**Full page (на всю страницу):**
 
 ```html
 <body style="margin: 0">
+  <chatbot-full></chatbot-full>
   <script type="module">
-    import Chatbot from 'https://cdn.jsdelivr.net/npm/osmi-ai-embed/dist/web.js';
+    import Chatbot from 'https://your-proxy.example.ru/web.js';
     Chatbot.initFull({
-      chatflowid: '<chatflowid>',
-      apiHost: 'http://localhost:3000',
-      theme: {
-        chatWindow: {
-          // height: 700, don't set height
-          // width: 400, don't set width
-        },
-      },
+      chatflowid: 'agent1',
+      apiHost: 'https://your-proxy.example.ru',
     });
   </script>
 </body>
 ```
 
-## Configuration
+Для полноэкранного режима не задавайте `height` и `width` в `theme.chatWindow`.
 
-You can also customize chatbot with different configuration
+## Разработка
+
+### Локальная разработка виджета
+
+1. Настройте `.env` (см. выше)
+2. Запустите прокси в одном терминале:
+
+```bash
+yarn start
+```
+
+3. Запустите dev-сервер в другом терминале:
+
+```bash
+yarn dev
+# Тестовая страница: http://localhost:5678
+```
+
+Dev-сервер собирает `dist/web.js` с hot reload и открывает `public/index.html`.
+
+Папка `public/` и файл `public/index.html` — **опциональны**; это только демо-страница для локального тестирования. Её можно удалить без влияния на embed-библиотеку.
+
+Пример конфигурации в `public/index.html`:
+
+```html
+<script type="module">
+  import Chatbot from './web.js';
+  Chatbot.init({
+    chatflowid: 'agent1',
+    apiHost: 'http://localhost:3001',
+  });
+</script>
+```
+
+Для fullpage-теста:
+
+```html
+<chatbot-full></chatbot-full>
+<script type="module">
+  import Chatbot from './web.js';
+  Chatbot.initFull({
+    chatflowid: 'agent1',
+    apiHost: 'http://localhost:3001',
+  });
+</script>
+```
+
+### Сборка
+
+```bash
+yarn build
+```
+
+Артефакты: `dist/web.js` (ES module) и `dist/web.umd.js` (UMD).
+
+### Линтинг и форматирование
+
+```bash
+yarn lint
+yarn lint-fix
+yarn format
+```
+
+## Прокси-сервер
+
+Прокси (`server.js`) — рекомендуемый способ подключения в production.
+
+**Что делает:**
+
+- Скрывает `API_HOST`, UUID chatflow и API-ключ от клиента
+- Проверяет origin запросов по whitelist из `.env`
+- Проксирует API: prediction, streaming, config, файлы, вложения
+- Отдаёт `web.js` только с разрешённых доменов
+
+**Схема:**
+
+```text
+Сайт (браузер)  →  Прокси (server.js)  →  Osmi AI
+```
+
+**Переменные окружения:**
+
+| Переменная             | Обязательная | Описание                                |
+| ---------------------- | ------------ | --------------------------------------- |
+| `API_HOST`             | да           | URL бэкенда Osmi AI                     |
+| `CHATBOT_API_KEY`      | да           | API-ключ бэкенда                        |
+| `agent1`, `support`, … | да (≥1)      | Маппинг chatflow                        |
+| `PORT`                 | нет          | Порт (по умолчанию `3001`)              |
+| `HOST`                 | нет          | Адрес привязки (по умолчанию `0.0.0.0`) |
+| `BASE_URL`             | нет          | Базовый URL для embed-скриптов в логах  |
+| `NODE_ENV`             | нет          | `development` или `production`          |
+
+Сервер не запустится без `API_HOST`, `CHATBOT_API_KEY` и хотя бы одной валидной chatflow-записи.
+
+## Docker
+
+```bash
+docker compose up --build
+```
+
+Контейнер слушает порт `3001`, переменные берутся из `.env`. В `docker-compose.yml` задано `NODE_ENV=production`.
+
+Или вручную:
+
+```bash
+docker build -t osmi-ai-testchat .
+docker run -p 3001:3001 --env-file .env osmi-ai-testchat
+```
+
+## Встраивание через CDN (без прокси)
+
+Если прокси не используется, можно подключить библиотеку напрямую. В этом случае `apiHost` и `chatflowid` (UUID) будут видны в браузере:
 
 ```html
 <script type="module">
   import Chatbot from 'https://cdn.jsdelivr.net/npm/osmi-ai-embed/dist/web.js';
   Chatbot.init({
-    chatflowid: '91e9c803-5169-4db9-8207-3c0915d71c5f',
-    apiHost: 'http://localhost:3000',
+    chatflowid: '<uuid-chatflow>',
+    apiHost: 'https://your-chatbot-instance.com',
+  });
+</script>
+```
+
+Для production рекомендуется прокси-сервер.
+
+## Настройка виджета
+
+Параметры передаются в `Chatbot.init()` / `Chatbot.initFull()`:
+
+```html
+<script type="module">
+  import Chatbot from 'https://your-proxy.example.ru/web.js';
+  Chatbot.init({
+    chatflowid: 'agent1',
+    apiHost: 'https://your-proxy.example.ru',
     chatflowConfig: {
-      // topK: 2
+      // дополнительные параметры chatflow
     },
     observersConfig: {
-      // (optional) Allows you to execute code in parent based upon signal observations within the chatbot.
-      // The userinput field submitted to bot ("" when reset by bot)
-      observeUserInput: (userInput) => {
-        console.log({ userInput });
-      },
-      // The bot message stack has changed
-      observeMessages: (messages) => {
-        console.log({ messages });
-      },
-      // The bot loading signal changed
-      observeLoading: (loading) => {
-        console.log({ loading });
-      },
+      observeUserInput: (userInput) => console.log({ userInput }),
+      observeMessages: (messages) => console.log({ messages }),
+      observeLoading: (loading) => console.log({ loading }),
     },
     theme: {
       button: {
         backgroundColor: '#3B81F6',
         right: 20,
         bottom: 20,
-        size: 48, // small | medium | large | number
+        size: 48,
         dragAndDrop: true,
         iconColor: 'white',
-        customIconSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
         autoWindowOpen: {
-          autoOpen: true, //parameter to control automatic window opening
-          openDelay: 2, // Optional parameter for delay time in seconds
-          autoOpenOnMobile: false, //parameter to control automatic window opening in mobile
+          autoOpen: true,
+          openDelay: 2,
+          autoOpenOnMobile: false,
         },
       },
       tooltip: {
         showTooltip: true,
-        tooltipMessage: 'Hi There 👋!',
-        tooltipBackgroundColor: 'black',
-        tooltipTextColor: 'white',
-        tooltipFontSize: 16,
+        tooltipMessage: 'Привет! 👋',
       },
       disclaimer: {
-        title: 'Disclaimer',
-        message: 'By using this chatbot, you agree to the <a target="_blank" href="https://your-domain.com/terms">Terms & Condition</a>',
-        textColor: 'black',
-        buttonColor: '#3b82f6',
-        buttonText: 'Start Chatting',
-        buttonTextColor: 'white',
-        blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)', //The color of the blurred background that overlays the chat interface
-        backgroundColor: 'white',
-        denyButtonText: 'Cancel',
-        denyButtonBgColor: '#ef4444',
+        title: 'Дисклеймер',
+        message: 'Продолжая, вы соглашаетесь с <a target="_blank" href="https://example.com/terms">условиями</a>',
+        buttonText: 'Начать чат',
       },
-      form: {
-        backgroundColor: 'white',
-        textColor: 'black',
-      }
-      customCSS: ``, // Add custom CSS styles. Use !important to override default styles
       chatWindow: {
-        showTitle: true,
-        showAgentMessages: true,
-        title: 'Chatbot',
-        titleAvatarSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
-        titleBackgroundColor: '#3B81F6',
-        titleTextColor: '#ffffff',
-        welcomeMessage: 'Hello! This is custom welcome message',
-        errorMessage: 'This is a custom error message',
-        backgroundColor: '#ffffff',
-        backgroundImage: 'enter image path or link', // If set, this will overlap the background color of the chat window.
+        title: 'Чат-бот',
+        welcomeMessage: 'Здравствуйте! Чем могу помочь?',
         height: 700,
         width: 400,
-        fontSize: 16,
-        starterPrompts: ['What is a bot?', 'Who are you?'], // It overrides the starter prompts set by the chat flow passed
-        starterPromptFontSize: 15,
-        clearChatOnReload: false, // If set to true, the chat will be cleared when the page reloads
-        sourceDocsTitle: 'Sources:',
+        starterPrompts: ['Что вы умеете?', 'Как с вами связаться?'],
+        clearChatOnReload: false,
         renderHTML: true,
         botMessage: {
           backgroundColor: '#f7f8ff',
-          textColor: '#303235',
           showAvatar: true,
-          avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/parroticon.png',
         },
         userMessage: {
           backgroundColor: '#3B81F6',
           textColor: '#ffffff',
-          showAvatar: true,
-          avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png',
         },
         textInput: {
-          placeholder: 'Type your question',
-          backgroundColor: '#ffffff',
-          textColor: '#303235',
-          sendButtonColor: '#3B81F6',
-          maxChars: 50,
-          maxCharsWarningMessage: 'You exceeded the characters limit. Please input less than 50 characters.',
-          autoFocus: true, // If not used, autofocus is disabled on mobile and enabled on desktop. true enables it on both, false disables it on both.
-          sendMessageSound: true,
-          // sendSoundLocation: "send_message.mp3", // If this is not used, the default sound effect will be played if sendSoundMessage is true.
-          receiveMessageSound: true,
-          // receiveSoundLocation: "receive_message.mp3", // If this is not used, the default sound effect will be played if receiveSoundMessage is true.
-        },
-        feedback: {
-          color: '#303235',
-        },
-        dateTimeToggle: {
-          date: true,
-          time: true,
+          placeholder: 'Введите сообщение',
+          maxChars: 500,
+          autoFocus: true,
         },
         footer: {
-          textColor: '#303235',
           text: 'Powered by',
           company: 'Company',
-          companyLink: 'https://your-domain.com',
+          companyLink: 'https://example.com',
         },
       },
+      customCSS: '',
     },
   });
 </script>
 ```
 
-## (Experimental) Proxy Server Setup
+### API
 
-The Chatbot Embed Proxy Server enhances the security of your chatbot implementation by acting as a protective intermediary layer. This server eliminates the need to expose sensitive backend details in your frontend code and provides several key security benefits:
+| Метод                     | Описание                   |
+| ------------------------- | -------------------------- |
+| `Chatbot.init(props)`     | Виджет с плавающей кнопкой |
+| `Chatbot.initFull(props)` | Полноэкранный чат          |
+| `Chatbot.destroy()`       | Удалить виджет со страницы |
 
-![Proxy Server](./images/proxyserver.png)
+## Деплой в облако
 
-- **Enhanced Security**: Conceals your API host and chatflow IDs from client-side exposure
-- **Access Control**: Implements strict domain-based restrictions for chatbot embedding
-- **Secure Communication**: Acts as a secure gateway for all interactions between your website and your backend
-- **Authentication Management**: Handles API key authentication securely on the server side, away from client exposure
+- Задайте переменные окружения на платформе (Heroku, Railway, Fly.io и т.д.)
+- Убедитесь, что `NODE_ENV=production`
+- Добавьте URL прокси и все сайты-embedder'ы в whitelist каждого chatflow
+- Совместимо с Nixpacks для автоматической конфигурации деплоя
 
-This proxy server can be deployed to any Node.js hosting platform.
+## Лицензия
 
-## Quick Start
-
-1. Configure environment:
-
-```bash
-# Copy .env.example to .env and configure required settings:
-API_HOST=https://your-chatbot-instance.com
-CHATBOT_API_KEY=your-api-key
-
-# Configure your chatflows:
-# Format: [identifier]=[chatflowId],[allowedDomain1],[allowedDomain2],...
-#
-# identifier: Any name you choose (e.g., agent1, support, salesbot)
-# chatflowId: The UUID of your chatflow
-# allowedDomains: Comma-separated list of domains where this chat can be embedded
-#
-# Examples:
-support=abc123-def456,https://example.com
-agent1=xyz789-uvw456,https://sales.example.com
-helpdesk=ghi123-jkl456,https://help.example.com,https://support.example.com
-```
-
-2. Install dependencies: (assuming you did not run `yarn install` yet)
-
-```bash
-yarn install
-```
-
-3. Start proxy server:
-
-```bash
-yarn start
-# Server will be available at:
-# - Local:  http://localhost:3001
-# - Cloud:  [Your Platform URL] (e.g., https://your-app.herokuapp.com)
-```
-
-4. Once the proxy server is running in production, you will be able to embed your chatbots safely without exposing your API host and chatflow IDs as below:
-
-```html
-<script type="module">
-  import Chatbot from 'your-proxy-server-url/web.js'; // Must be 'your-proxy-server-url/web.js'
-  Chatbot.init({
-    chatflowid: 'your-identifier-here', // Must match an identifier from your .env
-    apiHost: 'your-proxy-server-url', // Must match the URL of your proxy server
-    chatflowConfig: {
-      // ...
-    },
-  });
-</script>
-```
-
-5. (optional) If you want to test any identifier in public/index.html, you can update it as below:
-
-```html
-<!-- public/index.html -->
-chatflowid: 'your-identifier-here' // Must match an identifier from your .env
-```
-
-**Important Notes:**
-
-- To ensure secure embedding, you must explicitly whitelist the websites authorized to embed each chatbot. This configuration is done within the .env file. Note that this also applies to your server's URL when deployed to a cloud environment, or http://localhost:3001 for local development, if needed you must whitelist it as well.
-- Wildcard domains (\*) are not supported for security reasons
-- Identifiers are case-insensitive (e.g., 'Support' and 'support' are treated the same)
-
-## Cloud Deployment Requirements
-
-When deploying to cloud platforms, you must configure the environment variables directly in your platform. The proxy server will not start without these variables being properly set. Compatible with Nixpacks for automatic deployment configuration.
-
-## Development Mode (For Local Testing)
-
-1. Configure your environment variables (see above)
-
-2. Start the proxy server:
-
-```bash
-yarn start
-# Server will be available at:
-# - Local:  http://localhost:3001
-```
-
-3. Update the test page configuration:
-
-- Open `public/index.html` in your code editor
-- Modify the `chatflowid` and `apiHost` to match your `.env` settings:
-
-```html
-<!-- public/index.html -->
-<script type="module">
-  import Chatbot from './web.js';
-  Chatbot.init({
-    chatflowid: 'agent1', // Must match an identifier from your .env
-    apiHost: 'http://localhost:3001', // Change this from window.location.origin to 'http://localhost:3001'
-  });
-</script>
-```
-
-For full page testing, use this configuration instead:
-
-```html
-<!-- public/index.html -->
-<chatbot-full></chatbot-full>
-<script type="module">
-  import Chatbot from './web.js';
-  Chatbot.initFull({
-    chatflowid: 'agent1', // Must match an identifier from your .env
-    apiHost: 'http://localhost:3001', // Change this from window.location.origin to 'http://localhost:3001'
-  });
-</script>
-```
-
-4. While the proxy server is running, open a new terminal and start the development server:
-
-```bash
-yarn dev
-# This will serve the test page on http://localhost:5678 automatically
-```
-
-5. Test the chatbot:
-
-- Navigate to http://localhost:5678
-- The chatbot should now be visible and functional
-
-**Note:** The development URL (http://localhost:5678) is automatically added to allowed domains in development mode. You don't need to add it manually.
-
-## License
-
-Source code in this repository is made available under the MIT License.
+Исходный код является собственностью компании ООО «ОСМИ-ИТ»
