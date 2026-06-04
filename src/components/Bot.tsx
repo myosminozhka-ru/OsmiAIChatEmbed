@@ -48,10 +48,9 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   const [loading, setLoading] = createSignal(false);
   const [sourcePopupOpen, setSourcePopupOpen] = createSignal(false);
   const [sourcePopupSrc, setSourcePopupSrc] = createSignal({});
-  const [messages, setMessages] = createSignal<MessageType[]>(
-    [{ message: props.welcomeMessage ?? DEFAULT_WELCOME_MESSAGE, type: 'apiMessage' }],
-    { equals: false },
-  );
+  const [messages, setMessages] = createSignal<MessageType[]>([{ message: props.welcomeMessage ?? DEFAULT_WELCOME_MESSAGE, type: 'apiMessage' }], {
+    equals: false,
+  });
 
   const [isChatFlowAvailableToStream, setIsChatFlowAvailableToStream] = createSignal(false);
   const [chatId, setChatId] = createSignal('');
@@ -369,7 +368,11 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                   <div class="w-full flex items-center justify-between p-4 border border-[#eeeeee]">
                     <div class="w-full flex items-center justify-between gap-3">
                       <span class="text-base">To record audio, use modern browsers like Chrome or Firefox that support audio recording.</span>
-                      <button class="py-2 px-4 justify-center flex items-center bg-red-500 text-white rounded-md" type="button" onClick={onRecordingCancelled}>
+                      <button
+                        class="py-2 px-4 justify-center flex items-center bg-red-500 text-white rounded-md"
+                        type="button"
+                        onClick={onRecordingCancelled}
+                      >
                         Okay
                       </button>
                     </div>
@@ -413,7 +416,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 onAbortMessage={chat.abortMessage}
               />
             </div>
-            <Badge footer={props.footer} badgeBackgroundColor={props.badgeBackgroundColor} poweredByTextColor={props.poweredByTextColor} botContainer={botContainer} />
+            <Badge
+              footer={props.footer}
+              badgeBackgroundColor={props.badgeBackgroundColor}
+              poweredByTextColor={props.poweredByTextColor}
+              botContainer={botContainer}
+            />
           </div>
         </div>
       )}

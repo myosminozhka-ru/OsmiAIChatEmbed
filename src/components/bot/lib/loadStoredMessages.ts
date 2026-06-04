@@ -18,9 +18,7 @@ export const mapStoredMessage = (message: MessageType, welcomeMessage?: string):
   if (message.followUpPrompts) chatHistory.followUpPrompts = message.followUpPrompts;
   if (message.execution?.executionData) {
     chatHistory.agentFlowExecutedData =
-      typeof message.execution.executionData === 'string'
-        ? JSON.parse(message.execution.executionData)
-        : message.execution.executionData;
+      typeof message.execution.executionData === 'string' ? JSON.parse(message.execution.executionData) : message.execution.executionData;
   }
   if (message.agentFlowExecutedData) {
     chatHistory.agentFlowExecutedData =
@@ -36,10 +34,7 @@ export const buildInitialMessages = (welcomeMessage?: string): MessageType[] => 
   },
 ];
 
-export const loadMessagesFromHistory = (
-  chatHistory: MessageType[] | undefined,
-  welcomeMessage?: string,
-): MessageType[] => {
+export const loadMessagesFromHistory = (chatHistory: MessageType[] | undefined, welcomeMessage?: string): MessageType[] => {
   if (!chatHistory?.length) {
     return buildInitialMessages(welcomeMessage);
   }

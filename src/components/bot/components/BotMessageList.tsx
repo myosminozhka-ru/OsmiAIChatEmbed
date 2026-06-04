@@ -80,31 +80,27 @@ export const BotMessageList = (listProps: BotMessageListProps) => {
               starterPrompts={index() === 0 && listProps.messages.length === 1 ? listProps.starterPrompts : []}
               starterPromptFontSize={props.starterPromptFontSize}
               onStarterPromptClick={listProps.onStarterPromptClick}
-              showFeedback={
-                !(index() === 0 && message.message === (props.welcomeMessage ?? DEFAULT_WELCOME_MESSAGE))
-              }
+              showFeedback={!(index() === 0 && message.message === (props.welcomeMessage ?? DEFAULT_WELCOME_MESSAGE))}
             />
           )}
-          {message.type === 'leadCaptureMessage' &&
-            listProps.leadsConfig?.status &&
-            !getLocalStorageChatflow(props.chatflowid)?.lead && (
-              <LeadCaptureBubble
-                message={message}
-                chatflowid={props.chatflowid}
-                chatId={listProps.chatId}
-                apiHost={props.apiHost}
-                backgroundColor={props.botMessage?.backgroundColor}
-                textColor={props.botMessage?.textColor}
-                fontSize={props.fontSize}
-                showAvatar={props.botMessage?.showAvatar}
-                avatarSrc={props.botMessage?.avatarSrc}
-                leadsConfig={listProps.leadsConfig}
-                sendButtonColor={props.textInput?.sendButtonColor}
-                isLeadSaved={listProps.isLeadSaved}
-                setIsLeadSaved={listProps.setIsLeadSaved}
-                setLeadEmail={listProps.setLeadEmail}
-              />
-            )}
+          {message.type === 'leadCaptureMessage' && listProps.leadsConfig?.status && !getLocalStorageChatflow(props.chatflowid)?.lead && (
+            <LeadCaptureBubble
+              message={message}
+              chatflowid={props.chatflowid}
+              chatId={listProps.chatId}
+              apiHost={props.apiHost}
+              backgroundColor={props.botMessage?.backgroundColor}
+              textColor={props.botMessage?.textColor}
+              fontSize={props.fontSize}
+              showAvatar={props.botMessage?.showAvatar}
+              avatarSrc={props.botMessage?.avatarSrc}
+              leadsConfig={listProps.leadsConfig}
+              sendButtonColor={props.textInput?.sendButtonColor}
+              isLeadSaved={listProps.isLeadSaved}
+              setIsLeadSaved={listProps.setIsLeadSaved}
+              setLeadEmail={listProps.setLeadEmail}
+            />
+          )}
           {message.type === 'userMessage' && listProps.loading && index() === listProps.messages.length - 1 && (
             <LoadingBubble showAvatar={props.botMessage?.showAvatar} avatarSrc={props.botMessage?.avatarSrc} />
           )}

@@ -79,9 +79,7 @@ export const createMessageUpdaters = (options: MessageUpdatersOptions) => {
   const updateLastMessageAgentReasoning = (agentReasoning: string | IAgentReasoning[]) => {
     setMessages((data) => {
       const updated = data.map((item, i) =>
-        i === data.length - 1
-          ? { ...item, agentReasoning: typeof agentReasoning === 'string' ? JSON.parse(agentReasoning) : agentReasoning }
-          : item,
+        i === data.length - 1 ? { ...item, agentReasoning: typeof agentReasoning === 'string' ? JSON.parse(agentReasoning) : agentReasoning } : item,
       );
       addChatMessage(updated);
       return [...updated];

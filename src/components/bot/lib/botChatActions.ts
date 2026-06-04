@@ -2,21 +2,9 @@ import { Accessor, Setter } from 'solid-js';
 import { v4 as uuidv4 } from 'uuid';
 import { fetchEventSource, EventStreamContentType } from '@microsoft/fetch-event-source';
 import { cloneDeep } from 'lodash';
-import {
-  IncomingInput,
-  sendMessageQuery,
-  upsertVectorStoreWithFormData,
-  createAttachmentWithFormData,
-} from '@/queries/sendMessageQuery';
+import { IncomingInput, sendMessageQuery, upsertVectorStoreWithFormData, createAttachmentWithFormData } from '@/queries/sendMessageQuery';
 import { setLocalStorageChatflow, removeLocalStorageChatHistory, getLocalStorageChatflow } from '@/utils';
-import {
-  BotProps,
-  IAction,
-  IUploads,
-  LeadsConfig,
-  MessageType,
-  UploadsConfig,
-} from '../types';
+import { BotProps, IAction, IUploads, LeadsConfig, MessageType, UploadsConfig } from '../types';
 import { DEFAULT_WELCOME_MESSAGE } from '../constants';
 import { createMessageUpdaters } from './messageUpdaters';
 import { createReceiveSoundPlayer } from './receiveSound';

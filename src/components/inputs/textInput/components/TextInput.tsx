@@ -70,7 +70,7 @@ export const DeleteButton = (props: DeleteButtonProps) => {
         props.class
       }
       style={{ background: 'transparent', border: 'none' }}
-      title="Reset Chat"
+      title="Сбросить чат"
     >
       <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
         <ResetIcon color={props.sendButtonColor} class={'send-icon flex ' + (props.disableIcon ? 'hidden' : '')} />
