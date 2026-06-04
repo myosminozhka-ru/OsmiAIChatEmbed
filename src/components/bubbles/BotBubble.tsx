@@ -12,6 +12,7 @@ import { SourceBubble } from '../bubbles/SourceBubble';
 import { DateTimeToggleTheme } from '@/features/bubble/types';
 import { WorkflowTreeView } from '../treeview/WorkflowTreeView';
 import { StarterPromptBubble } from './StarterPromptBubble';
+import { effect } from 'solid-js/web';
 
 type Props = {
   message: MessageType;
@@ -50,6 +51,8 @@ const defaultBackgroundColor = '#19191b';
 const defaultTextColor = '#ffffff';
 const defaultFontSize = 16;
 const defaultFeedbackColor = '#3B81F6';
+const thumbsUpActiveColor = '#00e676';
+const thumbsDownActiveColor = '#f44336';
 
 export const BotBubble = (props: Props) => {
   let botDetailsEl: HTMLDetailsElement | undefined;
@@ -60,8 +63,6 @@ export const BotBubble = (props: Props) => {
   const [feedbackId, setFeedbackId] = createSignal('');
   const [showFeedbackContentDialog, setShowFeedbackContentModal] = createSignal(false);
   const [copiedMessage, setCopiedMessage] = createSignal(false);
-  const [thumbsUpColor, setThumbsUpColor] = createSignal(props.feedbackColor ?? defaultFeedbackColor); // default color
-  const [thumbsDownColor, setThumbsDownColor] = createSignal(props.feedbackColor ?? defaultFeedbackColor); // default color
 
   // Store a reference to the bot message element for the copyMessageToClipboard function
   const [botMessageElement, setBotMessageElement] = createSignal<HTMLElement | null>(null);
@@ -100,11 +101,6 @@ export const BotBubble = (props: Props) => {
 
       if (props.message.rating) {
         setRating(props.message.rating);
-        if (props.message.rating === 'THUMBS_UP') {
-          setThumbsUpColor('#006400');
-        } else if (props.message.rating === 'THUMBS_DOWN') {
-          setThumbsDownColor('#8B0000');
-        }
       }
       if (props.fileAnnotations && props.fileAnnotations.length) {
         for (const annotations of props.fileAnnotations) {
@@ -220,8 +216,6 @@ export const BotBubble = (props: Props) => {
         setRating('THUMBS_UP');
         setFeedbackId(id);
         setShowFeedbackContentModal(true);
-        // update the thumbs up color state
-        setThumbsUpColor('#006400');
         saveToLocalStorage('THUMBS_UP');
       }
     }
@@ -250,8 +244,6 @@ export const BotBubble = (props: Props) => {
         setRating('THUMBS_DOWN');
         setFeedbackId(id);
         setShowFeedbackContentModal(true);
-        // update the thumbs down color state
-        setThumbsDownColor('#8B0000');
         saveToLocalStorage('THUMBS_DOWN');
       }
     }
@@ -577,18 +569,29 @@ export const BotBubble = (props: Props) => {
             />
           </Show>
           <Show when={props.showFeedback !== false}>
-            <CopyToClipboardButton feedbackColor={props.feedbackColor} onClick={() => copyMessageToClipboard()} />
+            <CopyToClipboardButton
+              iconColor={copiedMessage() ? props.feedbackColor ?? defaultFeedbackColor : props.textColor ?? defaultTextColor}
+              filled={copiedMessage()}
+              onClick={() => copyMessageToClipboard()}
+            />
             <Show when={copiedMessage()}>
               <div class="copied-message" style={{ color: props.feedbackColor ?? defaultFeedbackColor }}>
                 Скопировано!
               </div>
             </Show>
             {rating() === '' || rating() === 'THUMBS_UP' ? (
-              <ThumbsUpButton feedbackColor={thumbsUpColor()} isDisabled={rating() === 'THUMBS_UP'} rating={rating()} onClick={onThumbsUpClick} />
+              <ThumbsUpButton
+                iconColor={rating() === 'THUMBS_UP' ? thumbsUpActiveColor : props.textColor ?? defaultTextColor}
+                filled={rating() === 'THUMBS_UP'}
+                isDisabled={rating() === 'THUMBS_UP'}
+                rating={rating()}
+                onClick={onThumbsUpClick}
+              />
             ) : null}
             {rating() === '' || rating() === 'THUMBS_DOWN' ? (
               <ThumbsDownButton
-                feedbackColor={thumbsDownColor()}
+                iconColor={rating() === 'THUMBS_DOWN' ? thumbsDownActiveColor : props.textColor ?? defaultTextColor}
+                filled={rating() === 'THUMBS_DOWN'}
                 isDisabled={rating() === 'THUMBS_DOWN'}
                 rating={rating()}
                 onClick={onThumbsDownClick}
