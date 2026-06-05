@@ -30,17 +30,23 @@
         chatflowid: 'agent1', // or 'support', 'salesbot', etc.
         apiHost: window.location.origin,
         theme: {
+          colors: {
+            userBubble: {
+              background: '#FF4978',
+              text: '#ffffff',
+            },
+            accent: '#FF4978',
+            sendButton: '#FF4978',
+            feedback: {
+              default: '#FFFFFF',
+            },
+          },
           chatWindow: {
             welcomeMessage: 'Привет! Я здесь, чтобы помочь. Напиши запрос или выбери подсказку ниже\n\nЧто ты хочешь сделать?',
             starterPrompts: ['Заказать чат-бота', 'Сколько стоит чат-бот?', 'Сколько займет разработка чат-бота?'],
             clearChatOnReload: true,
             fontSize: 16,
-            feedback: {
-              color: '#FFFFFF',
-            },
             userMessage: {
-              backgroundColor: '#FF4978',
-              textColor: '#ffffff',
               showAvatar: false,
             },
             botMessage: {

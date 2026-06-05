@@ -10,14 +10,10 @@ type Props = {
   agentName: string;
   agentMessage: string;
   agentArtifacts?: FileUpload[];
-  backgroundColor?: string;
-  textColor?: string;
   fontSize?: number;
   renderHTML?: boolean;
 };
 
-const defaultBackgroundColor = '#19191B';
-const defaultTextColor = '#FFFFFF';
 const defaultFontSize = 16;
 
 export const AgentReasoningBubble = (props: Props) => {
@@ -68,12 +64,9 @@ export const AgentReasoningBubble = (props: Props) => {
       return (
         <span
           innerHTML={Marked.parse(src)}
-          class="prose"
+          class="prose chatbot-host-bubble"
           style={{
-            'background-color': props.backgroundColor ?? defaultBackgroundColor,
-            color: props.textColor ?? defaultTextColor,
             'border-radius': '16px',
-            border: '1px solid #4D5164',
             'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
           }}
         />
@@ -95,13 +88,10 @@ export const AgentReasoningBubble = (props: Props) => {
       {props.agentMessage && (
         <span
           ref={botMessageEl}
-          class="prose"
+          class="prose chatbot-host-bubble"
           style={{
-            'background-color': props.backgroundColor ?? defaultBackgroundColor,
-            color: props.textColor ?? defaultTextColor,
             'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
             'border-radius': '16px',
-            border: '1px solid #4D5164',
           }}
         />
       )}

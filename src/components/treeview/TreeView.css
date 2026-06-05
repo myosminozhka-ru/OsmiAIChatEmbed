@@ -15,11 +15,11 @@
 }
 
 .tree-item-content:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: var(--chatbot-tree-hover-bg-color);
 }
 
 .tree-item-content.selected {
-  background-color: rgba(25, 118, 210, 0.08);
+  background-color: var(--chatbot-tree-selected-bg-color);
 }
 
 .tree-item-icon-container {
@@ -33,18 +33,16 @@
 .tree-item-children {
   margin-left: 0.75rem;
   padding-left: 1rem;
-  border-left: 1px dashed #ccc;
+  border-left: 1px dashed var(--chatbot-tree-children-border-color);
 }
 
-/* Custom icon styles */
 .tree-item-icon, .tree-item-end-icon {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Highlighted item style */
 .tree-item-content.highlighted {
-  background-color: rgba(255, 193, 7, 0.1);
+  background-color: var(--chatbot-tree-highlight-bg-color);
   font-weight: 500;
-} 
+}

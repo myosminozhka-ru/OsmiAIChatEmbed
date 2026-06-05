@@ -6,8 +6,6 @@ type Props = {
     agentName: string;
     agentMessage: string;
     agentArtifacts?: FileUpload[];
-    backgroundColor?: string;
-    textColor?: string;
     fontSize?: number;
     renderHTML?: boolean;
 };

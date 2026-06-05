@@ -7,13 +7,11 @@ type Props = ButtonTheme & {
   toggleBot: () => void;
   setButtonPosition: (position: { bottom: number; right: number }) => void;
   dragAndDrop: boolean;
-  autoOpen?: boolean; // Optional parameter to control automatic window opening
-  openDelay?: number; // Optional parameter for delay time in seconds
-  autoOpenOnMobile?: boolean; // Optional parameter for opening on mobile
+  autoOpen?: boolean;
+  openDelay?: number;
+  autoOpenOnMobile?: boolean;
 };
 
-const defaultButtonColor = '#3B81F6';
-const defaultIconColor = 'white';
 const defaultBottom = 20;
 const defaultRight = 20;
 
@@ -64,17 +62,16 @@ export const BubbleButton = (props: Props) => {
 
   const handleButtonClick = () => {
     props.toggleBot();
-    setUserInteracted(true); // Mark that the user has interacted
+    setUserInteracted(true);
     if (window.innerWidth <= 640) {
       setIsSmallScreen(true);
     }
   };
 
   createEffect(() => {
-    // Automatically open the chat window if autoOpen is true
     if (props.autoOpen && (props.autoOpenOnMobile || window.innerWidth > 640)) {
-      const delayInSeconds = props.openDelay ?? 2; // Default to 2 seconds if openDelay is not defined
-      const delayInMilliseconds = delayInSeconds * 1000; // Convert seconds to milliseconds
+      const delayInSeconds = props.openDelay ?? 2;
+      const delayInMilliseconds = delayInSeconds * 1000;
       setTimeout(() => {
         if (!props.isBotOpened && !userInteracted()) {
           props.toggleBot();
@@ -89,9 +86,8 @@ export const BubbleButton = (props: Props) => {
         part="button"
         onClick={handleButtonClick}
         onMouseDown={onMouseDown}
-        class={`fixed shadow-md rounded-full hover:scale-110 active:scale-95 transition-transform duration-200 flex justify-center items-center animate-fade-in`}
+        class="chatbot-bubble-button fixed shadow-md rounded-full hover:scale-110 active:scale-95 transition-transform duration-200 flex justify-center items-center animate-fade-in"
         style={{
-          'background-color': props.backgroundColor ?? defaultButtonColor,
           'z-index': 42424242,
           right: `${position().right}px`,
           bottom: `${position().bottom}px`,
@@ -103,12 +99,10 @@ export const BubbleButton = (props: Props) => {
         <Show when={isNotDefined(props.customIconSrc)} keyed>
           <svg
             viewBox="0 0 24 24"
-            style={{
-              stroke: props.iconColor ?? defaultIconColor,
-            }}
             class={
               `stroke-2 fill-transparent absolute duration-200 transition ` + (props.isBotOpened ? 'scale-0 opacity-0' : 'scale-100 opacity-100')
             }
+            style={{ stroke: 'currentColor' }}
             width={buttonSize * 0.6}
             height={buttonSize * 0.6}
           >
@@ -129,8 +123,8 @@ export const BubbleButton = (props: Props) => {
 
         <svg
           viewBox="0 0 24 24"
-          style={{ fill: props.iconColor ?? 'white' }}
           class={`absolute duration-200 transition ` + (props.isBotOpened ? 'scale-100 rotate-0 opacity-100' : 'scale-0 -rotate-180 opacity-0')}
+          style={{ fill: 'currentColor' }}
           width={buttonSize * 0.6}
           height={buttonSize * 0.6}
         >

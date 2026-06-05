@@ -11,8 +11,6 @@ type WorkflowTreeViewProps = {
     indentationLevel?: number;
     initiallyExpanded?: boolean;
     title?: string;
-    backgroundColor?: string;
-    textColor?: string;
     fontSize?: number;
 };
 export declare const WorkflowTreeView: (props: WorkflowTreeViewProps) => import("solid-js").JSX.Element;

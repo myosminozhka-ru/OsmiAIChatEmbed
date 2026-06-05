@@ -1,6 +1,5 @@
 import { JSX } from 'solid-js/jsx-runtime';
 type RecordAudioButtonProps = {
-    buttonColor?: string;
     isDisabled?: boolean;
     isLoading?: boolean;
     disableIcon?: boolean;

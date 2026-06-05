@@ -1,7 +1,6 @@
 type Props = {
     isLoading?: boolean;
     isPlaying?: boolean;
-    feedbackColor?: string;
     onClick: () => void;
     class?: string;
 };

@@ -1,40 +1,18 @@
 import { Show } from 'solid-js';
-import { VolumeIcon, SquareStopIcon, CircleDotIcon } from '../icons';
+import { VolumeIcon, CircleDotIcon } from '../icons';
 
 type Props = {
   isLoading?: boolean;
   isPlaying?: boolean;
-  feedbackColor?: string;
   onClick: () => void;
   class?: string;
 };
 
-const defaultButtonColor = '#3B81F6';
-
 export const TTSButton = (props: Props) => {
   const handleClick = (event: MouseEvent) => {
     event.preventDefault();
-    if (props.isLoading) return; // Prevent clicks during loading
+    if (props.isLoading) return;
     props.onClick();
-  };
-
-  const getButtonStyle = () => {
-    const baseColor = props.feedbackColor ?? defaultButtonColor;
-
-    if (props.isPlaying) {
-      return {
-        'background-color': 'transparent',
-        color: baseColor,
-        border: 'none',
-        'border-radius': '4px',
-      };
-    }
-
-    return {
-      'background-color': 'transparent',
-      border: 'none',
-      color: baseColor,
-    };
   };
 
   const getTooltip = () => {
@@ -45,10 +23,10 @@ export const TTSButton = (props: Props) => {
 
   return (
     <button
-      class={`py-2 px-2 justify-center font-semibold focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-all filter hover:brightness-90 active:brightness-75 ${
+      class={`chatbot-feedback-icon py-2 px-2 justify-center font-semibold focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-all filter hover:brightness-90 active:brightness-75 ${
         props.class ?? ''
       }`}
-      style={getButtonStyle()}
+      style={{ background: 'transparent', border: 'none' }}
       disabled={props.isLoading}
       onClick={handleClick}
       type="button"
@@ -66,8 +44,8 @@ export const TTSButton = (props: Props) => {
           />
         }
       >
-        <Show when={!props.isPlaying} fallback={<CircleDotIcon color="red" />}>
-          <VolumeIcon color={props.isPlaying ? 'white' : props.feedbackColor ?? defaultButtonColor} />
+        <Show when={!props.isPlaying} fallback={<CircleDotIcon color="var(--chatbot-feedback-negative-color)" />}>
+          <VolumeIcon />
         </Show>
       </Show>
     </button>

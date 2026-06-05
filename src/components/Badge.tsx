@@ -4,11 +4,7 @@ import { Show, onCleanup, onMount } from 'solid-js';
 type Props = {
   footer?: FooterTheme;
   botContainer: HTMLDivElement | undefined;
-  poweredByTextColor?: string;
-  badgeBackgroundColor?: string;
 };
-
-const defaultTextColor = '#FFFFFF';
 
 export const Badge = (props: Props) => {
   let liteBadge: HTMLAnchorElement | undefined;
@@ -41,34 +37,21 @@ export const Badge = (props: Props) => {
   return (
     <>
       <Show when={props.footer?.showFooter === undefined || props.footer?.showFooter === null || props.footer?.showFooter === true}>
-        <span
-          class="hidden md:block w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto font-normal text-[12px]"
-          style={{
-            color: props.footer?.textColor ?? props.poweredByTextColor ?? defaultTextColor,
-            'background-color': props.badgeBackgroundColor ?? '#4D5164',
-          }}
-        >
+        <span class="chatbot-badge chatbot-footer-text hidden md:block w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto font-normal text-[12px]">
           <a
             ref={liteBadge}
             href={'https://osmi-it.ru/'}
             target="_blank"
             rel="noopener noreferrer"
-            class="lite-badge"
+            class="lite-badge chatbot-footer-text"
             id="lite-badge"
-            style={{ color: props.footer?.textColor ?? props.poweredByTextColor ?? defaultTextColor }}
           >
-            <span>Разработано OsmiIt</span>
+            <span>Разработано OSMI</span>
           </a>
         </span>
       </Show>
       <Show when={props.footer?.showFooter === false}>
-        <span
-          class="w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto font-normal text-[12px]"
-          style={{
-            color: props.footer?.textColor ?? props.poweredByTextColor ?? defaultTextColor,
-            'background-color': props.badgeBackgroundColor ?? '#ffffff',
-          }}
-        />
+        <span class="chatbot-badge chatbot-footer-text w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto font-normal text-[12px]" />
       </Show>
     </>
   );

@@ -7,13 +7,12 @@ import { CopyToClipboardButton, ThumbsDownButton, ThumbsUpButton } from '../butt
 import { TTSButton } from '../buttons/TTSButton';
 import FeedbackContentDialog from '../FeedbackContentDialog';
 import { AgentReasoningBubble } from './AgentReasoningBubble';
-import { DeleteIcon, TickIcon, XIcon } from '../icons';
+import { TickIcon, XIcon } from '../icons';
 import { SourceBubble } from '../bubbles/SourceBubble';
 import { DateTimeToggleTheme } from '@/features/bubble/types';
 import { WorkflowTreeView } from '../treeview/WorkflowTreeView';
 import { StarterPromptBubble } from './StarterPromptBubble';
-import { DeleteButtonProps } from '../inputs/textInput/components/TextInput';
-import { Spinner } from '../buttons/SendButton';
+import { effect } from 'solid-js/web';
 
 type Props = {
   message: MessageType;
@@ -24,11 +23,8 @@ type Props = {
   fileAnnotations?: any;
   showAvatar?: boolean;
   avatarSrc?: string;
-  backgroundColor?: string;
-  textColor?: string;
   chatFeedbackStatus?: boolean;
   fontSize?: number;
-  feedbackColor?: string;
   isLoading: boolean;
   dateTimeToggle?: DateTimeToggleTheme;
   showAgentMessages?: boolean;
@@ -48,34 +44,7 @@ type Props = {
   showFeedback?: boolean;
 };
 
-const defaultBackgroundColor = '#19191b';
-const defaultTextColor = '#ffffff';
 const defaultFontSize = 16;
-const defaultFeedbackColor = '#3B81F6';
-
-export const RetryButton = (props: DeleteButtonProps) => {
-  // Check if <chatbot-full> is present in the DOM
-  const isFullChatbot = document.querySelector('chatbot-full') !== null;
-  const paddingClass = isFullChatbot ? 'px-4' : 'px-2';
-
-  return (
-    <button
-      type="submit"
-      disabled={props.isDisabled || props.isLoading}
-      {...props}
-      class={
-        `${paddingClass} justify-center font-semibold text-white focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 chatbot-button ` +
-        props.class
-      }
-      style={{ background: 'transparent', border: 'none' }}
-      title="Reset Chat"
-    >
-      <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
-        <DeleteIcon color={props.sendButtonColor} class={'send-icon flex ' + (props.disableIcon ? 'hidden' : '')} />
-      </Show>
-    </button>
-  );
-};
 
 export const BotBubble = (props: Props) => {
   let botDetailsEl: HTMLDetailsElement | undefined;
@@ -86,8 +55,6 @@ export const BotBubble = (props: Props) => {
   const [feedbackId, setFeedbackId] = createSignal('');
   const [showFeedbackContentDialog, setShowFeedbackContentModal] = createSignal(false);
   const [copiedMessage, setCopiedMessage] = createSignal(false);
-  const [thumbsUpColor, setThumbsUpColor] = createSignal(props.feedbackColor ?? defaultFeedbackColor); // default color
-  const [thumbsDownColor, setThumbsDownColor] = createSignal(props.feedbackColor ?? defaultFeedbackColor); // default color
 
   // Store a reference to the bot message element for the copyMessageToClipboard function
   const [botMessageElement, setBotMessageElement] = createSignal<HTMLElement | null>(null);
@@ -95,26 +62,6 @@ export const BotBubble = (props: Props) => {
   const setBotMessageRef = (el: HTMLDivElement) => {
     if (el) {
       el.innerHTML = Marked.parse(props.message.message);
-
-      // Apply textColor to all links, headings, and other markdown elements except code
-      const textColor = props.textColor ?? defaultTextColor;
-      el.querySelectorAll('a, h1, h2, h3, h4, h5, h6, strong, em, blockquote, li').forEach((element) => {
-        (element as HTMLElement).style.color = textColor;
-      });
-
-      // Code blocks (with pre) get white text
-      el.querySelectorAll('pre').forEach((element) => {
-        (element as HTMLElement).style.color = '#FFFFFF';
-        // Also ensure any code elements inside pre have white text
-        element.querySelectorAll('code').forEach((codeElement) => {
-          (codeElement as HTMLElement).style.color = '#FFFFFF';
-        });
-      });
-
-      // Inline code (not in pre) gets green text
-      el.querySelectorAll('code:not(pre code)').forEach((element) => {
-        (element as HTMLElement).style.color = '#4CAF50'; // Green color
-      });
 
       // Set target="_blank" for links
       el.querySelectorAll('a').forEach((link) => {
@@ -126,11 +73,6 @@ export const BotBubble = (props: Props) => {
 
       if (props.message.rating) {
         setRating(props.message.rating);
-        if (props.message.rating === 'THUMBS_UP') {
-          setThumbsUpColor('#006400');
-        } else if (props.message.rating === 'THUMBS_DOWN') {
-          setThumbsDownColor('#8B0000');
-        }
       }
       if (props.fileAnnotations && props.fileAnnotations.length) {
         for (const annotations of props.fileAnnotations) {
@@ -143,7 +85,7 @@ export const BotBubble = (props: Props) => {
           });
           const svgContainer = document.createElement('div');
           svgContainer.className = 'ml-2';
-          svgContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-download" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="#ffffff" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>`;
+          svgContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-download" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>`;
 
           button.appendChild(svgContainer);
           el.appendChild(button);
@@ -170,15 +112,6 @@ export const BotBubble = (props: Props) => {
     } catch (error) {
       console.error('Download failed:', error);
     }
-  };
-
-  const retryChat = async () => {
-    // try {
-    //   const response = await sendMessageQuery({
-    //     apiHost: props.apiHost,
-    //     body: { chatflowid: props.chatflowid, chatId: props.chatId, humanInput: props.message.message },
-    //   });
-    // }
   };
 
   const copyMessageToClipboard = async () => {
@@ -255,8 +188,6 @@ export const BotBubble = (props: Props) => {
         setRating('THUMBS_UP');
         setFeedbackId(id);
         setShowFeedbackContentModal(true);
-        // update the thumbs up color state
-        setThumbsUpColor('#006400');
         saveToLocalStorage('THUMBS_UP');
       }
     }
@@ -285,8 +216,6 @@ export const BotBubble = (props: Props) => {
         setRating('THUMBS_DOWN');
         setFeedbackId(id);
         setShowFeedbackContentModal(true);
-        // update the thumbs down color state
-        setThumbsDownColor('#8B0000');
         saveToLocalStorage('THUMBS_DOWN');
       }
     }
@@ -327,26 +256,6 @@ export const BotBubble = (props: Props) => {
     // Instead of onMount, we'll use a callback ref to apply styles
     const setArtifactRef = (el: HTMLSpanElement) => {
       if (el) {
-        const textColor = props.textColor ?? defaultTextColor;
-        // Apply textColor to all elements except code blocks
-        el.querySelectorAll('a, h1, h2, h3, h4, h5, h6, strong, em, blockquote, li').forEach((element) => {
-          (element as HTMLElement).style.color = textColor;
-        });
-
-        // Code blocks (with pre) get white text
-        el.querySelectorAll('pre').forEach((element) => {
-          (element as HTMLElement).style.color = '#FFFFFF';
-          // Also ensure any code elements inside pre have white text
-          element.querySelectorAll('code').forEach((codeElement) => {
-            (codeElement as HTMLElement).style.color = '#FFFFFF';
-          });
-        });
-
-        // Inline code (not in pre) gets green text
-        el.querySelectorAll('code:not(pre code)').forEach((element) => {
-          (element as HTMLElement).style.color = '#4CAF50'; // Green color
-        });
-
         el.querySelectorAll('a').forEach((link) => {
           link.target = '_blank';
         });
@@ -379,10 +288,8 @@ export const BotBubble = (props: Props) => {
           <span
             ref={setArtifactRef}
             innerHTML={Marked.parse(item.data as string)}
-            class="prose"
+            class="prose chatbot-host-bubble"
             style={{
-              'background-color': props.backgroundColor ?? defaultBackgroundColor,
-              color: props.textColor ?? defaultTextColor,
               'border-radius': '6px',
               'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
             }}
@@ -467,8 +374,6 @@ export const BotBubble = (props: Props) => {
                       agentName={agent.agentName ?? ''}
                       agentMessage={msgContent}
                       agentArtifacts={agent.artifacts}
-                      backgroundColor={props.backgroundColor}
-                      textColor={props.textColor}
                       fontSize={props.fontSize}
                       apiHost={props.apiHost}
                       chatflowid={props.chatflowid}
@@ -491,11 +396,9 @@ export const BotBubble = (props: Props) => {
           )}
           {props.message.message && (
             <div
-              class="px-4 py-2 w-full max-w-[487px] border border-[#4D5164] chatbot-host-bubble text-white"
+              class="px-4 py-2 w-full max-w-[487px] chatbot-host-bubble"
               data-testid="host-bubble"
               style={{
-                'background-color': props.backgroundColor ?? defaultBackgroundColor,
-                color: props.textColor ?? defaultTextColor,
                 'border-radius': '16px',
                 'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
               }}
@@ -586,7 +489,6 @@ export const BotBubble = (props: Props) => {
         <div class={`flex items-center px-2 pb-2 ${props.showAvatar ? '' : ''}`}>
           <Show when={props.isTTSEnabled && (props.message.id || props.message.messageId)}>
             <TTSButton
-              feedbackColor={props.feedbackColor}
               isLoading={(() => {
                 const messageId = props.message.id || props.message.messageId;
                 return !!(messageId && props.isTTSLoading?.[messageId]);
@@ -612,24 +514,25 @@ export const BotBubble = (props: Props) => {
             />
           </Show>
           <Show when={props.showFeedback !== false}>
-            <CopyToClipboardButton feedbackColor={props.feedbackColor} onClick={() => copyMessageToClipboard()} />
+            <CopyToClipboardButton
+              filled={copiedMessage()}
+              activeVariant={copiedMessage() ? 'copied' : 'default'}
+              onClick={() => copyMessageToClipboard()}
+            />
             <Show when={copiedMessage()}>
-              <div class="copied-message" style={{ color: props.feedbackColor ?? defaultFeedbackColor }}>
-                Скопировано!
-              </div>
+              <div class="copied-message chatbot-feedback-icon">Скопировано!</div>
             </Show>
             {rating() === '' || rating() === 'THUMBS_UP' ? (
-              <ThumbsUpButton feedbackColor={thumbsUpColor()} isDisabled={rating() === 'THUMBS_UP'} rating={rating()} onClick={onThumbsUpClick} />
+              <ThumbsUpButton filled={rating() === 'THUMBS_UP'} isDisabled={rating() === 'THUMBS_UP'} rating={rating()} onClick={onThumbsUpClick} />
             ) : null}
             {rating() === '' || rating() === 'THUMBS_DOWN' ? (
               <ThumbsDownButton
-                feedbackColor={thumbsDownColor()}
+                filled={rating() === 'THUMBS_DOWN'}
                 isDisabled={rating() === 'THUMBS_DOWN'}
                 rating={rating()}
                 onClick={onThumbsDownClick}
               />
             ) : null}
-            <RetryButton sendButtonColor={props.feedbackColor} onClick={() => retryChat()} />
           </Show>
           <Show when={props.message.dateTime}>
             <div class="text-sm text-gray-500 ml-2">
@@ -642,8 +545,6 @@ export const BotBubble = (props: Props) => {
             isOpen={showFeedbackContentDialog()}
             onClose={() => setShowFeedbackContentModal(false)}
             onSubmit={submitFeedbackContent}
-            backgroundColor={props.backgroundColor}
-            textColor={props.textColor}
           />
         </Show>
       </div>
