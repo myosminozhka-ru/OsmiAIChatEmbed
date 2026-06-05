@@ -1,6 +1,5 @@
 import { IAction, MessageType } from '../Bot';
 import { DateTimeToggleTheme } from '@/features/bubble/types';
-import { DeleteButtonProps } from '../inputs/textInput/components/TextInput';
 type Props = {
     message: MessageType;
     chatflowid: string;
@@ -10,11 +9,8 @@ type Props = {
     fileAnnotations?: any;
     showAvatar?: boolean;
     avatarSrc?: string;
-    backgroundColor?: string;
-    textColor?: string;
     chatFeedbackStatus?: boolean;
     fontSize?: number;
-    feedbackColor?: string;
     isLoading: boolean;
     dateTimeToggle?: DateTimeToggleTheme;
     showAgentMessages?: boolean;
@@ -32,7 +28,6 @@ type Props = {
     onStarterPromptClick?: (prompt: string) => void;
     showFeedback?: boolean;
 };
-export declare const RetryButton: (props: DeleteButtonProps) => import("solid-js").JSX.Element;
 export declare const BotBubble: (props: Props) => import("solid-js").JSX.Element;
 export {};
 //# sourceMappingURL=BotBubble.d.ts.map

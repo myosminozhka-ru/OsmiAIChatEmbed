@@ -1,0 +1,1 @@
+{"version":3,"file":"PauseButton.d.ts","sourceRoot":"","sources":["../../../src/components/buttons/PauseButton.tsx"],"names":[],"mappings":"AAAA,OAAO,EAAE,GAAG,EAAE,MAAM,sBAAsB,CAAC;AAG3C,KAAK,gBAAgB,GAAG;IACtB,UAAU,CAAC,EAAE,OAAO,CAAC;CACtB,GAAG,GAAG,CAAC,oBAAoB,CAAC,iBAAiB,CAAC,CAAC;AAEhD,eAAO,MAAM,WAAW,UAAW,gBAAgB,gBAelD,CAAC"}

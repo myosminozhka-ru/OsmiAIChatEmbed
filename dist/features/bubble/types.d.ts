@@ -1,23 +1,17 @@
+import type { ThemeColors } from '@/theme/colors';
 export type BubbleParams = {
     theme?: BubbleTheme;
 };
 export type BubbleTheme = {
+    colors?: ThemeColors;
     chatWindow?: ChatWindowTheme;
     button?: ButtonTheme;
     tooltip?: ToolTipTheme;
     disclaimer?: DisclaimerPopUpTheme;
     customCSS?: string;
-    form?: FormTheme;
-};
-export type FormTheme = {
-    backgroundColor?: string;
-    textColor?: string;
 };
 export type TextInputTheme = {
-    backgroundColor?: string;
-    textColor?: string;
     placeholder?: string;
-    sendButtonColor?: string;
     maxChars?: number;
     maxCharsWarningMessage?: string;
     autoFocus?: boolean;
@@ -27,48 +21,34 @@ export type TextInputTheme = {
     receiveSoundLocation?: string;
 };
 export type UserMessageTheme = {
-    backgroundColor?: string;
-    textColor?: string;
     showAvatar?: boolean;
     avatarSrc?: string;
 };
 export type BotMessageTheme = {
-    backgroundColor?: string;
-    textColor?: string;
     showAvatar?: boolean;
     avatarSrc?: string;
 };
 export type FooterTheme = {
     showFooter?: boolean;
-    textColor?: string;
     text?: string;
     company?: string;
     companyLink?: string;
-};
-export type FeedbackTheme = {
-    color?: string;
 };
 export type ChatWindowTheme = {
     showTitle?: boolean;
     showAgentMessages?: boolean;
     title?: string;
     titleAvatarSrc?: string;
-    titleTextColor?: string;
-    titleBackgroundColor?: string;
     welcomeMessage?: string;
     errorMessage?: string;
-    backgroundColor?: string;
-    backgroundImage?: string;
     height?: number;
     width?: number;
     fontSize?: number;
     userMessage?: UserMessageTheme;
     botMessage?: BotMessageTheme;
     textInput?: TextInputTheme;
-    feedback?: FeedbackTheme;
     footer?: FooterTheme;
     sourceDocsTitle?: string;
-    poweredByTextColor?: string;
     starterPrompts?: string[];
     starterPromptFontSize?: number;
     clearChatOnReload?: boolean;
@@ -77,8 +57,6 @@ export type ChatWindowTheme = {
 };
 export type ButtonTheme = {
     size?: 'small' | 'medium' | 'large' | number;
-    backgroundColor?: string;
-    iconColor?: string;
     customIconSrc?: string;
     bottom?: number;
     right?: number;
@@ -88,8 +66,6 @@ export type ButtonTheme = {
 export type ToolTipTheme = {
     showTooltip?: boolean;
     tooltipMessage?: string;
-    tooltipBackgroundColor?: string;
-    tooltipTextColor?: string;
     tooltipFontSize?: number;
 };
 export type autoWindowOpenTheme = {
@@ -100,13 +76,7 @@ export type autoWindowOpenTheme = {
 export type DisclaimerPopUpTheme = {
     title?: string;
     message?: string;
-    textColor?: string;
-    buttonColor?: string;
-    buttonTextColor?: string;
     buttonText?: string;
-    blurredBackgroundColor?: string;
-    backgroundColor?: string;
-    denyButtonBgColor?: string;
     denyButtonText?: string;
 };
 export type DateTimeToggleTheme = {

@@ -3,10 +3,6 @@ import { JSX } from 'solid-js/jsx-runtime';
 import { FileEvent, UploadsConfig } from '@/components/Bot';
 type TextInputProps = {
     placeholder?: string;
-    backgroundColor?: string;
-    textColor?: string;
-    sendButtonColor?: string;
-    clearButtonColor?: string;
     inputValue: string;
     fontSize?: number;
     disabled?: boolean;
@@ -33,7 +29,6 @@ type TextInputProps = {
     onAbortMessage?: () => void;
 };
 export type DeleteButtonProps = {
-    sendButtonColor?: string;
     isDisabled?: boolean;
     isLoading?: boolean;
     disableIcon?: boolean;
