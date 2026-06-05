@@ -58,10 +58,7 @@ export const ThumbsUpButton = (props: RatingButtonProps) => {
       title="Понравилось"
     >
       <Show when={!local.isLoading} fallback={<Spinner />}>
-        <ThumbsUpIcon
-          filled={local.filled}
-          class={iconClass({ ...local, activeVariant: local.rating === 'THUMBS_UP' ? 'positive' : 'default' })}
-        />
+        <ThumbsUpIcon filled={local.filled} class={iconClass({ ...local, activeVariant: local.rating === 'THUMBS_UP' ? 'positive' : 'default' })} />
       </Show>
     </button>
   );

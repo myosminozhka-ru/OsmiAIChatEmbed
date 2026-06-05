@@ -514,17 +514,16 @@ export const BotBubble = (props: Props) => {
             />
           </Show>
           <Show when={props.showFeedback !== false}>
-            <CopyToClipboardButton filled={copiedMessage()} activeVariant={copiedMessage() ? 'copied' : 'default'} onClick={() => copyMessageToClipboard()} />
+            <CopyToClipboardButton
+              filled={copiedMessage()}
+              activeVariant={copiedMessage() ? 'copied' : 'default'}
+              onClick={() => copyMessageToClipboard()}
+            />
             <Show when={copiedMessage()}>
               <div class="copied-message chatbot-feedback-icon">Скопировано!</div>
             </Show>
             {rating() === '' || rating() === 'THUMBS_UP' ? (
-              <ThumbsUpButton
-                filled={rating() === 'THUMBS_UP'}
-                isDisabled={rating() === 'THUMBS_UP'}
-                rating={rating()}
-                onClick={onThumbsUpClick}
-              />
+              <ThumbsUpButton filled={rating() === 'THUMBS_UP'} isDisabled={rating() === 'THUMBS_UP'} rating={rating()} onClick={onThumbsUpClick} />
             ) : null}
             {rating() === '' || rating() === 'THUMBS_DOWN' ? (
               <ThumbsDownButton

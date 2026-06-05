@@ -667,10 +667,7 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
       }}
     >
       {/* Collapsible header */}
-      <div
-        class="chatbot-tree-header flex items-center justify-between p-4 cursor-pointer transition-colors duration-150"
-        onClick={togglePanel}
-      >
+      <div class="chatbot-tree-header flex items-center justify-between p-4 cursor-pointer transition-colors duration-150" onClick={togglePanel}>
         <div class="flex items-center space-x-2">
           <div class="flex-shrink-0">{isPanelExpanded() ? <ChevronDownIcon /> : <ChevronRightIcon />}</div>
           <h2 class="font-semibold flex items-center">

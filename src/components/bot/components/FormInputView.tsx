@@ -93,7 +93,10 @@ export const FormInputView = (props: FormInputViewProps) => {
             </For>
 
             <div class="pt-4">
-              <button type="submit" class="chatbot-form-submit w-full py-2 px-4 font-semibold rounded-md focus:outline-none transition duration-300 ease-in-out">
+              <button
+                type="submit"
+                class="chatbot-form-submit w-full py-2 px-4 font-semibold rounded-md focus:outline-none transition duration-300 ease-in-out"
+              >
                 Submit
               </button>
             </div>

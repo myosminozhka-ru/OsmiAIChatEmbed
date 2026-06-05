@@ -1,12 +1,5 @@
 import { FeedbackRatingType } from '@/queries/sendMessageQuery';
-import {
-  BotMessageTheme,
-  FooterTheme,
-  TextInputTheme,
-  UserMessageTheme,
-  DisclaimerPopUpTheme,
-  DateTimeToggleTheme,
-} from '@/features/bubble/types';
+import { BotMessageTheme, FooterTheme, TextInputTheme, UserMessageTheme, DisclaimerPopUpTheme, DateTimeToggleTheme } from '@/features/bubble/types';
 
 export type FileEvent<T = EventTarget> = {
   target: T;
