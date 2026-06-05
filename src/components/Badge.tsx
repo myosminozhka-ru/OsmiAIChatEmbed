@@ -35,8 +35,7 @@ export const Badge = (props: Props) => {
   });
 
   return (
-    <>
-      <Show when={props.footer?.showFooter === undefined || props.footer?.showFooter === null || props.footer?.showFooter === true}>
+    <Show when={props.footer?.showFooter === undefined || props.footer?.showFooter === null || props.footer?.showFooter === true}>
         <span class="chatbot-badge chatbot-footer-text hidden md:block w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto font-normal text-[12px]">
           <a
             ref={liteBadge}
@@ -50,9 +49,5 @@ export const Badge = (props: Props) => {
           </a>
         </span>
       </Show>
-      <Show when={props.footer?.showFooter === false}>
-        <span class="chatbot-badge chatbot-footer-text w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto font-normal text-[12px]" />
-      </Show>
-    </>
   );
 };
