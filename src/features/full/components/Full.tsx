@@ -44,8 +44,8 @@ export const Full = (props: FullProps, { element }: { element: HTMLElement }) =>
       <Show when={props.theme?.customCSS}>
         <style>{props.theme?.customCSS}</style>
       </Show>
-      <style>{themeColorsToHostCss(props.theme?.colors)}</style>
       <style>{styles}</style>
+      <style>{themeColorsToHostCss(props.theme?.colors)}</style>
       <Show when={isBotDisplayed()}>
         <div
           class="chatbot-window-outer"

@@ -81,8 +81,8 @@ export const Bubble = (props: BubbleProps) => {
       <Show when={props.theme?.customCSS}>
         <style>{props.theme?.customCSS}</style>
       </Show>
-      <style>{themeColorsToHostCss(props.theme?.colors)}</style>
       <style>{styles}</style>
+      <style>{themeColorsToHostCss(props.theme?.colors)}</style>
       <Tooltip
         showTooltip={showTooltip && !isBotOpened()}
         position={buttonPosition()}
