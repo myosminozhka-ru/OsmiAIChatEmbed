@@ -12,14 +12,12 @@ export const StarterPromptBubble = (props: Props) => (
       onClick={() => props.onPromptClick?.()}
     >
       <span
-        class="px-2 py-1 ml-1 whitespace-pre-wrap max-w-full chatbot-host-bubble"
+        class="chatbot-starter-prompt px-2 py-1 ml-1 whitespace-pre-wrap max-w-full chatbot-host-bubble"
         data-testid="host-bubble"
         style={{
-          'font-size': props.starterPromptFontSize ? `${props.starterPromptFontSize}px` : '12px', // Convert to string with unit
+          'font-size': props.starterPromptFontSize ? `${props.starterPromptFontSize}px` : '12px',
           'border-radius': '20px',
           background: 'transparent',
-          color: '#ffffff',
-          border: '1px solid #FF4978',
           cursor: 'pointer',
         }}
       >

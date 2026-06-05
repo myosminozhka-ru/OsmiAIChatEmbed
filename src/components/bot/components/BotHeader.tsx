@@ -16,10 +16,10 @@ export const BotHeader = (headerProps: BotHeaderProps) => {
     <button
       type="button"
       onClick={onToggleFullScreen}
-      class="p-2 bg-transparent text-white rounded-full hover:opacity-90 active:opacity-75 transition-opacity"
+      class="chatbot-header-icon p-2 bg-transparent rounded-full hover:opacity-90 active:opacity-75 transition-opacity"
       title={isFullScreen ? 'Выйти из полноэкранного режима' : 'Полноэкранный режим'}
     >
-      {isFullScreen ? <CollapseIcon class="w-6 h-6" color={props.bubbleTextColor} /> : <ExpandIcon class="w-6 h-6" color={props.bubbleTextColor} />}
+      {isFullScreen ? <CollapseIcon class="w-6 h-6" /> : <ExpandIcon class="w-6 h-6" />}
     </button>
   );
 

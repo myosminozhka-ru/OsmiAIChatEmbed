@@ -12,10 +12,6 @@ import { ResetIcon } from '@/components/icons';
 
 type TextInputProps = {
   placeholder?: string;
-  backgroundColor?: string;
-  textColor?: string;
-  sendButtonColor?: string;
-  clearButtonColor?: string;
   inputValue: string;
   fontSize?: number;
   disabled?: boolean;
@@ -42,13 +38,10 @@ type TextInputProps = {
   onAbortMessage?: () => void;
 };
 
-const defaultBackgroundColor = '#19191B';
-const defaultTextColor = '#9E9E9E';
 // CDN link for default send sound
 const defaultSendSound = 'https://cdn.jsdelivr.net/npm/osmi-ai-embed@latest/src/assets/send_message.mp3';
 
 export type DeleteButtonProps = {
-  sendButtonColor?: string;
   isDisabled?: boolean;
   isLoading?: boolean;
   disableIcon?: boolean;
@@ -73,7 +66,7 @@ export const DeleteButton = (props: DeleteButtonProps) => {
       title="Сбросить чат"
     >
       <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
-        <ResetIcon color={props.sendButtonColor} class={'send-icon flex ' + (props.disableIcon ? 'hidden' : '')} />
+        <ResetIcon class={'send-icon flex ' + (props.disableIcon ? 'hidden' : '')} />
       </Show>
     </button>
   );
@@ -181,12 +174,9 @@ export const TextInput = (props: TextInputProps) => {
 
   return (
     <div
-      class="w-full h-auto max-h-[192px] pb-2 min-h-[54px] flex flex-col items-end justify-between"
+      class="chatbot-input-area w-full h-auto max-h-[192px] pb-2 min-h-[54px] flex flex-col items-end justify-between"
       data-testid="input"
-      style={{
-        margin: 'auto',
-        color: props.textColor ?? defaultTextColor,
-      }}
+      style={{ margin: 'auto' }}
       onKeyDown={handleKeyDown}
     >
       <Show when={warningMessage() !== ''}>
@@ -221,7 +211,6 @@ export const TextInput = (props: TextInputProps) => {
               </Show> */}
               <Show when={Boolean(props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload)}>
                 <AttachmentUploadButton
-                  buttonColor="#FFFFFF"
                   type="button"
                   class="m-0 h-[56px] w-10 flex items-center justify-center p-0"
                   isDisabled={props.disabled || isSendButtonDisabled()}
@@ -254,7 +243,6 @@ export const TextInput = (props: TextInputProps) => {
           </div>
         </div>
         <RecordAudioButton
-          buttonColor={props.sendButtonColor}
           type="button"
           class="absolute right-[60px] m-0 mr-4 start-recording-button h-[54px] min-h-[54px] flex items-center justify-center flex-shrink-0"
           isDisabled={props.disabled || isSendButtonDisabled()}
@@ -263,7 +251,6 @@ export const TextInput = (props: TextInputProps) => {
           <span style={{ 'font-family': 'Montserrat, sans-serif' }}>Record Audio</span>
         </RecordAudioButton>
         <SendButton
-          sendButtonColor={props.sendButtonColor}
           type="button"
           isDisabled={props.disabled || isSendButtonDisabled() || !String(props.inputValue ?? '').trim()}
           isLoading={props.isLoading}

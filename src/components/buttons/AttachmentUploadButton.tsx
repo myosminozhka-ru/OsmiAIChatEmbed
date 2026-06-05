@@ -3,7 +3,6 @@ import { JSX } from 'solid-js/jsx-runtime';
 import { AttachmentIcon } from '../icons';
 
 type FileUploadButtonProps = {
-  buttonColor?: string;
   isDisabled?: boolean;
   isLoading?: boolean;
   disableIcon?: boolean;
@@ -16,13 +15,13 @@ export const AttachmentUploadButton = (props: FileUploadButtonProps) => {
       disabled={props.isDisabled || props.isLoading}
       {...props}
       class={
-        'py-2 pr-0 justify-center font-semibold focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 chatbot-button ' +
+        'chatbot-close-icon py-2 pr-0 justify-center font-semibold focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75 chatbot-button ' +
         props.class
       }
       style={{ background: 'transparent', border: 'none' }}
     >
-      <Show when={!props.isLoading} fallback={<Spinner class="text-white" />}>
-        <AttachmentIcon color={props.buttonColor} />
+      <Show when={!props.isLoading} fallback={<Spinner />}>
+        <AttachmentIcon />
       </Show>
     </button>
   );

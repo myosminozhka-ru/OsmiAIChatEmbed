@@ -5,7 +5,6 @@ export type BotDragOverlayProps = {
   isDragActive: boolean;
   uploadsConfig?: UploadsConfig;
   isFileUploadAllowed: boolean;
-  borderColor?: string;
   onDragEnter: (e: DragEvent) => void;
   onDragLeave: (e: DragEvent) => void;
   onDragEnd: (e: DragEvent) => void;
@@ -27,8 +26,8 @@ export const BotDragOverlay = (props: BotDragOverlayProps) => (
     </Show>
     <Show when={props.isDragActive && (props.uploadsConfig?.isImageUploadAllowed || props.isFileUploadAllowed)}>
       <div
-        class="absolute top-0 left-0 bottom-0 right-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm text-white z-40 gap-2 border-2 border-dashed"
-        style={{ 'border-color': props.borderColor }}
+        class="absolute top-0 left-0 bottom-0 right-0 flex flex-col items-center justify-center backdrop-blur-sm z-40 gap-2 border-2 border-dashed chatbot-drag-overlay"
+        style={{ background: 'var(--chatbot-overlay-dark-color)', color: 'var(--chatbot-header-color)' }}
       >
         <h2 class="text-xl font-semibold">Drop here to upload</h2>
         <For each={[...(props.uploadsConfig?.imgUploadSizeAndTypes || []), ...(props.uploadsConfig?.fileUploadSizeAndTypes || [])]}>

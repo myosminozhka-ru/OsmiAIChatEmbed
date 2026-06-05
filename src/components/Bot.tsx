@@ -264,10 +264,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           description={formDescription()}
           inputParams={formInputParams()}
           onSubmit={(formData) => chat.handleSubmit(formData)}
-          parentBackgroundColor={props.backgroundColor}
-          backgroundColor={props.formBackgroundColor}
-          textColor={props.formTextColor || props.botMessage?.textColor}
-          sendButtonColor={props.textInput?.sendButtonColor}
           fontSize={props.fontSize}
         />
       ) : (
@@ -280,7 +276,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             isDragActive={fileUpload.isDragActive()}
             uploadsConfig={uploadsConfig()}
             isFileUploadAllowed={fileUpload.isFileUploadAllowed()}
-            borderColor={props.bubbleBackgroundColor}
             onDragEnter={fileUpload.handleDrag}
             onDragLeave={fileUpload.handleDrag}
             onDragEnd={fileUpload.handleDrag}
@@ -344,7 +339,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             </Show>
 
             <Show when={fileUpload.previews().length > 0}>
-              <div class="w-full flex items-center justify-start gap-2 px-5 pt-2 border-t border-[#eeeeee]">
+              <div class="w-full flex items-center justify-start gap-2 px-5 pt-2 chatbot-border-t">
                 <For each={[...fileUpload.previews()]}>
                   {(item) => (
                     <FilePreviewItem
@@ -361,11 +356,11 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
             <div class="mx-auto max-w-[796px] w-full px-5 pt-2 pb-1 flex flex-col gap-4 items-center">
               <Show when={messages().length > 1}>
-                <SuggestionPromptsBar onSelect={(text) => chat.handleSubmit(text)} borderColor="#FF4978" textColor="#d1d5db" class="pb-1" />
+                <SuggestionPromptsBar onSelect={(text) => chat.handleSubmit(text)} class="pb-1" />
               </Show>
               <Show when={isRecording()}>
                 {recordingNotSupported() ? (
-                  <div class="w-full flex items-center justify-between p-4 border border-[#eeeeee]">
+                  <div class="w-full flex items-center justify-between p-4 chatbot-border">
                     <div class="w-full flex items-center justify-between gap-3">
                       <span class="text-base">To record audio, use modern browsers like Chrome or Firefox that support audio recording.</span>
                       <button
@@ -379,21 +374,18 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                   </div>
                 ) : (
                   <button
-                    class="h-[44px] w-fit flex items-center gap-3 rounded-full bg-[#29292C] px-5 text-white"
+                    class="chatbot-recording-bar h-[44px] w-fit flex items-center gap-3 rounded-full px-5"
                     data-testid="voice-input"
                     type="button"
                     onClick={onRecordingStopped}
                   >
-                    <span class="w-3 h-3 rounded-[2px] bg-[#FF4978]" />
+                    <span class="chatbot-recording-indicator w-3 h-3 rounded-[2px]" />
                     <span class="text-sm font-medium">Остановить запись</span>
                   </button>
                 )}
               </Show>
               <TextInput
-                backgroundColor={props.textInput?.backgroundColor}
-                textColor={props.textInput?.textColor}
                 placeholder={props.textInput?.placeholder}
-                sendButtonColor={props.textInput?.sendButtonColor}
                 maxChars={props.textInput?.maxChars}
                 maxCharsWarningMessage={props.textInput?.maxCharsWarningMessage}
                 autoFocus={props.textInput?.autoFocus}
@@ -416,12 +408,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 onAbortMessage={chat.abortMessage}
               />
             </div>
-            <Badge
-              footer={props.footer}
-              badgeBackgroundColor={props.badgeBackgroundColor}
-              poweredByTextColor={props.poweredByTextColor}
-              botContainer={botContainer}
-            />
+            <Badge footer={props.footer} botContainer={botContainer} />
           </div>
         </div>
       )}
@@ -434,13 +421,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           onAccept={handleDisclaimerAccept}
           title={props.disclaimer?.title}
           message={props.disclaimer?.message}
-          textColor={props.disclaimer?.textColor}
-          buttonColor={props.disclaimer?.buttonColor}
           buttonText={props.disclaimer?.buttonText}
-          buttonTextColor={props.disclaimer?.buttonTextColor}
-          blurredBackgroundColor={props.disclaimer?.blurredBackgroundColor}
-          backgroundColor={props.disclaimer?.backgroundColor}
-          denyButtonBgColor={props.disclaimer?.denyButtonBgColor}
           denyButtonText={props.disclaimer?.denyButtonText}
           onDeny={props.closeBot}
           isFullPage={props.isFullPage}

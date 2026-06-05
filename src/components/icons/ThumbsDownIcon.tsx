@@ -1,5 +1,5 @@
 import { JSX } from 'solid-js/jsx-runtime';
-const defaultButtonColor = '#FFFFFF';
+const defaultButtonColor = 'currentColor';
 export const ThumbsDownIcon = (
   props: JSX.SvgSVGAttributes<SVGSVGElement> & {
     filled?: boolean;

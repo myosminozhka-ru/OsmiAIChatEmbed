@@ -1,5 +1,5 @@
 import { JSX } from 'solid-js/jsx-runtime';
-const defaultButtonColor = '#3B81F6';
+const defaultButtonColor = 'currentColor';
 export const XIcon = (props: JSX.SvgSVGAttributes<SVGSVGElement> & { isCurrentColor?: boolean }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

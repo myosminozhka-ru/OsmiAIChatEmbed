@@ -81,7 +81,7 @@ export const Popup = (props: PopupProps) => {
       <style>{styles}</style>
       <div class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true" style={{ 'z-index': 1100 }} on:click={closeBot}>
         <style>{styles}</style>
-        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity animate-fade-in" />
+        <div class="chatbot-dialog-overlay fixed inset-0 transition-opacity animate-fade-in" />
         <div class="fixed inset-0 z-10 overflow-y-auto">
           <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
             <div
@@ -95,7 +95,7 @@ export const Popup = (props: PopupProps) => {
               on:pointerdown={stopPropagation}
             >
               {props.value && (
-                <div style={{ background: 'white', margin: 'auto', padding: '7px' }}>
+                <div class="chatbot-dialog-content" style={{ margin: 'auto', padding: '7px' }}>
                   <pre ref={preEl} />
                 </div>
               )}

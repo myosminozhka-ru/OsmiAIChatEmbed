@@ -4,7 +4,6 @@ import {
   FooterTheme,
   TextInputTheme,
   UserMessageTheme,
-  FeedbackTheme,
   DisclaimerPopUpTheme,
   DateTimeToggleTheme,
 } from '@/features/bubble/types';
@@ -113,25 +112,15 @@ export type BotProps = {
   apiHost?: string;
   onRequest?: (request: RequestInit) => Promise<void>;
   chatflowConfig?: Record<string, unknown>;
-  backgroundColor?: string;
   welcomeMessage?: string;
   errorMessage?: string;
   botMessage?: BotMessageTheme;
   userMessage?: UserMessageTheme;
   textInput?: TextInputTheme;
-  feedback?: FeedbackTheme;
-  poweredByTextColor?: string;
-  badgeBackgroundColor?: string;
-  bubbleBackgroundColor?: string;
-  bubbleTextColor?: string;
   showTitle?: boolean;
   showAgentMessages?: boolean;
   title?: string;
   titleAvatarSrc?: string;
-  titleTextColor?: string;
-  titleBackgroundColor?: string;
-  formBackgroundColor?: string;
-  formTextColor?: string;
   fontSize?: number;
   isFullPage?: boolean;
   footer?: FooterTheme;

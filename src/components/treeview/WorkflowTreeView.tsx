@@ -17,14 +17,9 @@ type WorkflowTreeViewProps = {
   indentationLevel?: number;
   initiallyExpanded?: boolean;
   title?: string;
-  backgroundColor?: string;
-  textColor?: string;
   fontSize?: number;
 };
 
-// Default styling values consistent with BotBubble
-const defaultBackgroundColor = '#f7f8ff';
-const defaultTextColor = '#303235';
 const defaultFontSize = 16;
 const CREDENTIAL_ID_KEY = 'CHATBOT_CREDENTIAL_ID';
 
@@ -121,7 +116,7 @@ const FinishedIcon = () => (
     height="18"
     viewBox="0 0 24 24"
     fill="none"
-    stroke="#4CAF50"
+    stroke="var(--chatbot-tree-status-finished-color)"
     stroke-width="2"
     stroke-linecap="round"
     stroke-linejoin="round"
@@ -138,7 +133,7 @@ const PendingIcon = () => (
     height="18"
     viewBox="0 0 24 24"
     fill="none"
-    stroke="#FFC107"
+    stroke="var(--chatbot-tree-status-pending-color)"
     stroke-width="2"
     stroke-linecap="round"
     stroke-linejoin="round"
@@ -155,7 +150,7 @@ const RunningIcon = () => (
     height="18"
     viewBox="0 0 24 24"
     fill="none"
-    stroke="#2196F3"
+    stroke="var(--chatbot-tree-status-running-color)"
     stroke-width="2"
     stroke-linecap="round"
     stroke-linejoin="round"
@@ -173,7 +168,7 @@ const ErrorIcon = () => (
     height="18"
     viewBox="0 0 24 24"
     fill="none"
-    stroke="#F44336"
+    stroke="var(--chatbot-tree-status-error-color)"
     stroke-width="2"
     stroke-linecap="round"
     stroke-linejoin="round"
@@ -253,7 +248,7 @@ const StoppedIcon = () => (
     height="18"
     viewBox="0 0 24 24"
     fill="none"
-    stroke="#FF9800"
+    stroke="var(--chatbot-tree-status-stopped-color)"
     stroke-width="2"
     stroke-linecap="round"
     stroke-linejoin="round"
@@ -666,20 +661,15 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
 
   return (
     <div
-      class={`mb-2 ml-2 border rounded-lg shadow-sm overflow-hidden ${props.class || ''}`}
+      class={`chatbot-tree-view mb-2 ml-2 border rounded-lg shadow-sm overflow-hidden ${props.class || ''}`}
       style={{
-        'background-color': props.backgroundColor ?? defaultBackgroundColor,
-        color: props.textColor ?? defaultTextColor,
         'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
       }}
     >
       {/* Collapsible header */}
       <div
-        class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-100 transition-colors duration-150"
+        class="chatbot-tree-header flex items-center justify-between p-4 cursor-pointer transition-colors duration-150"
         onClick={togglePanel}
-        style={{
-          'background-color': 'rgba(0,0,0,0.03)',
-        }}
       >
         <div class="flex items-center space-x-2">
           <div class="flex-shrink-0">{isPanelExpanded() ? <ChevronDownIcon /> : <ChevronRightIcon />}</div>
@@ -696,23 +686,22 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
 
       {/* JSON Syntax Highlighting Styles */}
       <style>{`
-        .json-viewer .string { color: #7ac35c; }
-        .json-viewer .number { color: #e08331; }
-        .json-viewer .boolean { color: #326dc3; }
-        .json-viewer .null { color: #a951ad; }
-        .json-viewer .key { color: #d73e3e; font-weight: bold; }
+        .json-viewer .string { color: var(--chatbot-tree-json-string-color); }
+        .json-viewer .number { color: var(--chatbot-tree-json-number-color); }
+        .json-viewer .boolean { color: var(--chatbot-tree-json-boolean-color); }
+        .json-viewer .null { color: var(--chatbot-tree-json-null-color); }
+        .json-viewer .key { color: var(--chatbot-tree-json-key-color); font-weight: bold; }
 
-        /* Custom tree view styles */
         .tree-item-content.selected {
-          background-color: rgba(25, 118, 210, 0.15);
+          background-color: var(--chatbot-tree-selected-bg-color);
           font-weight: 500;
-          border-left: 3px solid #1976d2;
+          border-left: 3px solid var(--chatbot-tree-selected-border-color);
           padding-left: calc(0.25rem - 3px) !important;
-          box-shadow: 0 0 0 1px rgba(25, 118, 210, 0.05);
+          box-shadow: 0 0 0 1px var(--chatbot-tree-selected-shadow-color);
           transform: translateX(2px);
         }
         .tree-item-content.selected:hover {
-          background-color: rgba(25, 118, 210, 0.25);
+          background-color: var(--chatbot-tree-selected-hover-bg-color);
         }
         .tree-item-content {
           border-left: 3px solid transparent;
@@ -729,7 +718,7 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
 
         /* Enhanced status icons */
         .status-icon {
-          filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+          filter: drop-shadow(0 1px 1px var(--chatbot-tree-status-shadow-color));
         }
       `}</style>
 
@@ -743,12 +732,7 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
           </div>
 
           {selectedNode() && (
-            <div
-              class="mx-4 mb-4 p-4 rounded border node-details-panel"
-              style={{
-                'background-color': 'rgba(0,0,0,0.03)',
-              }}
-            >
+            <div class="chatbot-tree-header mx-4 mb-4 p-4 rounded border node-details-panel">
               <div class="flex flex-col md:flex-row justify-between items-start mb-3">
                 <div class="flex items-center mb-2 md:mb-0">
                   <span class="mr-2 status-icon">{getStatusIcon(getSelectedNodeDetails()?.status || 'PENDING')}</span>
@@ -766,9 +750,8 @@ export const WorkflowTreeView = (props: WorkflowTreeViewProps) => {
               </div>
 
               <div
-                class="json-viewer text-xs overflow-auto max-h-60 p-2 rounded font-mono"
+                class="json-viewer chatbot-tree-json-bg text-xs overflow-auto max-h-60 p-2 rounded font-mono"
                 style={{
-                  'background-color': 'rgba(0,0,0,0.05)',
                   'white-space': 'pre-wrap',
                   'word-break': 'break-word',
                 }}

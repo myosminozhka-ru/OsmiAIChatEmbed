@@ -4,12 +4,10 @@ import { SendIcon } from '../icons';
 import { PauseIcon } from '../icons/PauseIcon';
 
 type SendButtonProps = {
-  sendButtonColor?: string;
   isDisabled?: boolean;
   isLoading?: boolean;
   disableIcon?: boolean;
   active?: boolean;
-  /** When set and isLoading is true, button shows Pause icon and calls onStop on click (stop generation) */
   onStop?: () => void;
 } & JSX.ButtonHTMLAttributes<HTMLButtonElement>;
 
@@ -30,12 +28,13 @@ export const SendButton = (props: SendButtonProps) => {
         }
       }}
       class={
-        'py-2 px-4 justify-center font-semibold text-white rounded-full overflow-hidden focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:bg-[#FF4978] active:brightness-75 chatbot-button ' +
+        'py-2 px-4 justify-center font-semibold text-white rounded-full overflow-hidden focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter active:brightness-75 chatbot-button ' +
+        (props.active ? 'chatbot-button-accent ' : '') +
         props.class
       }
-      style={{ border: 'none', background: props.active ? '#FF4978' : '' }}
+      style={{ border: 'none' }}
     >
-      <Show when={!props.isLoading} fallback={isStoppable() ? <PauseIcon class="w-5 h-5 flex" color="white" /> : <Spinner class="text-white" />}>
+      <Show when={!props.isLoading} fallback={isStoppable() ? <PauseIcon class="w-5 h-5 flex" /> : <Spinner class="text-white" />}>
         <SendIcon class={'send-icon flex' + (props.disableIcon ? 'hidden' : '')} />
       </Show>
     </button>

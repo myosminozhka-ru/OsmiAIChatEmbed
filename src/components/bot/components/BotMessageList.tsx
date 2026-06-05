@@ -41,8 +41,6 @@ export const BotMessageList = (listProps: BotMessageListProps) => {
               apiHost={props.apiHost}
               chatflowid={props.chatflowid}
               chatId={listProps.chatId}
-              backgroundColor={props.userMessage?.backgroundColor}
-              textColor={props.userMessage?.textColor}
               showAvatar={props.userMessage?.showAvatar}
               avatarSrc={props.userMessage?.avatarSrc}
               fontSize={props.fontSize}
@@ -58,9 +56,6 @@ export const BotMessageList = (listProps: BotMessageListProps) => {
               chatflowid={props.chatflowid}
               chatId={listProps.chatId}
               apiHost={props.apiHost}
-              backgroundColor={props.botMessage?.backgroundColor}
-              textColor={props.botMessage?.textColor}
-              feedbackColor={props.feedback?.color}
               showAvatar={props.botMessage?.showAvatar}
               avatarSrc={props.botMessage?.avatarSrc}
               chatFeedbackStatus={listProps.chatFeedbackStatus}
@@ -89,13 +84,10 @@ export const BotMessageList = (listProps: BotMessageListProps) => {
               chatflowid={props.chatflowid}
               chatId={listProps.chatId}
               apiHost={props.apiHost}
-              backgroundColor={props.botMessage?.backgroundColor}
-              textColor={props.botMessage?.textColor}
               fontSize={props.fontSize}
               showAvatar={props.botMessage?.showAvatar}
               avatarSrc={props.botMessage?.avatarSrc}
               leadsConfig={listProps.leadsConfig}
-              sendButtonColor={props.textInput?.sendButtonColor}
               isLeadSaved={listProps.isLeadSaved}
               setIsLeadSaved={listProps.setIsLeadSaved}
               setLeadEmail={listProps.setLeadEmail}

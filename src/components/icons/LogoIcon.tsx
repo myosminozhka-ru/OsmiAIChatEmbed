@@ -1,5 +1,5 @@
 import { JSX } from 'solid-js/jsx-runtime';
-const defaultButtonColor = '#3B81F6';
+const defaultButtonColor = 'currentColor';
 export const LogoIcon = (props: JSX.SvgSVGAttributes<SVGSVGElement>) => (
   <svg width="128" height="22" viewBox="0 0 128 22" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path

@@ -1,6 +1,6 @@
 import { JSX } from 'solid-js/jsx-runtime';
 
-const defaultButtonColor = '#FFFFFF';
+const defaultButtonColor = 'currentColor';
 
 type ClipboardIconProps = JSX.SvgSVGAttributes<SVGSVGElement> & {
   filled?: boolean;

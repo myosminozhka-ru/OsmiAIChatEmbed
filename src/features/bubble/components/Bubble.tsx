@@ -6,9 +6,7 @@ import { Bot, BotProps } from '../../../components/Bot';
 import Tooltip from './Tooltip';
 import { DeleteButton } from '../../../components/inputs/textInput';
 import { getBubbleButtonSize } from '@/utils';
-
-const defaultButtonColor = '#3B81F6';
-const defaultIconColor = 'white';
+import { themeColorsToHostCss } from '@/theme/colors';
 
 export type BubbleProps = BotProps & BubbleParams;
 
@@ -61,11 +59,10 @@ export const Bubble = (props: BubbleProps) => {
     setIsBotStarted(false);
   });
 
-  const buttonSize = getBubbleButtonSize(props.theme?.button?.size); // Default to 48px if size is not provided
+  const buttonSize = getBubbleButtonSize(props.theme?.button?.size);
   const buttonBottom = props.theme?.button?.bottom ?? 20;
-  const chatWindowBottom = buttonBottom + buttonSize + 10; // Adjust the offset here for slight shift
+  const chatWindowBottom = buttonBottom + buttonSize + 10;
 
-  // Add viewport meta tag dynamically
   createEffect(() => {
     const meta = document.createElement('meta');
     meta.name = 'viewport';
@@ -84,15 +81,14 @@ export const Bubble = (props: BubbleProps) => {
       <Show when={props.theme?.customCSS}>
         <style>{props.theme?.customCSS}</style>
       </Show>
+      <style>{themeColorsToHostCss(props.theme?.colors)}</style>
       <style>{styles}</style>
       <Tooltip
         showTooltip={showTooltip && !isBotOpened()}
         position={buttonPosition()}
         buttonSize={buttonSize}
         tooltipMessage={bubbleProps.theme?.tooltip?.tooltipMessage}
-        tooltipBackgroundColor={bubbleProps.theme?.tooltip?.tooltipBackgroundColor}
-        tooltipTextColor={bubbleProps.theme?.tooltip?.tooltipTextColor}
-        tooltipFontSize={bubbleProps.theme?.tooltip?.tooltipFontSize} // Set the tooltip font size
+        tooltipFontSize={bubbleProps.theme?.tooltip?.tooltipFontSize}
       />
       <BubbleButton
         {...bubbleProps.theme?.button}
@@ -113,27 +109,21 @@ export const Bubble = (props: BubbleProps) => {
               ? `${bubbleProps.theme?.chatWindow?.height.toString()}px`
               : 'calc(100% - 150px)',
           width: isFullScreen() ? '100vw' : bubbleProps.theme?.chatWindow?.width ? `${bubbleProps.theme?.chatWindow?.width.toString()}px` : undefined,
-          top: isFullScreen() ? '0' : undefined, // Add top for fullscreen
-          left: isFullScreen() ? '0' : undefined, // Add left for fullscreen
+          top: isFullScreen() ? '0' : undefined,
+          left: isFullScreen() ? '0' : undefined,
           transition: 'transform 200ms cubic-bezier(0, 1.2, 1, 1), opacity 150ms ease-out',
           'transform-origin': 'bottom right',
           transform: isBotOpened() ? 'scale3d(1, 1, 1)' : 'scale3d(0, 0, 1)',
-          'box-shadow': 'rgb(0 0 0 / 16%) 0px 5px 40px',
-          'background-color': bubbleProps.theme?.chatWindow?.backgroundColor || '#ffffff',
-          'background-image': bubbleProps.theme?.chatWindow?.backgroundImage ? `url(${bubbleProps.theme?.chatWindow?.backgroundImage})` : 'none',
-          'background-size': 'cover',
-          'background-position': 'center',
-          'background-repeat': 'no-repeat',
           overflow: 'hidden',
           'z-index': 42424242,
           bottom: isFullScreen() ? '0' : `${Math.min(buttonPosition().bottom + buttonSize + 10, window.innerHeight - chatWindowBottom)}px`,
           right: isFullScreen()
             ? '0'
             : `${Math.max(0, Math.min(buttonPosition().right, window.innerWidth - (bubbleProps.theme?.chatWindow?.width ?? 410) - 10))}px`,
-          'max-height': isFullScreen() ? '100vh' : '704px', // Set max-height for fullscreen
+          'max-height': isFullScreen() ? '100vh' : '704px',
         }}
         class={
-          `fixed w-full` +
+          `chatbot-window-outer fixed w-full` +
           (isFullScreen() ? ' h-full' : ` sm:right-5 md:rounded-[30px] sm:w-[400px]`) +
           (isBotOpened() ? ' opacity-1' : ' opacity-0 pointer-events-none')
         }
@@ -142,10 +132,9 @@ export const Bubble = (props: BubbleProps) => {
           <div class="relative h-full bg-transparent">
             <Show when={isBotOpened()}>
               <DeleteButton
-                sendButtonColor={bubbleProps.theme?.button?.iconColor ?? defaultIconColor}
                 type="button"
                 isDisabled={clearChatRef()?.getCanClear() ?? true}
-                class="py-3 md:py-[22px] pr-2 absolute top-0 right-10 md:right-12 m-[6px] bg-transparent rounded-full z-50"
+                class="py-3 md:py-[22px] pr-2 absolute top-0 right-10 md:right-12 m-[6px] bg-transparent rounded-full z-50 chatbot-close-icon"
                 onClick={() => clearChatRef()?.clear()}
                 title="Очистить чат"
               >
@@ -153,37 +142,27 @@ export const Bubble = (props: BubbleProps) => {
               </DeleteButton>
               <button
                 onClick={closeBot}
-                class="py-3 md:py-[22px] pr-3 absolute top-0 right-0 m-[6px] bg-transparent text-white rounded-full z-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75"
+                class="py-3 md:py-[22px] pr-3 absolute top-0 right-0 m-[6px] bg-transparent chatbot-close-icon rounded-full z-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75"
                 title="Close Chat"
               >
-                <svg viewBox="0 0 24 24" width="24" height="24">
+                <svg viewBox="0 0 24 24" width="24" height="24" class="chatbot-close-icon">
                   <path
-                    fill={bubbleProps.theme?.button?.iconColor ?? defaultIconColor}
+                    fill="currentColor"
                     d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
                   />
                 </svg>
               </button>
             </Show>
             <Bot
-              backgroundColor={bubbleProps.theme?.chatWindow?.backgroundColor}
-              formBackgroundColor={bubbleProps.theme?.form?.backgroundColor}
-              formTextColor={bubbleProps.theme?.form?.textColor}
-              badgeBackgroundColor={bubbleProps.theme?.chatWindow?.backgroundColor}
-              bubbleBackgroundColor={bubbleProps.theme?.button?.backgroundColor ?? defaultButtonColor}
-              bubbleTextColor={bubbleProps.theme?.button?.iconColor ?? defaultIconColor}
               showTitle={bubbleProps.theme?.chatWindow?.showTitle}
               showAgentMessages={bubbleProps.theme?.chatWindow?.showAgentMessages}
               title={bubbleProps.theme?.chatWindow?.title}
               titleAvatarSrc={bubbleProps.theme?.chatWindow?.titleAvatarSrc}
-              titleTextColor={bubbleProps.theme?.chatWindow?.titleTextColor}
-              titleBackgroundColor={bubbleProps.theme?.chatWindow?.titleBackgroundColor}
               welcomeMessage={bubbleProps.theme?.chatWindow?.welcomeMessage}
               errorMessage={bubbleProps.theme?.chatWindow?.errorMessage}
-              poweredByTextColor={bubbleProps.theme?.chatWindow?.poweredByTextColor}
               textInput={bubbleProps.theme?.chatWindow?.textInput}
               botMessage={bubbleProps.theme?.chatWindow?.botMessage}
               userMessage={bubbleProps.theme?.chatWindow?.userMessage}
-              feedback={bubbleProps.theme?.chatWindow?.feedback}
               fontSize={bubbleProps.theme?.chatWindow?.fontSize}
               footer={bubbleProps.theme?.chatWindow?.footer}
               sourceDocsTitle={bubbleProps.theme?.chatWindow?.sourceDocsTitle}

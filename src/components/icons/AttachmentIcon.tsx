@@ -1,5 +1,5 @@
 import { JSX } from 'solid-js/jsx-runtime';
-const defaultButtonColor = '#3B81F6';
+const defaultButtonColor = 'currentColor';
 export const AttachmentIcon = (props: JSX.SvgSVGAttributes<SVGSVGElement>) => (
   <svg
     width="20"

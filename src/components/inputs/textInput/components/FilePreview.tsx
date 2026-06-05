@@ -9,7 +9,6 @@ type CardWithDeleteOverlayProps = {
 
 export const FilePreview = (props: CardWithDeleteOverlayProps) => {
   const [isHovered, setIsHovered] = createSignal(false);
-  const defaultBackgroundColor = 'transparent';
 
   const onMouseEnter = () => {
     if (props.disabled) return;
@@ -24,26 +23,26 @@ export const FilePreview = (props: CardWithDeleteOverlayProps) => {
   return (
     <div onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} class="relative inline-block">
       <div
-        class={`inline-flex items-center h-12 max-w-max p-2 flex-none transition-opacity duration-300 ${
-          isHovered() ? 'opacity-100' : 'opacity-100'
-        } ${isHovered() ? 'bg-[rgba(0,0,0,0.3)]' : `bg-[${defaultBackgroundColor}]`} border border-gray-300 rounded-md`}
+        class={`inline-flex items-center h-12 max-w-max p-2 flex-none transition-opacity duration-300 opacity-100 chatbot-border rounded-md ${
+          isHovered() ? 'chatbot-file-preview-hover' : 'bg-transparent'
+        }`}
       >
-        <AttachmentIcon color="#303235" class={`transition-filter duration-300 ${isHovered() ? 'blur-[2px]' : 'blur-none'}`} />
-        <span class={`ml-1.5 'text-inherit transition-filter duration-300 ${isHovered() ? 'blur-[2px]' : 'blur-none'}`}>{props.item.name}</span>
+        <AttachmentIcon class={`chatbot-form-text transition-filter duration-300 ${isHovered() ? 'blur-[2px]' : 'blur-none'}`} />
+        <span class={`ml-1.5 text-inherit transition-filter duration-300 ${isHovered() ? 'blur-[2px]' : 'blur-none'}`}>{props.item.name}</span>
       </div>
       {isHovered() && !props.disabled && (
         <button
           disabled={props.disabled}
           onClick={() => props.onDelete(props.item)}
-          class="absolute top-0 left-0 right-0 bottom-0 bg-transparent hover:bg-transparent flex items-center justify-center"
+          class="absolute top-0 left-0 right-0 bottom-0 bg-transparent hover:bg-transparent flex items-center justify-center chatbot-header-icon"
           title="Remove attachment"
         >
-          <TrashIcon color="white" />
+          <TrashIcon />
         </button>
       )}
       {props.disabled && (
-        <div class="absolute inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-10 rounded-md">
-          <div class="spinner border-4 border-gray-200 border-t-4 border-t-white rounded-full w-6 h-6 animate-spin" />
+        <div class="chatbot-file-preview-overlay absolute inset-0 flex items-center justify-center z-10 rounded-md">
+          <div class="spinner w-6 h-6" />
         </div>
       )}
     </div>

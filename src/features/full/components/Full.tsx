@@ -2,9 +2,7 @@ import styles from '../../../assets/index.css';
 import { Bot, BotProps } from '@/components/Bot';
 import { BubbleParams } from '@/features/bubble/types';
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
-
-const defaultButtonColor = '#3B81F6';
-const defaultIconColor = 'white';
+import { themeColorsToHostCss } from '@/theme/colors';
 
 export type FullProps = BotProps & BubbleParams;
 
@@ -13,10 +11,9 @@ export const Full = (props: FullProps, { element }: { element: HTMLElement }) =>
 
   const launchBot = () => {
     setIsBotDisplayed(true);
-    document.body.style.margin = '0'; // Ensure no margin
-    document.documentElement.style.padding = '0'; // Ensure no padding
+    document.body.style.margin = '0';
+    document.documentElement.style.padding = '0';
 
-    // Set viewport meta tag dynamically
     const viewportMeta = document.querySelector('meta[name="viewport"]');
     if (viewportMeta) {
       viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, interactive-widget=resizes-content');
@@ -33,10 +30,9 @@ export const Full = (props: FullProps, { element }: { element: HTMLElement }) =>
 
   onCleanup(() => {
     botLauncherObserver.disconnect();
-    document.body.style.margin = ''; // Reset margin
-    document.documentElement.style.padding = ''; // Reset padding
+    document.body.style.margin = '';
+    document.documentElement.style.padding = '';
 
-    // Reset viewport meta tag if needed
     const viewportMeta = document.querySelector('meta[name="viewport"]');
     if (viewportMeta) {
       viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
@@ -48,37 +44,28 @@ export const Full = (props: FullProps, { element }: { element: HTMLElement }) =>
       <Show when={props.theme?.customCSS}>
         <style>{props.theme?.customCSS}</style>
       </Show>
+      <style>{themeColorsToHostCss(props.theme?.colors)}</style>
       <style>{styles}</style>
       <Show when={isBotDisplayed()}>
         <div
+          class="chatbot-window-outer"
           style={{
-            'background-color': props.theme?.chatWindow?.backgroundColor || '#ffffff',
             height: props.theme?.chatWindow?.height ? `${props.theme?.chatWindow?.height.toString()}px` : '100dvh',
             width: props.theme?.chatWindow?.width ? `${props.theme?.chatWindow?.width.toString()}px` : '100%',
             margin: '0px',
-            overflow: 'hidden', // Ensure no extra scrolling due to content overflow
+            overflow: 'hidden',
           }}
         >
           <Bot
-            backgroundColor={props.theme?.chatWindow?.backgroundColor}
-            formBackgroundColor={props.theme?.form?.backgroundColor}
-            formTextColor={props.theme?.form?.textColor}
-            badgeBackgroundColor={props.theme?.chatWindow?.backgroundColor}
-            bubbleBackgroundColor={props.theme?.button?.backgroundColor ?? defaultButtonColor}
-            bubbleTextColor={props.theme?.button?.iconColor ?? defaultIconColor}
             showTitle={props.theme?.chatWindow?.showTitle}
             showAgentMessages={props.theme?.chatWindow?.showAgentMessages}
             title={props.theme?.chatWindow?.title}
             titleAvatarSrc={props.theme?.chatWindow?.titleAvatarSrc}
-            titleTextColor={props.theme?.chatWindow?.titleTextColor}
-            titleBackgroundColor={props.theme?.chatWindow?.titleBackgroundColor}
             welcomeMessage={props.theme?.chatWindow?.welcomeMessage}
             errorMessage={props.theme?.chatWindow?.errorMessage}
-            poweredByTextColor={props.theme?.chatWindow?.poweredByTextColor}
             textInput={props.theme?.chatWindow?.textInput}
             botMessage={props.theme?.chatWindow?.botMessage}
             userMessage={props.theme?.chatWindow?.userMessage}
-            feedback={props.theme?.chatWindow?.feedback}
             fontSize={props.theme?.chatWindow?.fontSize}
             footer={props.theme?.chatWindow?.footer}
             starterPrompts={props.theme?.chatWindow?.starterPrompts}
