@@ -36,18 +36,18 @@ export const Badge = (props: Props) => {
 
   return (
     <Show when={props.footer?.showFooter === undefined || props.footer?.showFooter === null || props.footer?.showFooter === true}>
-        <span class="chatbot-badge chatbot-footer-text hidden md:block w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto font-normal text-[12px]">
-          <a
-            ref={liteBadge}
-            href={'https://osmi-it.ru/'}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="lite-badge chatbot-footer-text"
-            id="lite-badge"
-          >
-            <span>Разработано OSMI</span>
-          </a>
-        </span>
-      </Show>
+      <span class="chatbot-badge chatbot-footer-text hidden md:block w-full text-center px-[10px] pt-[6px] pb-[10px] m-auto font-normal text-[12px]">
+        <a
+          ref={liteBadge}
+          href={'https://osmi-it.ru/'}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="lite-badge chatbot-footer-text"
+          id="lite-badge"
+        >
+          <span>Разработано OSMI</span>
+        </a>
+      </span>
+    </Show>
   );
 };
