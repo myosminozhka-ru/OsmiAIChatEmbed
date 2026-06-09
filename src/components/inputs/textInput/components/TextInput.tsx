@@ -258,7 +258,9 @@ export const TextInput = (props: TextInputProps) => {
         </Show>
         <SendButton
           type="button"
-          isDisabled={(props.disabled && !props.isRecording) || isSendButtonDisabled() || (!props.isRecording && !String(props.inputValue ?? '').trim())}
+          isDisabled={
+            (props.disabled && !props.isRecording) || isSendButtonDisabled() || (!props.isRecording && !String(props.inputValue ?? '').trim())
+          }
           isLoading={props.isLoading}
           onStop={props.onAbortMessage}
           active={props.isRecording || String(props.inputValue ?? '').trim().length > 0}

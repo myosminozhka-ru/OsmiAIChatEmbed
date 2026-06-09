@@ -1,0 +1,16 @@
+import { JSX } from 'solid-js/jsx-runtime';
+
+const defaultButtonColor = 'currentColor';
+
+export const PlayIcon = (props: JSX.SvgSVGAttributes<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill={props.color ?? defaultButtonColor}
+    {...props}
+  >
+    <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11.04-6.86a1 1 0 0 0 0-1.72L9.5 4.28A1 1 0 0 0 8 5.14z" />
+  </svg>
+);

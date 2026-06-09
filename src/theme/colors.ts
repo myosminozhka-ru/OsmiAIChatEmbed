@@ -74,7 +74,7 @@ export const DEFAULT_THEME_COLORS: Required<{
     border: '#4D5164',
   },
   userBubble: {
-    background: '#3b81f6',
+    background: '#FF4978',
     text: '#ffffff',
   },
   input: {

@@ -22,11 +22,7 @@ export function getElaspedTime() {
 }
 
 /** Starts the audio recording*/
-export function startAudioRecording(
-  onRecordingStart: (value: boolean) => void,
-  onMicError: () => void,
-  setElapsedTime: (value: string) => void,
-) {
+export function startAudioRecording(onRecordingStart: (value: boolean) => void, onMicError: () => void, setElapsedTime: (value: string) => void) {
   audioRecorder
     .start()
     .then(() => {
