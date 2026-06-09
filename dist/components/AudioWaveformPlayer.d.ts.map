@@ -1,0 +1,1 @@
+{"version":3,"file":"AudioWaveformPlayer.d.ts","sourceRoot":"","sources":["../../src/components/AudioWaveformPlayer.tsx"],"names":[],"mappings":"AAMA,KAAK,KAAK,GAAG;IACX,GAAG,EAAE,MAAM,CAAC;IACZ,IAAI,CAAC,EAAE,MAAM,CAAC;IACd,KAAK,CAAC,EAAE,MAAM,CAAC;CAChB,CAAC;AAEF,eAAO,MAAM,mBAAmB,UAAW,KAAK,mCAyE/C,CAAC"}

@@ -3,6 +3,7 @@ import { Avatar } from '../avatars/Avatar';
 import { Marked } from '@ts-stack/markdown';
 import { FileUpload, MessageType } from '../Bot';
 import { AttachmentIcon } from '../icons';
+import { AudioWaveformPlayer } from '../AudioWaveformPlayer';
 import { DateTimeToggleTheme } from '@/features/bubble/types';
 
 type Props = {
@@ -78,12 +79,7 @@ export const GuestBubble = (props: Props) => {
     } else if (item?.mime?.startsWith('audio/')) {
       const fileData = `${props.apiHost}/api/v1/get-upload-file?chatflowId=${props.chatflowid}&chatId=${props.chatId}&fileName=${item.name}`;
       const src = (item.data as string) ?? fileData;
-      return (
-        <audio class="min-w-[269px] w-full h-10 block bg-cover bg-center rounded-none text-transparent" controls>
-          Your browser does not support the &lt;audio&gt; tag.
-          <source src={src} type={item.mime} />
-        </audio>
-      );
+      return <AudioWaveformPlayer src={src} mime={item.mime} />;
     } else {
       return (
         <div class="inline-flex items-center h-12 max-w-max p-2 mr-1 flex-none bg-transparent border border-gray-300 rounded-md">
@@ -99,7 +95,7 @@ export const GuestBubble = (props: Props) => {
   return (
     <div class="flex flex-col mb-2 items-end guest-container mt-7" style={{ 'margin-left': '50px' }}>
       <Show when={formattedTime()}>
-        <span class="text-[12px] chatbot-guest-bubble mb-1">{formattedTime()}</span>
+        <span class="text-[12px] text-gray-500 mb-1">{formattedTime()}</span>
       </Show>
       <div class="flex justify-end items-end">
         <div

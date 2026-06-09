@@ -27,6 +27,8 @@ type TextInputProps = {
     maxHistorySize?: number;
     isLoading?: boolean;
     onAbortMessage?: () => void;
+    isRecording?: boolean;
+    onRecordingSend?: () => void;
 };
 export type DeleteButtonProps = {
     isDisabled?: boolean;

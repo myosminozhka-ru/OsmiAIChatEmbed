@@ -36,6 +36,8 @@ type TextInputProps = {
   maxHistorySize?: number;
   isLoading?: boolean;
   onAbortMessage?: () => void;
+  isRecording?: boolean;
+  onRecordingSend?: () => void;
 };
 
 // CDN link for default send sound
@@ -98,6 +100,10 @@ export const TextInput = (props: TextInputProps) => {
   const checkIfInputIsValid = () => warningMessage() === '' && inputRef?.reportValidity();
 
   const submit = () => {
+    if (props.isRecording) {
+      props.onRecordingSend?.();
+      return;
+    }
     if (checkIfInputIsValid()) {
       if (props.enableInputHistory) {
         inputHistory().addToHistory(props.inputValue);
@@ -242,20 +248,22 @@ export const TextInput = (props: TextInputProps) => {
             />
           </div>
         </div>
-        <RecordAudioButton
-          type="button"
-          class="absolute right-[60px] m-0 mr-4 start-recording-button h-[54px] min-h-[54px] flex items-center justify-center flex-shrink-0"
-          isDisabled={props.disabled || isSendButtonDisabled()}
-          on:click={props.onMicrophoneClicked}
-        >
-          <span style={{ 'font-family': 'Montserrat, sans-serif' }}>Record Audio</span>
-        </RecordAudioButton>
+        <Show when={Boolean(props.uploadsConfig?.isSpeechToTextEnabled) && !props.isRecording}>
+          <RecordAudioButton
+            type="button"
+            class="absolute right-[60px] m-0 mr-4 start-recording-button h-[54px] min-h-[54px] flex items-center justify-center flex-shrink-0"
+            isDisabled={props.disabled || isSendButtonDisabled()}
+            on:click={props.onMicrophoneClicked}
+          />
+        </Show>
         <SendButton
           type="button"
-          isDisabled={props.disabled || isSendButtonDisabled() || !String(props.inputValue ?? '').trim()}
+          isDisabled={
+            (props.disabled && !props.isRecording) || isSendButtonDisabled() || (!props.isRecording && !String(props.inputValue ?? '').trim())
+          }
           isLoading={props.isLoading}
           onStop={props.onAbortMessage}
-          active={String(props.inputValue ?? '').trim().length > 0}
+          active={props.isRecording || String(props.inputValue ?? '').trim().length > 0}
           class="m-0 h-[56px] min-h-[56px] flex items-center justify-center flex-shrink-0"
           on:click={submit}
         >

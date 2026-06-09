@@ -131,18 +131,23 @@ pre {
   white-space: -o-pre-wrap;
   word-wrap: break-word;
 }
+
 .string {
   color: green;
 }
+
 .number {
   color: darkorange;
 }
+
 .boolean {
   color: blue;
 }
+
 .null {
   color: magenta;
 }
+
 .key {
   color: rgb(0, 43, 54);
 }
@@ -191,9 +196,11 @@ pre {
   0% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-5px);
   }
+
   100% {
     transform: translateY(0);
   }
@@ -209,7 +216,7 @@ textarea {
   text-decoration: underline;
 }
 
-.slate-html-container > div {
+.slate-html-container>div {
   min-height: 24px;
 }
 
@@ -229,10 +236,12 @@ textarea {
   color: var(--chatbot-input-placeholder-color) !important;
   opacity: 1 !important;
 }
+
 .text-input::-moz-placeholder {
   color: var(--chatbot-input-placeholder-color) !important;
   opacity: 1 !important;
 }
+
 .text-input::placeholder {
   color: var(--chatbot-input-placeholder-color) !important;
   opacity: 1 !important;
@@ -275,6 +284,7 @@ textarea {
   color: var(--chatbot-button-color);
   background-color: var(--chatbot-button-bg-color);
   border-radius: 100%;
+  flex-shrink: 0;
 }
 
 .chatbot-button-accent {
@@ -308,7 +318,7 @@ textarea {
   white-space: normal;
 }
 
-.chatbot-host-bubble > .bubble-typing {
+.chatbot-host-bubble>.bubble-typing {
   background-color: var(--chatbot-host-bubble-bg-color);
   border: var(--chatbot-host-bubble-border);
   border-radius: 6px;
@@ -342,8 +352,7 @@ textarea {
   color: var(--chatbot-form-text-color);
 }
 
-.chatbot-button > .send-icon {
-  fill: var(--chatbot-button-color);
+.chatbot-button>.send-icon {
   stroke: var(--chatbot-button-color);
 }
 
@@ -500,6 +509,7 @@ textarea {
   0% {
     background-position: -100% 0;
   }
+
   100% {
     background-position: 100% 0;
   }
@@ -514,6 +524,7 @@ textarea {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -658,6 +669,7 @@ textarea {
   padding: 10px 10px;
   font-family: 'Montserrat', sans-serif;
 }
+
 @media (max-width: 640px) {
   div[part='bot'] {
     width: 100% !important;
@@ -682,6 +694,7 @@ textarea {
     cursor: default !important;
   }
 }
+
 .tooltip {
   position: fixed;
   background: var(--chatbot-tooltip-background-color);
@@ -700,6 +713,7 @@ textarea {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

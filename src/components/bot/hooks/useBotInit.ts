@@ -11,7 +11,6 @@ export type UseBotInitOptions = {
   setMessages: Setter<MessageType[]>;
   setDisclaimerPopupOpen: Setter<boolean>;
   setIsChatFlowAvailableToStream: Setter<boolean>;
-  setStarterPrompts: Setter<string[]>;
   setChatFeedbackStatus: Setter<boolean>;
   setUploadsConfig: Setter<UploadsConfig | undefined>;
   setLeadsConfig: Setter<LeadsConfig | undefined>;
@@ -87,13 +86,6 @@ export const useBotInit = (options: UseBotInitOptions) => {
         }
       }
 
-      if ((!props.starterPrompts || props.starterPrompts?.length === 0) && chatbotConfig.starterPrompts) {
-        const prompts: string[] = [];
-        Object.getOwnPropertyNames(chatbotConfig.starterPrompts).forEach((key) => {
-          prompts.push(chatbotConfig.starterPrompts[key].prompt);
-        });
-        options.setStarterPrompts(prompts.filter((prompt) => prompt !== ''));
-      }
       if (chatbotConfig.chatFeedback) {
         options.setChatFeedbackStatus(chatbotConfig.chatFeedback.status);
       }
