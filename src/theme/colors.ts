@@ -83,7 +83,7 @@ export const DEFAULT_THEME_COLORS: Required<{
     placeholder: '#9095a0',
   },
   button: {
-    background: '#3B81F6',
+    background: '#4D5164',
     icon: '#ffffff',
   },
   accent: '#FF4978',

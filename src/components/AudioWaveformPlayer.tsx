@@ -73,8 +73,8 @@ export const AudioWaveformPlayer = (props: Props) => {
         onClick={handlePlayPause}
         aria-label={isPlaying() ? 'Pause' : 'Play'}
       >
-        <Show when={isPlaying()} fallback={<PlayIcon class="w-6 h-6" />}>
-          <PauseBarsIcon class="w-6 h-6" />
+        <Show when={isPlaying()} fallback={<PlayIcon class="w-12 h-12" />}>
+          <PauseBarsIcon class="w-12 h-12" />
         </Show>
       </button>
       <div ref={waveformRef} style={{ 'grid-column': '2', 'grid-row': '1' }} />
