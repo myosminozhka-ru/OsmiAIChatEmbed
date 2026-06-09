@@ -81,7 +81,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
   const [elapsedTime, setElapsedTime] = createSignal('00:00');
   const [isRecording, setIsRecording] = createSignal(false);
-  const [recordingNotSupported, setRecordingNotSupported] = createSignal(false);
+  const [pendingAudioSend, setPendingAudioSend] = createSignal(false);
 
   const ttsGuard = createTTSActionGuard();
 
@@ -220,18 +220,27 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   });
 
   const onMicrophoneClicked = () => {
-    setIsRecording(true);
-    startAudioRecording(setIsRecording, setRecordingNotSupported, setElapsedTime);
+    startAudioRecording(
+      () => setIsRecording(true),
+      () => {
+        setMessages((prev) => [...prev, { message: 'Не удалось найти микрофон', type: 'apiMessage' }]);
+        scrollToBottom();
+      },
+      setElapsedTime,
+    );
   };
 
   const onRecordingCancelled = () => {
-    if (!recordingNotSupported()) cancelAudioRecording();
+    cancelAudioRecording();
     setIsRecording(false);
-    setRecordingNotSupported(false);
+    setElapsedTime('00:00');
   };
 
-  const onRecordingStopped = () => {
-    stopAudioRecording(fileUpload.addRecordingToPreviews);
+  const onRecordingSend = () => {
+    stopAudioRecording((blob) => {
+      setPendingAudioSend(true);
+      fileUpload.addRecordingToPreviews(blob);
+    });
   };
 
   const getInputDisabled = (): boolean => {
@@ -246,13 +255,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
   createEffect(
     on(fileUpload.previews, (uploads) => {
-      const containsAudio = uploads.filter((item) => item.type === 'audio').length > 0;
-      if (uploads.length >= 1 && containsAudio) {
+      if (pendingAudioSend() && uploads.some((item) => item.type === 'audio')) {
+        setPendingAudioSend(false);
         setIsRecording(false);
-        setRecordingNotSupported(false);
-        chat.promptClick('');
+        setElapsedTime('00:00');
+        chat.handleSubmit('');
       }
-      return () => fileUpload.setPreviews([]);
     }),
   );
 
@@ -359,30 +367,16 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 <SuggestionPromptsBar onSelect={(text) => chat.handleSubmit(text)} class="pb-1" />
               </Show>
               <Show when={isRecording()}>
-                {recordingNotSupported() ? (
-                  <div class="w-full flex items-center justify-between p-4 chatbot-border">
-                    <div class="w-full flex items-center justify-between gap-3">
-                      <span class="text-base">To record audio, use modern browsers like Chrome or Firefox that support audio recording.</span>
-                      <button
-                        class="py-2 px-4 justify-center flex items-center bg-red-500 text-white rounded-md"
-                        type="button"
-                        onClick={onRecordingCancelled}
-                      >
-                        Okay
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    class="chatbot-recording-bar h-[44px] w-fit flex items-center gap-3 rounded-full px-5"
-                    data-testid="voice-input"
-                    type="button"
-                    onClick={onRecordingStopped}
-                  >
-                    <span class="chatbot-recording-indicator w-3 h-3 rounded-[2px]" />
-                    <span class="text-sm font-medium">Остановить запись</span>
-                  </button>
-                )}
+                <button
+                  class="chatbot-recording-bar h-[44px] w-fit flex items-center gap-3 rounded-full px-5"
+                  data-testid="voice-input"
+                  type="button"
+                  onClick={onRecordingCancelled}
+                >
+                  <span class="chatbot-recording-indicator w-3 h-3 rounded-[2px]" />
+                  <span class="text-sm font-medium tabular-nums">{elapsedTime()}</span>
+                  <span class="text-sm font-medium">Остановить</span>
+                </button>
               </Show>
               <TextInput
                 placeholder={props.textInput?.placeholder}
@@ -390,7 +384,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 maxCharsWarningMessage={props.textInput?.maxCharsWarningMessage}
                 autoFocus={props.textInput?.autoFocus}
                 fontSize={props.fontSize}
-                disabled={getInputDisabled()}
+                disabled={getInputDisabled() || isRecording()}
                 inputValue={userInput()}
                 onInputChange={setUserInput}
                 onSubmit={chat.handleSubmit}
@@ -406,6 +400,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 maxHistorySize={10}
                 isLoading={loading()}
                 onAbortMessage={chat.abortMessage}
+                isRecording={isRecording()}
+                onRecordingSend={onRecordingSend}
               />
             </div>
             <Badge footer={props.footer} botContainer={botContainer} />

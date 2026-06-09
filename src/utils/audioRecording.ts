@@ -24,72 +24,22 @@ export function getElaspedTime() {
 /** Starts the audio recording*/
 export function startAudioRecording(
   onRecordingStart: (value: boolean) => void,
-  onUnsupportedBrowser: (value: boolean) => void,
+  onMicError: () => void,
   setElapsedTime: (value: string) => void,
 ) {
-  //start recording using the audio recording API
   audioRecorder
     .start()
     .then(() => {
-      //on success show the controls to stop and cancel the recording
       if (onRecordingStart) {
         onRecordingStart(true);
       }
-      //store the recording start time to display the elapsed time according to it
       audioRecordStartTime = new Date();
-
-      //Handle the displaying of the elapsed recording time
       handleElapsedRecordingTime(setElapsedTime);
     })
     .catch((error) => {
-      //on error
-      //No Browser Support Error
-      if (error.message.includes('mediaDevices API or getUserMedia method is not supported in this browser.')) {
-        if (onUnsupportedBrowser) {
-          onUnsupportedBrowser(true);
-        }
-      }
-
+      onMicError?.();
+      // eslint-disable-next-line no-console
       console.log(error);
-
-      //Error handling structure
-      switch (error.name) {
-        case 'AbortError': //error from navigator.mediaDevices.getUserMedia
-          // eslint-disable-next-line no-console
-          console.log('An AbortError has occurred.');
-          break;
-        case 'NotAllowedError': //error from navigator.mediaDevices.getUserMedia
-          // eslint-disable-next-line no-console
-          console.log('A NotAllowedError has occurred. User might have denied permission.');
-          break;
-        case 'NotFoundError': //error from navigator.mediaDevices.getUserMedia
-          // eslint-disable-next-line no-console
-          console.log('A NotFoundError has occurred.');
-          break;
-        case 'NotReadableError': //error from navigator.mediaDevices.getUserMedia
-          // eslint-disable-next-line no-console
-          console.log('A NotReadableError has occurred.');
-          break;
-        case 'SecurityError': //error from navigator.mediaDevices.getUserMedia or from the MediaRecorder.start
-          // eslint-disable-next-line no-console
-          console.log('A SecurityError has occurred.');
-          break;
-        case 'TypeError': //error from navigator.mediaDevices.getUserMedia
-          // eslint-disable-next-line no-console
-          console.log('A TypeError has occurred.');
-          break;
-        case 'InvalidStateError': //error from the MediaRecorder.start
-          // eslint-disable-next-line no-console
-          console.log('An InvalidStateError has occurred.');
-          break;
-        case 'UnknownError': //error from the MediaRecorder.start
-          // eslint-disable-next-line no-console
-          console.log('An UnknownError has occurred.');
-          break;
-        default:
-          // eslint-disable-next-line no-console
-          console.log('An error occurred with the error name ' + error.name);
-      }
     });
 }
 /** Stop the currently started audio recording & sends it
