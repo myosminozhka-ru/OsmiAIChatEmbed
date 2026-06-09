@@ -1,6 +1,6 @@
 export declare function getElaspedTime(): string;
 /** Starts the audio recording*/
-export declare function startAudioRecording(onRecordingStart: (value: boolean) => void, onUnsupportedBrowser: (value: boolean) => void, setElapsedTime: (value: string) => void): void;
+export declare function startAudioRecording(onRecordingStart: (value: boolean) => void, onMicError: () => void, setElapsedTime: (value: string) => void): void;
 /** Stop the currently started audio recording & sends it
  */
 export declare function stopAudioRecording(addRecordingToPreviews: null | ((blob: Blob) => void)): void;

@@ -6,7 +6,6 @@ export type UseBotInitOptions = {
     setMessages: Setter<MessageType[]>;
     setDisclaimerPopupOpen: Setter<boolean>;
     setIsChatFlowAvailableToStream: Setter<boolean>;
-    setStarterPrompts: Setter<string[]>;
     setChatFeedbackStatus: Setter<boolean>;
     setUploadsConfig: Setter<UploadsConfig | undefined>;
     setLeadsConfig: Setter<LeadsConfig | undefined>;
