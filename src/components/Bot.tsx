@@ -188,7 +188,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     setMessages,
     setDisclaimerPopupOpen,
     setIsChatFlowAvailableToStream,
-    setStarterPrompts,
     setChatFeedbackStatus,
     setUploadsConfig,
     setLeadsConfig,
@@ -363,8 +362,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             </Show>
 
             <div class="mx-auto max-w-[796px] w-full px-5 pt-2 pb-1 flex flex-col gap-4 items-center">
-              <Show when={messages().length > 1}>
-                <SuggestionPromptsBar onSelect={(text) => chat.handleSubmit(text)} class="pb-1" />
+              <Show when={messages().length > 1 && starterPrompts().length > 0}>
+                <SuggestionPromptsBar suggestions={starterPrompts()} onSelect={(text) => chat.handleSubmit(text)} class="pb-1" />
               </Show>
               <Show when={isRecording()}>
                 <button
