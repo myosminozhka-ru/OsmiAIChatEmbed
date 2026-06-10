@@ -346,7 +346,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             </Show>
 
             <Show when={fileUpload.previews().length > 0}>
-              <div class="w-full flex items-center justify-start gap-2 px-5 pt-2 chatbot-border-t">
+              <div class="w-full flex items-center justify-start gap-2 px-5 chatbot-border-t chatbot-scroller">
                 <For each={[...fileUpload.previews()]}>
                   {(item) => (
                     <FilePreviewItem

@@ -18,22 +18,38 @@ export const useBotFileUpload = (options: UseBotFileUploadOptions) => {
     setPreviews([]);
   };
 
+  const isImageFile = (file: File) => file.type.startsWith('image/');
+
   const isFileAllowedForUpload = (file: File) => {
-    let acceptFile = false;
     const config = uploadsConfig();
-    if (config?.isImageUploadAllowed && config.imgUploadSizeAndTypes) {
-      const fileType = file.type;
-      const sizeInMB = file.size / 1024 / 1024;
-      config.imgUploadSizeAndTypes.forEach((allowed) => {
-        if (allowed.fileTypes.includes(fileType) && sizeInMB <= allowed.maxUploadSize) {
-          acceptFile = true;
+    const sizeInMB = file.size / 1024 / 1024;
+
+    if (isImageFile(file)) {
+      if (!config?.isImageUploadAllowed) {
+        alert(`Cannot upload file. Kindly check the allowed file types and maximum allowed size.`);
+        return false;
+      }
+      if (config.imgUploadSizeAndTypes) {
+        let acceptFile = false;
+        config.imgUploadSizeAndTypes.forEach((allowed) => {
+          if (allowed.fileTypes.includes(file.type) && sizeInMB <= allowed.maxUploadSize) {
+            acceptFile = true;
+          }
+        });
+        if (!acceptFile) {
+          alert(`Cannot upload file. Kindly check the allowed file types and maximum allowed size.`);
         }
-      });
+        return acceptFile;
+      }
+      return true;
     }
+
     if (fullFileUpload()) {
       return true;
     }
+
     if (config?.isRAGFileUploadAllowed && config.fileUploadSizeAndTypes) {
+      let acceptFile = false;
       const fileExt = file.name.split('.').pop();
       if (fileExt) {
         config.fileUploadSizeAndTypes.forEach((allowed) => {
@@ -44,11 +60,14 @@ export const useBotFileUpload = (options: UseBotFileUploadOptions) => {
           }
         });
       }
+      if (!acceptFile) {
+        alert(`Cannot upload file. Kindly check the allowed file types and maximum allowed size.`);
+      }
+      return acceptFile;
     }
-    if (!acceptFile) {
-      alert(`Cannot upload file. Kindly check the allowed file types and maximum allowed size.`);
-    }
-    return acceptFile;
+
+    alert(`Cannot upload file. Kindly check the allowed file types and maximum allowed size.`);
+    return false;
   };
 
   const isFileUploadAllowed = () => fullFileUpload() || !!uploadsConfig()?.isRAGFileUploadAllowed;
@@ -61,14 +80,7 @@ export const useBotFileUpload = (options: UseBotFileUploadOptions) => {
       if (!isFileAllowedForUpload(file)) {
         return;
       }
-      const config = uploadsConfig();
-      if (
-        !file.type ||
-        !config?.imgUploadSizeAndTypes
-          .map((allowed) => allowed.fileTypes)
-          .join(',')
-          .includes(file.type)
-      ) {
+      if (!isImageFile(file)) {
         newUploadedFiles.push({ file, type: fullFileUpload() ? 'file:full' : 'file:rag' });
       }
       const reader = new FileReader();

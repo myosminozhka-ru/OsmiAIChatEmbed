@@ -132,6 +132,27 @@ pre {
   word-wrap: break-word;
 }
 
+.chatbot-attachment-file {
+  color: var(--chatbot-header-color);
+}
+
+.chatbot-scroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 5px 20px;
+}
+
+.chatbot-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.chatbot-scroller>* {
+  margin: 5px 0;
+}
+
 .string {
   color: green;
 }

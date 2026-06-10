@@ -168,14 +168,46 @@ export const TextInput = (props: TextInputProps) => {
     if (event.target) event.target.value = '';
   };
 
-  const getFileType = () => {
-    if (props.isFullFileUpload) return props.fullFileUploadAllowedTypes === '' ? '*' : props.fullFileUploadAllowedTypes;
+  const isImageOnlyUpload = () =>
+    Boolean(props.uploadsConfig?.isImageUploadAllowed) &&
+    !props.isFullFileUpload &&
+    !props.uploadsConfig?.isRAGFileUploadAllowed;
+
+  const isUploadAllowed = () =>
+    Boolean(
+      props.uploadsConfig?.isImageUploadAllowed ||
+        props.uploadsConfig?.isRAGFileUploadAllowed ||
+        props.isFullFileUpload,
+    );
+
+  const getImageAcceptTypes = () => {
+    if (props.uploadsConfig?.imgUploadSizeAndTypes?.length) {
+      return props.uploadsConfig.imgUploadSizeAndTypes.map((allowed) => allowed.fileTypes).join(',');
+    }
+    return 'image/*';
+  };
+
+  const getFileAcceptTypes = (): string => {
+    if (props.isFullFileUpload) {
+      const allowed = props.fullFileUploadAllowedTypes;
+      return !allowed || allowed === '' ? '*' : allowed;
+    }
     if (props.uploadsConfig?.fileUploadSizeAndTypes?.length) {
-      const allowedFileTypes = props.uploadsConfig?.fileUploadSizeAndTypes.map((allowed) => allowed.fileTypes).join(',');
+      const allowedFileTypes = props.uploadsConfig.fileUploadSizeAndTypes.map((allowed) => allowed.fileTypes).join(',');
       if (allowedFileTypes.includes('*')) return '*';
-      else return allowedFileTypes;
+      return allowedFileTypes;
     }
     return '*';
+  };
+
+  const getAcceptTypes = () => {
+    if (isImageOnlyUpload()) return getImageAcceptTypes();
+
+    const parts: string[] = [];
+    if (props.uploadsConfig?.isImageUploadAllowed) parts.push(getImageAcceptTypes());
+    if (props.isFullFileUpload || props.uploadsConfig?.isRAGFileUploadAllowed) parts.push(getFileAcceptTypes());
+
+    return parts.join(',') || '*';
   };
 
   return (
@@ -194,9 +226,8 @@ export const TextInput = (props: TextInputProps) => {
         <div class="flex-1 relative flex min-h-[56px] min-w-0 overflow-hidden">
           <div class="absolute left-0 top-0 bottom-0 flex items-center z-10 pointer-events-none">
             <div class="pointer-events-auto flex items-center gap-1 flex-shrink-0">
-              {/* <Show when={Boolean(props.uploadsConfig && props.uploadsConfig.isImageUploadAllowed)}>
+              <Show when={isImageOnlyUpload()}>
                 <ImageUploadButton
-                  buttonColor="#FFFFFF"
                   type="button"
                   class="m-0 h-[56px] w-10 flex items-center justify-center p-0"
                   isDisabled={props.disabled || isSendButtonDisabled()}
@@ -208,14 +239,10 @@ export const TextInput = (props: TextInputProps) => {
                   ref={imgUploadRef as HTMLInputElement}
                   type="file"
                   onChange={handleFileChange}
-                  accept={
-                    props.uploadsConfig?.imgUploadSizeAndTypes?.length
-                      ? props.uploadsConfig?.imgUploadSizeAndTypes.map((allowed) => allowed.fileTypes).join(',')
-                      : '*'
-                  }
+                  accept={getImageAcceptTypes()}
                 />
-              </Show> */}
-              <Show when={Boolean(props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload)}>
+              </Show>
+              <Show when={isUploadAllowed() && !isImageOnlyUpload()}>
                 <AttachmentUploadButton
                   type="button"
                   class="m-0 h-[56px] w-10 flex items-center justify-center p-0"
@@ -228,14 +255,14 @@ export const TextInput = (props: TextInputProps) => {
                   ref={fileUploadRef as HTMLInputElement}
                   type="file"
                   onChange={handleFileChange}
-                  accept={getFileType()}
+                  accept={getAcceptTypes()}
                 />
               </Show>
             </div>
           </div>
           <div
             class={`flex-1 flex min-w-0 ${
-              props.uploadsConfig?.isImageUploadAllowed || props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload ? '' : ''
+              isUploadAllowed() ? '' : ''
             }`}
           >
             <ShortTextInput

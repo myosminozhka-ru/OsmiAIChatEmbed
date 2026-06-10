@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js';
-import { TrashIcon, AttachmentIcon } from '../../../icons';
+import { TrashIcon, FileIcon } from '../../../icons';
 
 type CardWithDeleteOverlayProps = {
   item: { name: string };
@@ -23,19 +23,19 @@ export const FilePreview = (props: CardWithDeleteOverlayProps) => {
   return (
     <div onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} class="relative inline-block">
       <div
-        class={`inline-flex items-center h-12 max-w-max p-2 flex-none transition-opacity duration-300 opacity-100 chatbot-border rounded-md ${
-          isHovered() ? 'chatbot-file-preview-hover' : 'bg-transparent'
+        class={`inline-flex items-center h-12 max-w-max p-2 flex-none transition-opacity duration-300 opacity-100 chatbot-border chatbot-attachment-file rounded-md ${
+          isHovered() ? 'chatbot-file-preview-hover blur-[2px]' : 'bg-transparent'
         }`}
       >
-        <AttachmentIcon class={`chatbot-form-text transition-filter duration-300 ${isHovered() ? 'blur-[2px]' : 'blur-none'}`} />
-        <span class={`ml-1.5 text-inherit transition-filter duration-300 ${isHovered() ? 'blur-[2px]' : 'blur-none'}`}>{props.item.name}</span>
+        <FileIcon class={`chatbot-form-text transition-filter duration-300`} />
+        <span class={`ml-1.5 text-inherit transition-filter duration-300 whitespace-nowrap`}>{props.item.name}</span>
       </div>
       {isHovered() && !props.disabled && (
         <button
           disabled={props.disabled}
           onClick={() => props.onDelete(props.item)}
           class="absolute top-0 left-0 right-0 bottom-0 bg-transparent hover:bg-transparent flex items-center justify-center chatbot-header-icon"
-          title="Remove attachment"
+          title="Удалить файл"
         >
           <TrashIcon />
         </button>
