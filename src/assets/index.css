@@ -133,6 +133,7 @@ pre {
 }
 
 .chatbot-attachment-file {
+  height: 100%;
   color: var(--chatbot-header-color);
 }
 
@@ -143,6 +144,7 @@ pre {
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding: 5px 20px;
+  min-height: 52px;
 }
 
 .chatbot-scroller::-webkit-scrollbar {

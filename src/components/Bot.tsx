@@ -310,7 +310,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 isLeadSaved={isLeadSaved()}
                 setIsLeadSaved={setIsLeadSaved}
                 setLeadEmail={setLeadEmail}
-                starterPrompts={starterPrompts()}
+                starterPrompts={fileUpload.previews().length > 0 ? [] : starterPrompts()}
                 isTTSEnabled={tts.isTTSEnabled()}
                 isTTSLoading={tts.isTTSLoading()}
                 isTTSPlaying={tts.isTTSPlaying()}
@@ -325,7 +325,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
               />
             </div>
 
-            <Show when={messages().length > 2 && followUpPromptsStatus()}>
+            <Show when={messages().length > 2 && followUpPromptsStatus() && fileUpload.previews().length === 0}>
               <Show when={followUpPrompts().length > 0}>
                 <div class="mx-auto max-w-[796px] w-full flex items-center gap-1 px-5">
                   <SparklesIcon class="w-4 h-4" />
@@ -362,7 +362,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             </Show>
 
             <div class="mx-auto max-w-[796px] w-full px-5 pt-2 pb-1 flex flex-col gap-4 items-center">
-              <Show when={messages().length > 1 && starterPrompts().length > 0}>
+              <Show when={messages().length > 1 && starterPrompts().length > 0 && fileUpload.previews().length === 0}>
                 <SuggestionPromptsBar suggestions={starterPrompts()} onSelect={(text) => chat.handleSubmit(text)} class="pb-1" />
               </Show>
               <Show when={isRecording()}>
