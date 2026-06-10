@@ -12,6 +12,7 @@ import { SourceBubble } from '../bubbles/SourceBubble';
 import { DateTimeToggleTheme } from '@/features/bubble/types';
 import { WorkflowTreeView } from '../treeview/WorkflowTreeView';
 import { StarterPromptBubble } from './StarterPromptBubble';
+import { MessageImage } from './MessageImage';
 import { effect } from 'solid-js/web';
 
 type Props = {
@@ -252,7 +253,21 @@ export const BotBubble = (props: Props) => {
     }
   });
 
-  const renderArtifacts = (item: Partial<FileUpload>) => {
+  const getImageArtifactSrc = (item: Partial<FileUpload>) => {
+    const isFileStorage = typeof item.data === 'string' && item.data.startsWith('FILE-STORAGE::');
+    return isFileStorage
+      ? `${props.apiHost}/api/v1/get-upload-file?chatflowId=${props.chatflowid}&chatId=${props.chatId}&fileName=${(item.data as string).replace(
+          'FILE-STORAGE::',
+          '',
+        )}`
+      : (item.data as string);
+  };
+
+  const imageArtifacts = () => props.message.artifacts?.filter((item) => item && (item.type === 'png' || item.type === 'jpeg')) ?? [];
+  const otherArtifacts = () => props.message.artifacts?.filter((item) => item && item.type !== 'png' && item.type !== 'jpeg') ?? [];
+  const hasImageMessage = () => imageArtifacts().length > 0;
+
+  const renderOtherArtifacts = (item: Partial<FileUpload>) => {
     // Instead of onMount, we'll use a callback ref to apply styles
     const setArtifactRef = (el: HTMLSpanElement) => {
       if (el) {
@@ -264,21 +279,6 @@ export const BotBubble = (props: Props) => {
 
     return (
       <>
-        <Show when={item.type === 'png' || item.type === 'jpeg'}>
-          <div class="flex items-center justify-center p-0 m-0">
-            <img
-              class="w-full h-full bg-cover"
-              src={(() => {
-                const isFileStorage = typeof item.data === 'string' && item.data.startsWith('FILE-STORAGE::');
-                return isFileStorage
-                  ? `${props.apiHost}/api/v1/get-upload-file?chatflowId=${props.chatflowid}&chatId=${props.chatId}&fileName=${(
-                      item.data as string
-                    ).replace('FILE-STORAGE::', '')}`
-                  : (item.data as string);
-              })()}
-            />
-          </div>
-        </Show>
         <Show when={item.type === 'html'}>
           <div class="mt-2">
             <div innerHTML={item.data as string} />
@@ -343,6 +343,8 @@ export const BotBubble = (props: Props) => {
     }
   };
 
+  const formattedDateTime = () => formatDateTime(props.message.dateTime, props?.dateTimeToggle?.date, props?.dateTimeToggle?.time);
+
   return (
     <div>
       <div class="flex flex-col gap-4 justify-start mb-2 items-start host-container">
@@ -385,39 +387,75 @@ export const BotBubble = (props: Props) => {
               </For>
             </details>
           )}
-          {props.message.artifacts && props.message.artifacts.length > 0 && (
+          <Show when={hasImageMessage()}>
+            <div class="flex flex-col w-full max-w-[487px] gap-2">
+              <Show when={formattedDateTime()}>
+                <span class="text-[12px] text-gray-500">{formattedDateTime()}</span>
+              </Show>
+              <For each={imageArtifacts()}>{(item) => <MessageImage src={getImageArtifactSrc(item)} />}</For>
+            </div>
+          </Show>
+          {otherArtifacts().length > 0 && (
             <div class="flex flex-row items-start flex-wrap w-full gap-2">
-              <For each={props.message.artifacts}>
+              <For each={otherArtifacts()}>
                 {(item) => {
-                  return item !== null ? <>{renderArtifacts(item)}</> : null;
+                  return item !== null ? <>{renderOtherArtifacts(item)}</> : null;
                 }}
               </For>
             </div>
           )}
           {props.message.message && (
-            <div
-              class="px-4 py-2 w-full max-w-[487px] chatbot-host-bubble"
-              data-testid="host-bubble"
-              style={{
-                'border-radius': '16px',
-                'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
-              }}
-            >
-              <div ref={setBotMessageRef} class="prose text-gray-300" />
-              <Show when={props.starterPrompts && props.starterPrompts.length > 0}>
-                <div class="mt-3 flex flex-row flex-wrap gap-1.5">
-                  <For each={[...props.starterPrompts!]}>
-                    {(key) => (
-                      <StarterPromptBubble
-                        prompt={key}
-                        onPromptClick={() => props.onStarterPromptClick?.(key)}
-                        starterPromptFontSize={props.starterPromptFontSize}
-                      />
-                    )}
-                  </For>
+            <Show
+              when={hasImageMessage()}
+              fallback={
+                <div
+                  class="px-4 py-2 w-full max-w-[487px] chatbot-host-bubble"
+                  data-testid="host-bubble"
+                  style={{
+                    'border-radius': '16px',
+                    'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
+                  }}
+                >
+                  <div ref={setBotMessageRef} class="prose text-gray-300" />
+                  <Show when={props.starterPrompts && props.starterPrompts.length > 0}>
+                    <div class="mt-3 flex flex-row flex-wrap gap-1.5">
+                      <For each={[...props.starterPrompts!]}>
+                        {(key) => (
+                          <StarterPromptBubble
+                            prompt={key}
+                            onPromptClick={() => props.onStarterPromptClick?.(key)}
+                            starterPromptFontSize={props.starterPromptFontSize}
+                          />
+                        )}
+                      </For>
+                    </div>
+                  </Show>
                 </div>
-              </Show>
-            </div>
+              }
+            >
+              <div
+                class="w-full max-w-[487px]"
+                data-testid="host-bubble"
+                style={{
+                  'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
+                }}
+              >
+                <div ref={setBotMessageRef} class="prose text-gray-300" />
+                <Show when={props.starterPrompts && props.starterPrompts.length > 0}>
+                  <div class="mt-3 flex flex-row flex-wrap gap-1.5">
+                    <For each={[...props.starterPrompts!]}>
+                      {(key) => (
+                        <StarterPromptBubble
+                          prompt={key}
+                          onPromptClick={() => props.onStarterPromptClick?.(key)}
+                          starterPromptFontSize={props.starterPromptFontSize}
+                        />
+                      )}
+                    </For>
+                  </div>
+                </Show>
+              </div>
+            </Show>
           )}
           {props.message.action && (
             <div class="px-4 py-2 flex flex-row justify-start space-x-2">
@@ -534,10 +572,8 @@ export const BotBubble = (props: Props) => {
               />
             ) : null}
           </Show>
-          <Show when={props.message.dateTime}>
-            <div class="text-sm text-gray-500 ml-2">
-              {formatDateTime(props.message.dateTime, props?.dateTimeToggle?.date, props?.dateTimeToggle?.time)}
-            </div>
+          <Show when={props.message.dateTime && !hasImageMessage()}>
+            <div class="text-sm text-gray-500 ml-2">{formattedDateTime()}</div>
           </Show>
         </div>
         <Show when={showFeedbackContentDialog()}>

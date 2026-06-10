@@ -16,7 +16,7 @@ export const FilePreviewItem = (props: FilePreviewItemProps) => {
   if (item.mime.startsWith('image/')) {
     return (
       <button
-        class="group w-12 h-12 flex items-center justify-center relative rounded-[10px] overflow-hidden transition-colors duration-200"
+        class="group w-12 h-12 flex items-center justify-center relative rounded-[10px] overflow-hidden transition-colors duration-200 chatbot-attachment-file"
         onClick={() => props.onDelete(item)}
       >
         <img class="w-full h-full bg-cover" src={item.data as string} />

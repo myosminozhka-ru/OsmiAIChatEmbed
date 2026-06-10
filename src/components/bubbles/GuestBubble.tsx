@@ -5,6 +5,7 @@ import { FileUpload, MessageType } from '../Bot';
 import { AttachmentIcon } from '../icons';
 import { AudioWaveformPlayer } from '../AudioWaveformPlayer';
 import { DateTimeToggleTheme } from '@/features/bubble/types';
+import { MessageImage } from './MessageImage';
 
 type Props = {
   message: MessageType;
@@ -67,59 +68,94 @@ export const GuestBubble = (props: Props) => {
     }
   };
 
-  const renderFileUploads = (item: Partial<FileUpload>) => {
-    if (item?.mime?.startsWith('image/')) {
-      const fileData = `${props.apiHost}/api/v1/get-upload-file?chatflowId=${props.chatflowid}&chatId=${props.chatId}&fileName=${item.name}`;
-      const src = (item.data as string) ?? fileData;
-      return (
-        <div class="flex items-center justify-center max-w-[128px] mr-[10px] p-0 m-0">
-          <img class="w-full h-full bg-cover" src={src} />
-        </div>
-      );
-    } else if (item?.mime?.startsWith('audio/')) {
+  const getImageUploadSrc = (item: Partial<FileUpload>) => {
+    const fileData = `${props.apiHost}/api/v1/get-upload-file?chatflowId=${props.chatflowid}&chatId=${props.chatId}&fileName=${item.name}`;
+    return (item.data as string) ?? fileData;
+  };
+
+  const imageUploads = () => props.message.fileUploads?.filter((item) => item?.mime?.startsWith('image/')) ?? [];
+  const nonImageUploads = () => props.message.fileUploads?.filter((item) => !item?.mime?.startsWith('image/')) ?? [];
+  const hasImageMessage = () => imageUploads().length > 0;
+
+  const renderNonImageUpload = (item: Partial<FileUpload>) => {
+    if (item?.mime?.startsWith('audio/')) {
       const fileData = `${props.apiHost}/api/v1/get-upload-file?chatflowId=${props.chatflowid}&chatId=${props.chatId}&fileName=${item.name}`;
       const src = (item.data as string) ?? fileData;
       return <AudioWaveformPlayer src={src} mime={item.mime} />;
-    } else {
-      return (
-        <div class="inline-flex items-center h-12 max-w-max p-2 mr-1 flex-none bg-transparent border border-gray-300 rounded-md">
-          <AttachmentIcon />
-          <span class="ml-1.5 text-inherit">{item.name}</span>
-        </div>
-      );
     }
+
+    return (
+      <div class="inline-flex items-center h-12 max-w-max p-2 mr-1 flex-none bg-transparent border border-gray-300 rounded-md">
+        <AttachmentIcon />
+        <span class="ml-1.5 text-inherit">{item.name}</span>
+      </div>
+    );
   };
 
   const formattedTime = () => (props.dateTime ? formatDateTime(props.dateTime, props.dateTimeToggle?.date, props.dateTimeToggle?.time) : '');
 
   return (
     <div class="flex flex-col mb-2 items-end guest-container mt-7" style={{ 'margin-left': '50px' }}>
-      <Show when={formattedTime()}>
-        <span class="text-[12px] text-gray-500 mb-1">{formattedTime()}</span>
-      </Show>
-      <div class="flex justify-end items-end">
-        <div
-          class="max-w-full flex flex-col justify-center items-start chatbot-guest-bubble px-4 py-2 gap-2"
-          data-testid="guest-bubble"
-          style={{ 'border-radius': '16px' }}
-        >
-          {props.message.fileUploads && props.message.fileUploads.length > 0 && (
-            <div class="flex flex-col items-start flex-wrap w-full gap-2">
-              <For each={props.message.fileUploads}>{(item) => renderFileUploads(item)}</For>
+      <Show
+        when={hasImageMessage()}
+        fallback={
+          <>
+            <Show when={formattedTime()}>
+              <span class="text-[12px] text-gray-500 mb-1">{formattedTime()}</span>
+            </Show>
+            <div class="flex justify-end items-end">
+              <div
+                class="max-w-full flex flex-col justify-center items-start chatbot-guest-bubble px-4 py-2 gap-2"
+                data-testid="guest-bubble"
+                style={{ 'border-radius': '16px' }}
+              >
+                {nonImageUploads().length > 0 && (
+                  <div class="flex flex-col items-start flex-wrap w-full gap-2">
+                    <For each={nonImageUploads()}>{(item) => renderNonImageUpload(item)}</For>
+                  </div>
+                )}
+                {props.message.message && (
+                  <span
+                    ref={setUserMessageRef}
+                    class="whitespace-pre-wrap"
+                    style={{ 'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px` }}
+                  />
+                )}
+              </div>
+              <Show when={props.showAvatar}>
+                <Avatar initialAvatarSrc={props.avatarSrc} />
+              </Show>
             </div>
-          )}
-          {props.message.message && (
-            <span
-              ref={setUserMessageRef}
-              class="whitespace-pre-wrap"
-              style={{ 'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px` }}
-            />
-          )}
+          </>
+        }
+      >
+        <div class="flex justify-end items-end">
+          <div class="flex flex-col items-end max-w-[487px] w-full gap-2">
+            <Show when={formattedTime()}>
+              <span class="text-[12px] text-gray-500">{formattedTime()}</span>
+            </Show>
+            <For each={imageUploads()}>{(item) => <MessageImage src={getImageUploadSrc(item)} />}</For>
+            {props.message.message && (
+              <span
+                ref={setUserMessageRef}
+                class="whitespace-pre-wrap"
+                style={{
+                  color: 'var(--chatbot-guest-bubble-color)',
+                  'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
+                }}
+              />
+            )}
+            {nonImageUploads().length > 0 && (
+              <div class="flex flex-col items-end flex-wrap w-full gap-2">
+                <For each={nonImageUploads()}>{(item) => renderNonImageUpload(item)}</For>
+              </div>
+            )}
+          </div>
+          <Show when={props.showAvatar}>
+            <Avatar initialAvatarSrc={props.avatarSrc} />
+          </Show>
         </div>
-        <Show when={props.showAvatar}>
-          <Avatar initialAvatarSrc={props.avatarSrc} />
-        </Show>
-      </div>
+      </Show>
     </div>
   );
 };

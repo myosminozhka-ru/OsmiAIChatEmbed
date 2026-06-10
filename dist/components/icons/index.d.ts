@@ -18,4 +18,5 @@ export * from './VolumeIcon';
 export * from './SquareStopIcon';
 export * from './PlayIcon';
 export * from './PauseBarsIcon';
+export * from './FileIcon';
 //# sourceMappingURL=index.d.ts.map
