@@ -169,16 +169,10 @@ export const TextInput = (props: TextInputProps) => {
   };
 
   const isImageOnlyUpload = () =>
-    Boolean(props.uploadsConfig?.isImageUploadAllowed) &&
-    !props.isFullFileUpload &&
-    !props.uploadsConfig?.isRAGFileUploadAllowed;
+    Boolean(props.uploadsConfig?.isImageUploadAllowed) && !props.isFullFileUpload && !props.uploadsConfig?.isRAGFileUploadAllowed;
 
   const isUploadAllowed = () =>
-    Boolean(
-      props.uploadsConfig?.isImageUploadAllowed ||
-        props.uploadsConfig?.isRAGFileUploadAllowed ||
-        props.isFullFileUpload,
-    );
+    Boolean(props.uploadsConfig?.isImageUploadAllowed || props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload);
 
   const getImageAcceptTypes = () => {
     if (props.uploadsConfig?.imgUploadSizeAndTypes?.length) {
@@ -260,11 +254,7 @@ export const TextInput = (props: TextInputProps) => {
               </Show>
             </div>
           </div>
-          <div
-            class={`flex-1 flex min-w-0 ${
-              isUploadAllowed() ? '' : ''
-            }`}
-          >
+          <div class={`flex-1 flex min-w-0 ${isUploadAllowed() ? '' : ''}`}>
             <ShortTextInput
               ref={inputRef as HTMLTextAreaElement}
               onInput={handleInput}
