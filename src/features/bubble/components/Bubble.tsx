@@ -4,7 +4,6 @@ import { BubbleButton } from './BubbleButton';
 import { BubbleParams } from '../types';
 import { Bot, BotProps } from '../../../components/Bot';
 import Tooltip from './Tooltip';
-import { DeleteButton } from '../../../components/inputs/textInput';
 import { getBubbleButtonSize } from '@/utils';
 import { themeColorsToHostCss } from '@/theme/colors';
 
@@ -26,7 +25,6 @@ export const Bubble = (props: BubbleProps) => {
   const [isBotOpened, setIsBotOpened] = createSignal(storedOpen());
   const [isBotStarted, setIsBotStarted] = createSignal(storedOpen());
   const [isFullScreen, setIsFullScreen] = createSignal(false);
-  const [clearChatRef, setClearChatRef] = createSignal<{ clear: () => void; getCanClear: () => boolean } | null>(null);
   const [buttonPosition, setButtonPosition] = createSignal({
     bottom: bubbleProps.theme?.button?.bottom ?? 20,
     right: bubbleProps.theme?.button?.right ?? 20,
@@ -131,15 +129,6 @@ export const Bubble = (props: BubbleProps) => {
         <Show when={isBotStarted()}>
           <div class="relative h-full bg-transparent">
             <Show when={isBotOpened()}>
-              <DeleteButton
-                type="button"
-                isDisabled={clearChatRef()?.getCanClear() ?? true}
-                class="py-3 md:py-[22px] pr-2 absolute top-0 right-10 md:right-12 m-[6px] bg-transparent rounded-full z-50 chatbot-close-icon"
-                onClick={() => clearChatRef()?.clear()}
-                title="Очистить чат"
-              >
-                <span style={{ 'font-family': 'Montserrat, sans-serif' }}>Clear</span>
-              </DeleteButton>
               <button
                 onClick={closeBot}
                 class="py-3 md:py-[22px] pr-3 absolute top-0 right-0 m-[6px] bg-transparent chatbot-close-icon rounded-full z-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 transition-all filter hover:brightness-90 active:brightness-75"
@@ -179,7 +168,6 @@ export const Bubble = (props: BubbleProps) => {
               renderHTML={props.theme?.chatWindow?.renderHTML}
               closeBot={closeBot}
               onFullScreenChange={setIsFullScreen}
-              registerClearChat={(clear, getCanClear) => setClearChatRef({ clear, getCanClear })}
             />
           </div>
         </Show>
