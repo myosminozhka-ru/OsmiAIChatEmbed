@@ -162,7 +162,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   const toggleFullScreen = () => setIsFullScreen((prev) => !prev);
 
   createEffect(() => props.onFullScreenChange?.(isFullScreen()));
-  createEffect(() => props.registerClearChat?.(chat.clearChat, () => messages().length === 1));
 
   createEffect(() => {
     if (!props.starterPrompts) return;
@@ -290,7 +289,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             onDrop={fileUpload.handleDrop}
           />
 
-          <BotHeader props={props} isFullScreen={isFullScreen()} onToggleFullScreen={toggleFullScreen} />
+          <BotHeader props={props} isFullScreen={isFullScreen()} onToggleFullScreen={toggleFullScreen} onClearChat={chat.clearChat} />
 
           <div class="flex flex-col w-full h-full justify-start z-0">
             <div

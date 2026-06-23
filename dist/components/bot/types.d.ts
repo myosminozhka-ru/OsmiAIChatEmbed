@@ -114,7 +114,6 @@ export type BotProps = {
     renderHTML?: boolean;
     closeBot?: () => void;
     onFullScreenChange?: (value: boolean) => void;
-    registerClearChat?: (clear: () => void, getCanClear: () => boolean) => void;
 };
 export type LeadsConfig = {
     status: boolean;
